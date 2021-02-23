@@ -5,7 +5,7 @@ APP_NAME = bridge
 APP_VERSION = 1.0.0
 
 # build with verison infos
-VERSION_DIR = github.com/boring/${APP_NAME}
+VERSION_DIR = github.com/boringdao/${APP_NAME}
 BUILD_DATE = $(shell date +%FT%T)
 GIT_COMMIT = $(shell git log --pretty=format:'%h' -n 1)
 GIT_BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
