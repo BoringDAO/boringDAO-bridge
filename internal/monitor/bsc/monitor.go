@@ -210,6 +210,8 @@ func (m *Monitor) handleCross(lock *BorBSCCrossBurn, isHistory bool) {
 		return
 	}
 
+	m.logger.Info("confirmEvent")
+
 	m.cocoC <- coco
 	m.persistLBlockHeight(lock.Raw.TxHash.String(), lock.Raw.BlockNumber)
 }
@@ -227,8 +229,8 @@ func (m *Monitor) confirmEvent(event types.Log) bool {
 			m.logger.WithFields(logrus.Fields{
 				"err":        err,
 				"now_height": num,
-			}).Error("GetBurnBtcTokenLog")
-			continue
+			}).Error("confirmEvent")
+			return false
 		}
 		return log.BlockHeight == event.BlockNumber
 	}

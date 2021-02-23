@@ -236,7 +236,7 @@ func (m *Monitor) confirmEvent(event types.Log) bool {
 			m.logger.WithFields(logrus.Fields{
 				"err":        err,
 				"now_height": num,
-			}).Error("GetBurnBtcTokenLog")
+			}).Error("confirmEvent")
 			continue
 		}
 		return log.BlockHeight == event.BlockNumber
