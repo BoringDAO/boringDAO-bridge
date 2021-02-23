@@ -174,7 +174,7 @@ func (m *Monitor) listenLockEvent() {
 }
 
 func (m *Monitor) handleLock(lock *BorBSCCrossBurn, isHistory bool) {
-	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Bsc.LockContract) {
+	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Bsc.CrossContract) {
 		return
 	}
 	if m.storage.Has(TxKey(lock.Raw.TxHash.String())) {
