@@ -151,7 +151,7 @@ func (m *Monitor) listenLockEvent() {
 		m.logger.Error(err)
 	}
 	for filter.Next() {
-		m.handleLock(filter.Event, true)
+		m.handleCross(filter.Event, true)
 		if filter.done {
 			break
 		}
@@ -169,11 +169,11 @@ func (m *Monitor) listenLockEvent() {
 		return sub, nil
 	})
 	for be := range sink {
-		m.handleLock(be, false)
+		m.handleCross(be, false)
 	}
 }
 
-func (m *Monitor) handleLock(lock *BorBSCCrossBurn, isHistory bool) {
+func (m *Monitor) handleCross(lock *BorBSCCrossBurn, isHistory bool) {
 	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Bsc.CrossContract) {
 		return
 	}
@@ -196,7 +196,7 @@ func (m *Monitor) handleLock(lock *BorBSCCrossBurn, isHistory bool) {
 		"txId":         lock.Raw.TxHash.String(),
 		"block_height": lock.Raw.BlockNumber,
 		"removed":      lock.Raw.Removed,
-	}).Info("LockBorLock")
+	}).Info("CrossBurn")
 
 	if lock.Raw.Removed {
 		return
@@ -206,7 +206,7 @@ func (m *Monitor) handleLock(lock *BorBSCCrossBurn, isHistory bool) {
 		m.logger.WithFields(logrus.Fields{
 			"txId":         lock.Raw.TxHash.String(),
 			"block_height": lock.Raw.BlockNumber,
-		}).Info("LockBorLock has not confirmed")
+		}).Info("CrossBurn has not confirmed")
 		return
 	}
 
@@ -286,7 +286,7 @@ func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
 		return nil, err
 	}
 	for _, log := range receipt.Logs {
-		if !strings.EqualFold(log.Address.String(), m.config.Eth.LockContract) {
+		if !strings.EqualFold(log.Address.String(), m.config.Bsc.CrossContract) {
 			continue
 		}
 
