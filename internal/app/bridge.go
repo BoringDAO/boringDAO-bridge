@@ -70,6 +70,8 @@ func (b *Bridge) Start() error {
 
 	go b.listenEthCocoC()
 
+	go b.listenBscCocoC()
+
 	return nil
 }
 

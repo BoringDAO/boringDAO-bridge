@@ -213,7 +213,7 @@ func (m *Monitor) handleCross(lock *BorBSCCrossBurn, isHistory bool) {
 	m.logger.Info("confirmEvent")
 
 	m.cocoC <- coco
-	m.persistLBlockHeight(lock.Raw.TxHash.String(), lock.Raw.BlockNumber)
+	m.persistBBlockHeight(lock.Raw.TxHash.String(), lock.Raw.BlockNumber)
 }
 
 func (m *Monitor) confirmEvent(event types.Log) bool {
@@ -355,7 +355,7 @@ func bHeightKey() []byte {
 	return []byte(fmt.Sprintf("bHeight"))
 }
 
-func (m *Monitor) persistLBlockHeight(txId string, height uint64) {
+func (m *Monitor) persistBBlockHeight(txId string, height uint64) {
 	m.persistBHeight(height)
 	for {
 		if m.storage.Has(TxKey(txId)) {
