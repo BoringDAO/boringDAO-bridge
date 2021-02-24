@@ -245,7 +245,7 @@ func (m *Monitor) HandleCocoC() chan *Coco {
 	return m.cocoC
 }
 
-func (m *Monitor) CrossMint(addrFromEth common.Address, recipient common.Address, amount *big.Int) error {
+func (m *Monitor) CrossMint(txId string, addrFromEth common.Address, recipient common.Address, amount *big.Int) error {
 	m.mux.Lock()
 	defer m.mux.Unlock()
 
@@ -261,7 +261,7 @@ func (m *Monitor) CrossMint(addrFromEth common.Address, recipient common.Address
 		"amount":    amount.String(),
 	}).Info("will crossMint")
 
-	transaction, err := m.session.CrossMint(addrFromEth, recipient, amount)
+	transaction, err := m.session.CrossMint(addrFromEth, recipient, amount, txId)
 	if err != nil {
 		return fmt.Errorf("crossMint error:%v", err)
 	}

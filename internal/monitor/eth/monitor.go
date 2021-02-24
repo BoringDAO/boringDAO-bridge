@@ -247,7 +247,7 @@ func (m *Monitor) confirmEvent(event types.Log) bool {
 	}
 }
 
-func (m *Monitor) UnlockBor(token common.Address, from common.Address, recipient common.Address, amount *big.Int) error {
+func (m *Monitor) UnlockBor(txId string, token common.Address, from common.Address, recipient common.Address, amount *big.Int) error {
 	m.mux.Lock()
 	defer m.mux.Unlock()
 
@@ -264,7 +264,7 @@ func (m *Monitor) UnlockBor(token common.Address, from common.Address, recipient
 		"amount":    amount.String(),
 	}).Info("will unlock")
 
-	transaction, err := m.session.Unlock(token, from, recipient, amount)
+	transaction, err := m.session.Unlock(token, from, recipient, amount, txId)
 	if err != nil {
 		return fmt.Errorf("unlock error:%v", err)
 	}
