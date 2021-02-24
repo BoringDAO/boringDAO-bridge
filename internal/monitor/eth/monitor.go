@@ -31,10 +31,11 @@ import (
 
 type Coco struct {
 	IsHistory   bool           `json:"isHistory"`
-	Token       common.Address `json:"token"`
 	Sender      common.Address `json:"sender"`
 	Recipient   common.Address `json:"recipient"`
 	Amount      *big.Int       `json:"amount"`
+	EthToken    common.Address `json:"eth_token"`
+	BscToken    common.Address `json:"bsc_token"`
 	TxId        string         `json:"tx_id"`
 	BlockHeight uint64         `json:"block_height"`
 }
@@ -189,7 +190,8 @@ func (m *Monitor) handleLock(lock *CrossLockLock, isHistory bool) {
 	}
 	coco := &Coco{
 		IsHistory:   isHistory,
-		Token:       lock.Token,
+		EthToken:    lock.EthToken,
+		BscToken:    lock.BscToken,
 		Sender:      lock.Locker,
 		Recipient:   lock.Recipient,
 		Amount:      lock.Amount,
@@ -198,7 +200,8 @@ func (m *Monitor) handleLock(lock *CrossLockLock, isHistory bool) {
 	}
 
 	m.logger.WithFields(logrus.Fields{
-		"token":        coco.Token.String(),
+		"eth_token":    coco.EthToken.String(),
+		"bsc_token":    coco.BscToken.String(),
 		"sender":       coco.Sender.String(),
 		"recipient":    coco.Recipient.String(),
 		"amount":       coco.Amount.String(),
@@ -219,6 +222,7 @@ func (m *Monitor) handleLock(lock *CrossLockLock, isHistory bool) {
 		return
 	}
 
+	m.logger.WithField("tx", lock.Raw.TxHash.String()).Info("confirmEvent")
 	m.cocoC <- coco
 	m.persistLBlockHeight(lock.Raw.TxHash.String(), lock.Raw.BlockNumber)
 }
@@ -243,7 +247,7 @@ func (m *Monitor) confirmEvent(event types.Log) bool {
 	}
 }
 
-func (m *Monitor) UnlockBor(token common.Address, recipient common.Address, amount *big.Int) error {
+func (m *Monitor) UnlockBor(token common.Address, from common.Address, recipient common.Address, amount *big.Int) error {
 	m.mux.Lock()
 	defer m.mux.Unlock()
 
@@ -260,7 +264,7 @@ func (m *Monitor) UnlockBor(token common.Address, recipient common.Address, amou
 		"amount":    amount.String(),
 	}).Info("will unlock")
 
-	transaction, err := m.session.Unlock(token, recipient, amount)
+	transaction, err := m.session.Unlock(token, from, recipient, amount)
 	if err != nil {
 		return fmt.Errorf("unlock error:%v", err)
 	}
@@ -308,7 +312,8 @@ func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
 					continue
 				}
 				return &Coco{
-					Token:       lock.Token,
+					EthToken:    lock.EthToken,
+					BscToken:    lock.BscToken,
 					Sender:      lock.Locker,
 					Recipient:   lock.Recipient,
 					Amount:      lock.Amount,
@@ -369,6 +374,10 @@ func (m *Monitor) persistLBlockHeight(txId string, height uint64) {
 		}
 		time.Sleep(500 * time.Millisecond)
 	}
+}
+
+func (m *Monitor) HasTx(txId string) bool {
+	return m.storage.Has(TxKey(txId))
 }
 
 func (m *Monitor) persistLHeight(height uint64) {

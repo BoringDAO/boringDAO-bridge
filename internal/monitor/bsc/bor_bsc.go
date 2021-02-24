@@ -26,6 +26,864 @@ var (
 	_ = event.NewSubscription
 )
 
+// AccessControlABI is the input ABI used to generate the binding from.
+const AccessControlABI = "[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"previousAdminRole\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"newAdminRole\",\"type\":\"bytes32\"}],\"name\":\"RoleAdminChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"RoleGranted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"RoleRevoked\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"DEFAULT_ADMIN_ROLE\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"}],\"name\":\"getRoleAdmin\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"}],\"name\":\"getRoleMember\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"}],\"name\":\"getRoleMemberCount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"grantRole\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"hasRole\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"renounceRole\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"revokeRole\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
+
+// AccessControlFuncSigs maps the 4-byte function signature to its string representation.
+var AccessControlFuncSigs = map[string]string{
+	"a217fddf": "DEFAULT_ADMIN_ROLE()",
+	"248a9ca3": "getRoleAdmin(bytes32)",
+	"9010d07c": "getRoleMember(bytes32,uint256)",
+	"ca15c873": "getRoleMemberCount(bytes32)",
+	"2f2ff15d": "grantRole(bytes32,address)",
+	"91d14854": "hasRole(bytes32,address)",
+	"36568abe": "renounceRole(bytes32,address)",
+	"d547741f": "revokeRole(bytes32,address)",
+}
+
+// AccessControl is an auto generated Go binding around an Ethereum contract.
+type AccessControl struct {
+	AccessControlCaller     // Read-only binding to the contract
+	AccessControlTransactor // Write-only binding to the contract
+	AccessControlFilterer   // Log filterer for contract events
+}
+
+// AccessControlCaller is an auto generated read-only Go binding around an Ethereum contract.
+type AccessControlCaller struct {
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+}
+
+// AccessControlTransactor is an auto generated write-only Go binding around an Ethereum contract.
+type AccessControlTransactor struct {
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+}
+
+// AccessControlFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
+type AccessControlFilterer struct {
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+}
+
+// AccessControlSession is an auto generated Go binding around an Ethereum contract,
+// with pre-set call and transact options.
+type AccessControlSession struct {
+	Contract     *AccessControl    // Generic contract binding to set the session for
+	CallOpts     bind.CallOpts     // Call options to use throughout this session
+	TransactOpts bind.TransactOpts // Transaction auth options to use throughout this session
+}
+
+// AccessControlCallerSession is an auto generated read-only Go binding around an Ethereum contract,
+// with pre-set call options.
+type AccessControlCallerSession struct {
+	Contract *AccessControlCaller // Generic contract caller binding to set the session for
+	CallOpts bind.CallOpts        // Call options to use throughout this session
+}
+
+// AccessControlTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
+// with pre-set transact options.
+type AccessControlTransactorSession struct {
+	Contract     *AccessControlTransactor // Generic contract transactor binding to set the session for
+	TransactOpts bind.TransactOpts        // Transaction auth options to use throughout this session
+}
+
+// AccessControlRaw is an auto generated low-level Go binding around an Ethereum contract.
+type AccessControlRaw struct {
+	Contract *AccessControl // Generic contract binding to access the raw methods on
+}
+
+// AccessControlCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
+type AccessControlCallerRaw struct {
+	Contract *AccessControlCaller // Generic read-only contract binding to access the raw methods on
+}
+
+// AccessControlTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
+type AccessControlTransactorRaw struct {
+	Contract *AccessControlTransactor // Generic write-only contract binding to access the raw methods on
+}
+
+// NewAccessControl creates a new instance of AccessControl, bound to a specific deployed contract.
+func NewAccessControl(address common.Address, backend bind.ContractBackend) (*AccessControl, error) {
+	contract, err := bindAccessControl(address, backend, backend, backend)
+	if err != nil {
+		return nil, err
+	}
+	return &AccessControl{AccessControlCaller: AccessControlCaller{contract: contract}, AccessControlTransactor: AccessControlTransactor{contract: contract}, AccessControlFilterer: AccessControlFilterer{contract: contract}}, nil
+}
+
+// NewAccessControlCaller creates a new read-only instance of AccessControl, bound to a specific deployed contract.
+func NewAccessControlCaller(address common.Address, caller bind.ContractCaller) (*AccessControlCaller, error) {
+	contract, err := bindAccessControl(address, caller, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &AccessControlCaller{contract: contract}, nil
+}
+
+// NewAccessControlTransactor creates a new write-only instance of AccessControl, bound to a specific deployed contract.
+func NewAccessControlTransactor(address common.Address, transactor bind.ContractTransactor) (*AccessControlTransactor, error) {
+	contract, err := bindAccessControl(address, nil, transactor, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &AccessControlTransactor{contract: contract}, nil
+}
+
+// NewAccessControlFilterer creates a new log filterer instance of AccessControl, bound to a specific deployed contract.
+func NewAccessControlFilterer(address common.Address, filterer bind.ContractFilterer) (*AccessControlFilterer, error) {
+	contract, err := bindAccessControl(address, nil, nil, filterer)
+	if err != nil {
+		return nil, err
+	}
+	return &AccessControlFilterer{contract: contract}, nil
+}
+
+// bindAccessControl binds a generic wrapper to an already deployed contract.
+func bindAccessControl(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
+	parsed, err := abi.JSON(strings.NewReader(AccessControlABI))
+	if err != nil {
+		return nil, err
+	}
+	return bind.NewBoundContract(address, parsed, caller, transactor, filterer), nil
+}
+
+// Call invokes the (constant) contract method with params as input values and
+// sets the output to result. The result type might be a single field for simple
+// returns, a slice of interfaces for anonymous returns and a struct for named
+// returns.
+func (_AccessControl *AccessControlRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
+	return _AccessControl.Contract.AccessControlCaller.contract.Call(opts, result, method, params...)
+}
+
+// Transfer initiates a plain transaction to move funds to the contract, calling
+// its default method if one is available.
+func (_AccessControl *AccessControlRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _AccessControl.Contract.AccessControlTransactor.contract.Transfer(opts)
+}
+
+// Transact invokes the (paid) contract method with params as input values.
+func (_AccessControl *AccessControlRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _AccessControl.Contract.AccessControlTransactor.contract.Transact(opts, method, params...)
+}
+
+// Call invokes the (constant) contract method with params as input values and
+// sets the output to result. The result type might be a single field for simple
+// returns, a slice of interfaces for anonymous returns and a struct for named
+// returns.
+func (_AccessControl *AccessControlCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
+	return _AccessControl.Contract.contract.Call(opts, result, method, params...)
+}
+
+// Transfer initiates a plain transaction to move funds to the contract, calling
+// its default method if one is available.
+func (_AccessControl *AccessControlTransactorRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _AccessControl.Contract.contract.Transfer(opts)
+}
+
+// Transact invokes the (paid) contract method with params as input values.
+func (_AccessControl *AccessControlTransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _AccessControl.Contract.contract.Transact(opts, method, params...)
+}
+
+// DEFAULTADMINROLE is a free data retrieval call binding the contract method 0xa217fddf.
+//
+// Solidity: function DEFAULT_ADMIN_ROLE() view returns(bytes32)
+func (_AccessControl *AccessControlCaller) DEFAULTADMINROLE(opts *bind.CallOpts) ([32]byte, error) {
+	var out []interface{}
+	err := _AccessControl.contract.Call(opts, &out, "DEFAULT_ADMIN_ROLE")
+
+	if err != nil {
+		return *new([32]byte), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
+
+	return out0, err
+
+}
+
+// DEFAULTADMINROLE is a free data retrieval call binding the contract method 0xa217fddf.
+//
+// Solidity: function DEFAULT_ADMIN_ROLE() view returns(bytes32)
+func (_AccessControl *AccessControlSession) DEFAULTADMINROLE() ([32]byte, error) {
+	return _AccessControl.Contract.DEFAULTADMINROLE(&_AccessControl.CallOpts)
+}
+
+// DEFAULTADMINROLE is a free data retrieval call binding the contract method 0xa217fddf.
+//
+// Solidity: function DEFAULT_ADMIN_ROLE() view returns(bytes32)
+func (_AccessControl *AccessControlCallerSession) DEFAULTADMINROLE() ([32]byte, error) {
+	return _AccessControl.Contract.DEFAULTADMINROLE(&_AccessControl.CallOpts)
+}
+
+// GetRoleAdmin is a free data retrieval call binding the contract method 0x248a9ca3.
+//
+// Solidity: function getRoleAdmin(bytes32 role) view returns(bytes32)
+func (_AccessControl *AccessControlCaller) GetRoleAdmin(opts *bind.CallOpts, role [32]byte) ([32]byte, error) {
+	var out []interface{}
+	err := _AccessControl.contract.Call(opts, &out, "getRoleAdmin", role)
+
+	if err != nil {
+		return *new([32]byte), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
+
+	return out0, err
+
+}
+
+// GetRoleAdmin is a free data retrieval call binding the contract method 0x248a9ca3.
+//
+// Solidity: function getRoleAdmin(bytes32 role) view returns(bytes32)
+func (_AccessControl *AccessControlSession) GetRoleAdmin(role [32]byte) ([32]byte, error) {
+	return _AccessControl.Contract.GetRoleAdmin(&_AccessControl.CallOpts, role)
+}
+
+// GetRoleAdmin is a free data retrieval call binding the contract method 0x248a9ca3.
+//
+// Solidity: function getRoleAdmin(bytes32 role) view returns(bytes32)
+func (_AccessControl *AccessControlCallerSession) GetRoleAdmin(role [32]byte) ([32]byte, error) {
+	return _AccessControl.Contract.GetRoleAdmin(&_AccessControl.CallOpts, role)
+}
+
+// GetRoleMember is a free data retrieval call binding the contract method 0x9010d07c.
+//
+// Solidity: function getRoleMember(bytes32 role, uint256 index) view returns(address)
+func (_AccessControl *AccessControlCaller) GetRoleMember(opts *bind.CallOpts, role [32]byte, index *big.Int) (common.Address, error) {
+	var out []interface{}
+	err := _AccessControl.contract.Call(opts, &out, "getRoleMember", role, index)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// GetRoleMember is a free data retrieval call binding the contract method 0x9010d07c.
+//
+// Solidity: function getRoleMember(bytes32 role, uint256 index) view returns(address)
+func (_AccessControl *AccessControlSession) GetRoleMember(role [32]byte, index *big.Int) (common.Address, error) {
+	return _AccessControl.Contract.GetRoleMember(&_AccessControl.CallOpts, role, index)
+}
+
+// GetRoleMember is a free data retrieval call binding the contract method 0x9010d07c.
+//
+// Solidity: function getRoleMember(bytes32 role, uint256 index) view returns(address)
+func (_AccessControl *AccessControlCallerSession) GetRoleMember(role [32]byte, index *big.Int) (common.Address, error) {
+	return _AccessControl.Contract.GetRoleMember(&_AccessControl.CallOpts, role, index)
+}
+
+// GetRoleMemberCount is a free data retrieval call binding the contract method 0xca15c873.
+//
+// Solidity: function getRoleMemberCount(bytes32 role) view returns(uint256)
+func (_AccessControl *AccessControlCaller) GetRoleMemberCount(opts *bind.CallOpts, role [32]byte) (*big.Int, error) {
+	var out []interface{}
+	err := _AccessControl.contract.Call(opts, &out, "getRoleMemberCount", role)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// GetRoleMemberCount is a free data retrieval call binding the contract method 0xca15c873.
+//
+// Solidity: function getRoleMemberCount(bytes32 role) view returns(uint256)
+func (_AccessControl *AccessControlSession) GetRoleMemberCount(role [32]byte) (*big.Int, error) {
+	return _AccessControl.Contract.GetRoleMemberCount(&_AccessControl.CallOpts, role)
+}
+
+// GetRoleMemberCount is a free data retrieval call binding the contract method 0xca15c873.
+//
+// Solidity: function getRoleMemberCount(bytes32 role) view returns(uint256)
+func (_AccessControl *AccessControlCallerSession) GetRoleMemberCount(role [32]byte) (*big.Int, error) {
+	return _AccessControl.Contract.GetRoleMemberCount(&_AccessControl.CallOpts, role)
+}
+
+// HasRole is a free data retrieval call binding the contract method 0x91d14854.
+//
+// Solidity: function hasRole(bytes32 role, address account) view returns(bool)
+func (_AccessControl *AccessControlCaller) HasRole(opts *bind.CallOpts, role [32]byte, account common.Address) (bool, error) {
+	var out []interface{}
+	err := _AccessControl.contract.Call(opts, &out, "hasRole", role, account)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
+}
+
+// HasRole is a free data retrieval call binding the contract method 0x91d14854.
+//
+// Solidity: function hasRole(bytes32 role, address account) view returns(bool)
+func (_AccessControl *AccessControlSession) HasRole(role [32]byte, account common.Address) (bool, error) {
+	return _AccessControl.Contract.HasRole(&_AccessControl.CallOpts, role, account)
+}
+
+// HasRole is a free data retrieval call binding the contract method 0x91d14854.
+//
+// Solidity: function hasRole(bytes32 role, address account) view returns(bool)
+func (_AccessControl *AccessControlCallerSession) HasRole(role [32]byte, account common.Address) (bool, error) {
+	return _AccessControl.Contract.HasRole(&_AccessControl.CallOpts, role, account)
+}
+
+// GrantRole is a paid mutator transaction binding the contract method 0x2f2ff15d.
+//
+// Solidity: function grantRole(bytes32 role, address account) returns()
+func (_AccessControl *AccessControlTransactor) GrantRole(opts *bind.TransactOpts, role [32]byte, account common.Address) (*types.Transaction, error) {
+	return _AccessControl.contract.Transact(opts, "grantRole", role, account)
+}
+
+// GrantRole is a paid mutator transaction binding the contract method 0x2f2ff15d.
+//
+// Solidity: function grantRole(bytes32 role, address account) returns()
+func (_AccessControl *AccessControlSession) GrantRole(role [32]byte, account common.Address) (*types.Transaction, error) {
+	return _AccessControl.Contract.GrantRole(&_AccessControl.TransactOpts, role, account)
+}
+
+// GrantRole is a paid mutator transaction binding the contract method 0x2f2ff15d.
+//
+// Solidity: function grantRole(bytes32 role, address account) returns()
+func (_AccessControl *AccessControlTransactorSession) GrantRole(role [32]byte, account common.Address) (*types.Transaction, error) {
+	return _AccessControl.Contract.GrantRole(&_AccessControl.TransactOpts, role, account)
+}
+
+// RenounceRole is a paid mutator transaction binding the contract method 0x36568abe.
+//
+// Solidity: function renounceRole(bytes32 role, address account) returns()
+func (_AccessControl *AccessControlTransactor) RenounceRole(opts *bind.TransactOpts, role [32]byte, account common.Address) (*types.Transaction, error) {
+	return _AccessControl.contract.Transact(opts, "renounceRole", role, account)
+}
+
+// RenounceRole is a paid mutator transaction binding the contract method 0x36568abe.
+//
+// Solidity: function renounceRole(bytes32 role, address account) returns()
+func (_AccessControl *AccessControlSession) RenounceRole(role [32]byte, account common.Address) (*types.Transaction, error) {
+	return _AccessControl.Contract.RenounceRole(&_AccessControl.TransactOpts, role, account)
+}
+
+// RenounceRole is a paid mutator transaction binding the contract method 0x36568abe.
+//
+// Solidity: function renounceRole(bytes32 role, address account) returns()
+func (_AccessControl *AccessControlTransactorSession) RenounceRole(role [32]byte, account common.Address) (*types.Transaction, error) {
+	return _AccessControl.Contract.RenounceRole(&_AccessControl.TransactOpts, role, account)
+}
+
+// RevokeRole is a paid mutator transaction binding the contract method 0xd547741f.
+//
+// Solidity: function revokeRole(bytes32 role, address account) returns()
+func (_AccessControl *AccessControlTransactor) RevokeRole(opts *bind.TransactOpts, role [32]byte, account common.Address) (*types.Transaction, error) {
+	return _AccessControl.contract.Transact(opts, "revokeRole", role, account)
+}
+
+// RevokeRole is a paid mutator transaction binding the contract method 0xd547741f.
+//
+// Solidity: function revokeRole(bytes32 role, address account) returns()
+func (_AccessControl *AccessControlSession) RevokeRole(role [32]byte, account common.Address) (*types.Transaction, error) {
+	return _AccessControl.Contract.RevokeRole(&_AccessControl.TransactOpts, role, account)
+}
+
+// RevokeRole is a paid mutator transaction binding the contract method 0xd547741f.
+//
+// Solidity: function revokeRole(bytes32 role, address account) returns()
+func (_AccessControl *AccessControlTransactorSession) RevokeRole(role [32]byte, account common.Address) (*types.Transaction, error) {
+	return _AccessControl.Contract.RevokeRole(&_AccessControl.TransactOpts, role, account)
+}
+
+// AccessControlRoleAdminChangedIterator is returned from FilterRoleAdminChanged and is used to iterate over the raw logs and unpacked data for RoleAdminChanged events raised by the AccessControl contract.
+type AccessControlRoleAdminChangedIterator struct {
+	Event *AccessControlRoleAdminChanged // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *AccessControlRoleAdminChangedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(AccessControlRoleAdminChanged)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(AccessControlRoleAdminChanged)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *AccessControlRoleAdminChangedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *AccessControlRoleAdminChangedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// AccessControlRoleAdminChanged represents a RoleAdminChanged event raised by the AccessControl contract.
+type AccessControlRoleAdminChanged struct {
+	Role              [32]byte
+	PreviousAdminRole [32]byte
+	NewAdminRole      [32]byte
+	Raw               types.Log // Blockchain specific contextual infos
+}
+
+// FilterRoleAdminChanged is a free log retrieval operation binding the contract event 0xbd79b86ffe0ab8e8776151514217cd7cacd52c909f66475c3af44e129f0b00ff.
+//
+// Solidity: event RoleAdminChanged(bytes32 indexed role, bytes32 indexed previousAdminRole, bytes32 indexed newAdminRole)
+func (_AccessControl *AccessControlFilterer) FilterRoleAdminChanged(opts *bind.FilterOpts, role [][32]byte, previousAdminRole [][32]byte, newAdminRole [][32]byte) (*AccessControlRoleAdminChangedIterator, error) {
+
+	var roleRule []interface{}
+	for _, roleItem := range role {
+		roleRule = append(roleRule, roleItem)
+	}
+	var previousAdminRoleRule []interface{}
+	for _, previousAdminRoleItem := range previousAdminRole {
+		previousAdminRoleRule = append(previousAdminRoleRule, previousAdminRoleItem)
+	}
+	var newAdminRoleRule []interface{}
+	for _, newAdminRoleItem := range newAdminRole {
+		newAdminRoleRule = append(newAdminRoleRule, newAdminRoleItem)
+	}
+
+	logs, sub, err := _AccessControl.contract.FilterLogs(opts, "RoleAdminChanged", roleRule, previousAdminRoleRule, newAdminRoleRule)
+	if err != nil {
+		return nil, err
+	}
+	return &AccessControlRoleAdminChangedIterator{contract: _AccessControl.contract, event: "RoleAdminChanged", logs: logs, sub: sub}, nil
+}
+
+// WatchRoleAdminChanged is a free log subscription operation binding the contract event 0xbd79b86ffe0ab8e8776151514217cd7cacd52c909f66475c3af44e129f0b00ff.
+//
+// Solidity: event RoleAdminChanged(bytes32 indexed role, bytes32 indexed previousAdminRole, bytes32 indexed newAdminRole)
+func (_AccessControl *AccessControlFilterer) WatchRoleAdminChanged(opts *bind.WatchOpts, sink chan<- *AccessControlRoleAdminChanged, role [][32]byte, previousAdminRole [][32]byte, newAdminRole [][32]byte) (event.Subscription, error) {
+
+	var roleRule []interface{}
+	for _, roleItem := range role {
+		roleRule = append(roleRule, roleItem)
+	}
+	var previousAdminRoleRule []interface{}
+	for _, previousAdminRoleItem := range previousAdminRole {
+		previousAdminRoleRule = append(previousAdminRoleRule, previousAdminRoleItem)
+	}
+	var newAdminRoleRule []interface{}
+	for _, newAdminRoleItem := range newAdminRole {
+		newAdminRoleRule = append(newAdminRoleRule, newAdminRoleItem)
+	}
+
+	logs, sub, err := _AccessControl.contract.WatchLogs(opts, "RoleAdminChanged", roleRule, previousAdminRoleRule, newAdminRoleRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(AccessControlRoleAdminChanged)
+				if err := _AccessControl.contract.UnpackLog(event, "RoleAdminChanged", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseRoleAdminChanged is a log parse operation binding the contract event 0xbd79b86ffe0ab8e8776151514217cd7cacd52c909f66475c3af44e129f0b00ff.
+//
+// Solidity: event RoleAdminChanged(bytes32 indexed role, bytes32 indexed previousAdminRole, bytes32 indexed newAdminRole)
+func (_AccessControl *AccessControlFilterer) ParseRoleAdminChanged(log types.Log) (*AccessControlRoleAdminChanged, error) {
+	event := new(AccessControlRoleAdminChanged)
+	if err := _AccessControl.contract.UnpackLog(event, "RoleAdminChanged", log); err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
+// AccessControlRoleGrantedIterator is returned from FilterRoleGranted and is used to iterate over the raw logs and unpacked data for RoleGranted events raised by the AccessControl contract.
+type AccessControlRoleGrantedIterator struct {
+	Event *AccessControlRoleGranted // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *AccessControlRoleGrantedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(AccessControlRoleGranted)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(AccessControlRoleGranted)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *AccessControlRoleGrantedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *AccessControlRoleGrantedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// AccessControlRoleGranted represents a RoleGranted event raised by the AccessControl contract.
+type AccessControlRoleGranted struct {
+	Role    [32]byte
+	Account common.Address
+	Sender  common.Address
+	Raw     types.Log // Blockchain specific contextual infos
+}
+
+// FilterRoleGranted is a free log retrieval operation binding the contract event 0x2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d.
+//
+// Solidity: event RoleGranted(bytes32 indexed role, address indexed account, address indexed sender)
+func (_AccessControl *AccessControlFilterer) FilterRoleGranted(opts *bind.FilterOpts, role [][32]byte, account []common.Address, sender []common.Address) (*AccessControlRoleGrantedIterator, error) {
+
+	var roleRule []interface{}
+	for _, roleItem := range role {
+		roleRule = append(roleRule, roleItem)
+	}
+	var accountRule []interface{}
+	for _, accountItem := range account {
+		accountRule = append(accountRule, accountItem)
+	}
+	var senderRule []interface{}
+	for _, senderItem := range sender {
+		senderRule = append(senderRule, senderItem)
+	}
+
+	logs, sub, err := _AccessControl.contract.FilterLogs(opts, "RoleGranted", roleRule, accountRule, senderRule)
+	if err != nil {
+		return nil, err
+	}
+	return &AccessControlRoleGrantedIterator{contract: _AccessControl.contract, event: "RoleGranted", logs: logs, sub: sub}, nil
+}
+
+// WatchRoleGranted is a free log subscription operation binding the contract event 0x2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d.
+//
+// Solidity: event RoleGranted(bytes32 indexed role, address indexed account, address indexed sender)
+func (_AccessControl *AccessControlFilterer) WatchRoleGranted(opts *bind.WatchOpts, sink chan<- *AccessControlRoleGranted, role [][32]byte, account []common.Address, sender []common.Address) (event.Subscription, error) {
+
+	var roleRule []interface{}
+	for _, roleItem := range role {
+		roleRule = append(roleRule, roleItem)
+	}
+	var accountRule []interface{}
+	for _, accountItem := range account {
+		accountRule = append(accountRule, accountItem)
+	}
+	var senderRule []interface{}
+	for _, senderItem := range sender {
+		senderRule = append(senderRule, senderItem)
+	}
+
+	logs, sub, err := _AccessControl.contract.WatchLogs(opts, "RoleGranted", roleRule, accountRule, senderRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(AccessControlRoleGranted)
+				if err := _AccessControl.contract.UnpackLog(event, "RoleGranted", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseRoleGranted is a log parse operation binding the contract event 0x2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d.
+//
+// Solidity: event RoleGranted(bytes32 indexed role, address indexed account, address indexed sender)
+func (_AccessControl *AccessControlFilterer) ParseRoleGranted(log types.Log) (*AccessControlRoleGranted, error) {
+	event := new(AccessControlRoleGranted)
+	if err := _AccessControl.contract.UnpackLog(event, "RoleGranted", log); err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
+// AccessControlRoleRevokedIterator is returned from FilterRoleRevoked and is used to iterate over the raw logs and unpacked data for RoleRevoked events raised by the AccessControl contract.
+type AccessControlRoleRevokedIterator struct {
+	Event *AccessControlRoleRevoked // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *AccessControlRoleRevokedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(AccessControlRoleRevoked)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(AccessControlRoleRevoked)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *AccessControlRoleRevokedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *AccessControlRoleRevokedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// AccessControlRoleRevoked represents a RoleRevoked event raised by the AccessControl contract.
+type AccessControlRoleRevoked struct {
+	Role    [32]byte
+	Account common.Address
+	Sender  common.Address
+	Raw     types.Log // Blockchain specific contextual infos
+}
+
+// FilterRoleRevoked is a free log retrieval operation binding the contract event 0xf6391f5c32d9c69d2a47ea670b442974b53935d1edc7fd64eb21e047a839171b.
+//
+// Solidity: event RoleRevoked(bytes32 indexed role, address indexed account, address indexed sender)
+func (_AccessControl *AccessControlFilterer) FilterRoleRevoked(opts *bind.FilterOpts, role [][32]byte, account []common.Address, sender []common.Address) (*AccessControlRoleRevokedIterator, error) {
+
+	var roleRule []interface{}
+	for _, roleItem := range role {
+		roleRule = append(roleRule, roleItem)
+	}
+	var accountRule []interface{}
+	for _, accountItem := range account {
+		accountRule = append(accountRule, accountItem)
+	}
+	var senderRule []interface{}
+	for _, senderItem := range sender {
+		senderRule = append(senderRule, senderItem)
+	}
+
+	logs, sub, err := _AccessControl.contract.FilterLogs(opts, "RoleRevoked", roleRule, accountRule, senderRule)
+	if err != nil {
+		return nil, err
+	}
+	return &AccessControlRoleRevokedIterator{contract: _AccessControl.contract, event: "RoleRevoked", logs: logs, sub: sub}, nil
+}
+
+// WatchRoleRevoked is a free log subscription operation binding the contract event 0xf6391f5c32d9c69d2a47ea670b442974b53935d1edc7fd64eb21e047a839171b.
+//
+// Solidity: event RoleRevoked(bytes32 indexed role, address indexed account, address indexed sender)
+func (_AccessControl *AccessControlFilterer) WatchRoleRevoked(opts *bind.WatchOpts, sink chan<- *AccessControlRoleRevoked, role [][32]byte, account []common.Address, sender []common.Address) (event.Subscription, error) {
+
+	var roleRule []interface{}
+	for _, roleItem := range role {
+		roleRule = append(roleRule, roleItem)
+	}
+	var accountRule []interface{}
+	for _, accountItem := range account {
+		accountRule = append(accountRule, accountItem)
+	}
+	var senderRule []interface{}
+	for _, senderItem := range sender {
+		senderRule = append(senderRule, senderItem)
+	}
+
+	logs, sub, err := _AccessControl.contract.WatchLogs(opts, "RoleRevoked", roleRule, accountRule, senderRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(AccessControlRoleRevoked)
+				if err := _AccessControl.contract.UnpackLog(event, "RoleRevoked", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseRoleRevoked is a log parse operation binding the contract event 0xf6391f5c32d9c69d2a47ea670b442974b53935d1edc7fd64eb21e047a839171b.
+//
+// Solidity: event RoleRevoked(bytes32 indexed role, address indexed account, address indexed sender)
+func (_AccessControl *AccessControlFilterer) ParseRoleRevoked(log types.Log) (*AccessControlRoleRevoked, error) {
+	event := new(AccessControlRoleRevoked)
+	if err := _AccessControl.contract.UnpackLog(event, "RoleRevoked", log); err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
 // AddressABI is the input ABI used to generate the binding from.
 const AddressABI = "[]"
 
@@ -189,41 +1047,46 @@ func (_Address *AddressTransactorRaw) Transact(opts *bind.TransactOpts, method s
 }
 
 // BorBSCABI is the input ABI used to generate the binding from.
-const BorBSCABI = "[{\"inputs\":[{\"internalType\":\"string\",\"name\":\"_name\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"_symbol\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"_crosser\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Approval\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"CrossBurn\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"CrossMint\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"}],\"name\":\"allowance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"approve\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"crossBurn\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"recepient\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"crossMint\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"crosser\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"decimals\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"subtractedValue\",\"type\":\"uint256\"}],\"name\":\"decreaseAllowance\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"addedValue\",\"type\":\"uint256\"}],\"name\":\"increaseAllowance\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"name\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"setCrosser\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"symbol\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"totalSupply\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"transfer\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"transferFrom\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
+const BorBSCABI = "[{\"inputs\":[{\"internalType\":\"string\",\"name\":\"_name\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"_symbol\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"_crosser\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_ethBor\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Approval\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"ethToken\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"bscToken\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"CrossBurn\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"ethTokenr\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"bscToken\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"CrossMint\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"previousAdminRole\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"newAdminRole\",\"type\":\"bytes32\"}],\"name\":\"RoleAdminChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"RoleGranted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"RoleRevoked\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"CROSSER_ROLE\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"DEFAULT_ADMIN_ROLE\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"}],\"name\":\"allowance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"approve\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"crossBurn\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"addrFromETH\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"recepient\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"crossMint\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"decimals\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"subtractedValue\",\"type\":\"uint256\"}],\"name\":\"decreaseAllowance\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"ethBor\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"}],\"name\":\"getRoleAdmin\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"}],\"name\":\"getRoleMember\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"}],\"name\":\"getRoleMemberCount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"grantRole\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"hasRole\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"addedValue\",\"type\":\"uint256\"}],\"name\":\"increaseAllowance\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"name\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"renounceRole\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"revokeRole\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"symbol\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"totalSupply\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"transfer\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"transferFrom\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
 
 // BorBSCFuncSigs maps the 4-byte function signature to its string representation.
 var BorBSCFuncSigs = map[string]string{
+	"56cf02d9": "CROSSER_ROLE()",
+	"a217fddf": "DEFAULT_ADMIN_ROLE()",
 	"dd62ed3e": "allowance(address,address)",
 	"095ea7b3": "approve(address,uint256)",
 	"70a08231": "balanceOf(address)",
 	"589a9e6e": "crossBurn(address,uint256)",
-	"306c68a6": "crossMint(address,uint256)",
-	"bb75ba2c": "crosser()",
+	"131160d3": "crossMint(address,address,uint256)",
 	"313ce567": "decimals()",
 	"a457c2d7": "decreaseAllowance(address,uint256)",
+	"b9990ede": "ethBor()",
+	"248a9ca3": "getRoleAdmin(bytes32)",
+	"9010d07c": "getRoleMember(bytes32,uint256)",
+	"ca15c873": "getRoleMemberCount(bytes32)",
+	"2f2ff15d": "grantRole(bytes32,address)",
+	"91d14854": "hasRole(bytes32,address)",
 	"39509351": "increaseAllowance(address,uint256)",
 	"06fdde03": "name()",
-	"8da5cb5b": "owner()",
-	"715018a6": "renounceOwnership()",
-	"b8c0799e": "setCrosser(address)",
+	"36568abe": "renounceRole(bytes32,address)",
+	"d547741f": "revokeRole(bytes32,address)",
 	"95d89b41": "symbol()",
 	"18160ddd": "totalSupply()",
 	"a9059cbb": "transfer(address,uint256)",
 	"23b872dd": "transferFrom(address,address,uint256)",
-	"f2fde38b": "transferOwnership(address)",
 }
 
 // BorBSCBin is the compiled bytecode used for deploying new contracts.
-var BorBSCBin = "0x60806040523480156200001157600080fd5b506040516200148e3803806200148e833981810160405260608110156200003757600080fd5b81019080805160405193929190846401000000008211156200005857600080fd5b9083019060208201858111156200006e57600080fd5b82516401000000008111828201881017156200008957600080fd5b82525081516020918201929091019080838360005b83811015620000b85781810151838201526020016200009e565b50505050905090810190601f168015620000e65780820380516001836020036101000a031916815260200191505b50604052602001805160405193929190846401000000008211156200010a57600080fd5b9083019060208201858111156200012057600080fd5b82516401000000008111828201881017156200013b57600080fd5b82525081516020918201929091019080838360005b838110156200016a57818101518382015260200162000150565b50505050905090810190601f168015620001985780820380516001836020036101000a031916815260200191505b5060405260209081015185519093508592508491620001bd9160039185019062000272565b508051620001d390600490602084019062000272565b50506005805460ff19166012179055506000620001ef6200026e565b60058054610100600160a81b0319166101006001600160a01b03841690810291909117909155604051919250906000907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908290a350600680546001600160a01b0319166001600160a01b0392909216919091179055506200030e9050565b3390565b828054600181600116156101000203166002900490600052602060002090601f016020900481019282601f10620002b557805160ff1916838001178555620002e5565b82800160010185558215620002e5579182015b82811115620002e5578251825591602001919060010190620002c8565b50620002f3929150620002f7565b5090565b5b80821115620002f35760008155600101620002f8565b611170806200031e6000396000f3fe608060405234801561001057600080fd5b50600436106101165760003560e01c8063715018a6116100a2578063a9059cbb11610071578063a9059cbb14610352578063b8c0799e1461037e578063bb75ba2c146103a4578063dd62ed3e146103ac578063f2fde38b146103da57610116565b8063715018a6146102f25780638da5cb5b146102fa57806395d89b411461031e578063a457c2d71461032657610116565b8063306c68a6116100e9578063306c68a614610228578063313ce567146102565780633950935114610274578063589a9e6e146102a057806370a08231146102cc57610116565b806306fdde031461011b578063095ea7b31461019857806318160ddd146101d857806323b872dd146101f2575b600080fd5b610123610400565b6040805160208082528351818301528351919283929083019185019080838360005b8381101561015d578181015183820152602001610145565b50505050905090810190601f16801561018a5780820380516001836020036101000a031916815260200191505b509250505060405180910390f35b6101c4600480360360408110156101ae57600080fd5b506001600160a01b038135169060200135610496565b604080519115158252519081900360200190f35b6101e06104b3565b60408051918252519081900360200190f35b6101c46004803603606081101561020857600080fd5b506001600160a01b038135811691602081013590911690604001356104b9565b6102546004803603604081101561023e57600080fd5b506001600160a01b038135169060200135610540565b005b61025e6105db565b6040805160ff9092168252519081900360200190f35b6101c46004803603604081101561028a57600080fd5b506001600160a01b0381351690602001356105e4565b610254600480360360408110156102b657600080fd5b506001600160a01b038135169060200135610632565b6101e0600480360360208110156102e257600080fd5b50356001600160a01b0316610688565b6102546106a3565b610302610762565b604080516001600160a01b039092168252519081900360200190f35b610123610776565b6101c46004803603604081101561033c57600080fd5b506001600160a01b0381351690602001356107d7565b6101c46004803603604081101561036857600080fd5b506001600160a01b03813516906020013561083f565b6102546004803603602081101561039457600080fd5b50356001600160a01b0316610853565b6103026108e4565b6101e0600480360360408110156103c257600080fd5b506001600160a01b03813581169160200135166108f3565b610254600480360360208110156103f057600080fd5b50356001600160a01b031661091e565b60038054604080516020601f600260001961010060018816150201909516949094049384018190048102820181019092528281526060939092909183018282801561048c5780601f106104615761010080835404028352916020019161048c565b820191906000526020600020905b81548152906001019060200180831161046f57829003601f168201915b5050505050905090565b60006104aa6104a3610a39565b8484610a3d565b50600192915050565b60025490565b60006104c6848484610b29565b610536846104d2610a39565b61053185604051806060016040528060288152602001611084602891396001600160a01b038a16600090815260016020526040812090610510610a39565b6001600160a01b031681526020810191909152604001600020549190610c84565b610a3d565b5060019392505050565b6006546001600160a01b031633146105895760405162461bcd60e51b8152600401808060200182810382526021815260200180610fd36021913960400191505060405180910390fd5b6105938282610d1b565b604080516001600160a01b03841681526020810183905281517fd1ea2a72a31654a3d3ef37b4c6d0fe63e2d462e14a6390499348ff4ab8c24b87929181900390910190a15050565b60055460ff1690565b60006104aa6105f1610a39565b846105318560016000610602610a39565b6001600160a01b03908116825260208083019390935260409182016000908120918c168152925290205490610e0b565b61063c3382610e6c565b604080513381526001600160a01b038416602082015280820183905290517f70ea7a039ca3c689576222a1dc7943d0587d25c0fc8bb7016063a61f4906585c9181900360600190a15050565b6001600160a01b031660009081526020819052604090205490565b6106ab610a39565b60055461010090046001600160a01b03908116911614610712576040805162461bcd60e51b815260206004820181905260248201527f4f776e61626c653a2063616c6c6572206973206e6f7420746865206f776e6572604482015290519081900360640190fd5b60055460405160009161010090046001600160a01b0316907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908390a360058054610100600160a81b0319169055565b60055461010090046001600160a01b031690565b60048054604080516020601f600260001961010060018816150201909516949094049384018190048102820181019092528281526060939092909183018282801561048c5780601f106104615761010080835404028352916020019161048c565b60006104aa6107e4610a39565b8461053185604051806060016040528060258152602001611116602591396001600061080e610a39565b6001600160a01b03908116825260208083019390935260409182016000908120918d16815292529020549190610c84565b60006104aa61084c610a39565b8484610b29565b61085b610a39565b60055461010090046001600160a01b039081169116146108c2576040805162461bcd60e51b815260206004820181905260248201527f4f776e61626c653a2063616c6c6572206973206e6f7420746865206f776e6572604482015290519081900360640190fd5b600680546001600160a01b0319166001600160a01b0392909216919091179055565b6006546001600160a01b031681565b6001600160a01b03918216600090815260016020908152604080832093909416825291909152205490565b610926610a39565b60055461010090046001600160a01b0390811691161461098d576040805162461bcd60e51b815260206004820181905260248201527f4f776e61626c653a2063616c6c6572206973206e6f7420746865206f776e6572604482015290519081900360640190fd5b6001600160a01b0381166109d25760405162461bcd60e51b81526004018080602001828103825260268152602001806110166026913960400191505060405180910390fd5b6005546040516001600160a01b0380841692610100900416907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e090600090a3600580546001600160a01b0390921661010002610100600160a81b0319909216919091179055565b3390565b6001600160a01b038316610a825760405162461bcd60e51b81526004018080602001828103825260248152602001806110f26024913960400191505060405180910390fd5b6001600160a01b038216610ac75760405162461bcd60e51b815260040180806020018281038252602281526020018061103c6022913960400191505060405180910390fd5b6001600160a01b03808416600081815260016020908152604080832094871680845294825291829020859055815185815291517f8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b9259281900390910190a3505050565b6001600160a01b038316610b6e5760405162461bcd60e51b81526004018080602001828103825260258152602001806110cd6025913960400191505060405180910390fd5b6001600160a01b038216610bb35760405162461bcd60e51b8152600401808060200182810382526023815260200180610fb06023913960400191505060405180910390fd5b610bbe838383610f68565b610bfb8160405180606001604052806026815260200161105e602691396001600160a01b0386166000908152602081905260409020549190610c84565b6001600160a01b038085166000908152602081905260408082209390935590841681522054610c2a9082610e0b565b6001600160a01b038084166000818152602081815260409182902094909455805185815290519193928716927fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef92918290030190a3505050565b60008184841115610d135760405162461bcd60e51b81526004018080602001828103825283818151815260200191508051906020019080838360005b83811015610cd8578181015183820152602001610cc0565b50505050905090810190601f168015610d055780820380516001836020036101000a031916815260200191505b509250505060405180910390fd5b505050900390565b6001600160a01b038216610d76576040805162461bcd60e51b815260206004820152601f60248201527f45524332303a206d696e7420746f20746865207a65726f206164647265737300604482015290519081900360640190fd5b610d8260008383610f68565b600254610d8f9082610e0b565b6002556001600160a01b038216600090815260208190526040902054610db59082610e0b565b6001600160a01b0383166000818152602081815260408083209490945583518581529351929391927fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef9281900390910190a35050565b600082820183811015610e65576040805162461bcd60e51b815260206004820152601b60248201527f536166654d6174683a206164646974696f6e206f766572666c6f770000000000604482015290519081900360640190fd5b9392505050565b6001600160a01b038216610eb15760405162461bcd60e51b81526004018080602001828103825260218152602001806110ac6021913960400191505060405180910390fd5b610ebd82600083610f68565b610efa81604051806060016040528060228152602001610ff4602291396001600160a01b0385166000908152602081905260409020549190610c84565b6001600160a01b038316600090815260208190526040902055600254610f209082610f6d565b6002556040805182815290516000916001600160a01b038516917fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef9181900360200190a35050565b505050565b6000610e6583836040518060400160405280601e81526020017f536166654d6174683a207375627472616374696f6e206f766572666c6f770000815250610c8456fe45524332303a207472616e7366657220746f20746865207a65726f2061646472657373426f724253433a3a6d696e743a6f6e6c79206d696e7465722063616e206d696e7445524332303a206275726e20616d6f756e7420657863656564732062616c616e63654f776e61626c653a206e6577206f776e657220697320746865207a65726f206164647265737345524332303a20617070726f766520746f20746865207a65726f206164647265737345524332303a207472616e7366657220616d6f756e7420657863656564732062616c616e636545524332303a207472616e7366657220616d6f756e74206578636565647320616c6c6f77616e636545524332303a206275726e2066726f6d20746865207a65726f206164647265737345524332303a207472616e736665722066726f6d20746865207a65726f206164647265737345524332303a20617070726f76652066726f6d20746865207a65726f206164647265737345524332303a2064656372656173656420616c6c6f77616e63652062656c6f77207a65726fa264697066735822122014ab44d73928e2a36430232951199389050494d98ede530bee9b2c1cb37ee6fa64736f6c634300060c0033"
+var BorBSCBin = "0x60806040523480156200001157600080fd5b50604051620018f5380380620018f5833981810160405260808110156200003757600080fd5b81019080805160405193929190846401000000008211156200005857600080fd5b9083019060208201858111156200006e57600080fd5b82516401000000008111828201881017156200008957600080fd5b82525081516020918201929091019080838360005b83811015620000b85781810151838201526020016200009e565b50505050905090810190601f168015620000e65780820380516001836020036101000a031916815260200191505b50604052602001805160405193929190846401000000008211156200010a57600080fd5b9083019060208201858111156200012057600080fd5b82516401000000008111828201881017156200013b57600080fd5b82525081516020918201929091019080838360005b838110156200016a57818101518382015260200162000150565b50505050905090810190601f168015620001985780820380516001836020036101000a031916815260200191505b50604090815260208281015192909101518651929450925085918591620001c59160039185019062000350565b508051620001db90600490602084019062000350565b50506005805460ff1916601217905550600780546001600160a01b0383166001600160a01b0319909116179055620002156000336200023a565b620002306b43524f535345525f524f4c4560a01b836200023a565b50505050620003ec565b6200024682826200024a565b5050565b60008281526006602090815260409091206200027191839062000aa8620002c5821b17901c565b15620002465762000281620002e5565b6001600160a01b0316816001600160a01b0316837f2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d60405160405180910390a45050565b6000620002dc836001600160a01b038416620002e9565b90505b92915050565b3390565b6000620002f7838362000338565b6200032f57508154600181810184556000848152602080822090930184905584548482528286019093526040902091909155620002df565b506000620002df565b60009081526001919091016020526040902054151590565b828054600181600116156101000203166002900490600052602060002090601f016020900481019282601f106200039357805160ff1916838001178555620003c3565b82800160010185558215620003c3579182015b82811115620003c3578251825591602001919060010190620003a6565b50620003d1929150620003d5565b5090565b5b80821115620003d15760008155600101620003d6565b6114f980620003fc6000396000f3fe608060405234801561001057600080fd5b506004361061014d5760003560e01c8063589a9e6e116100c3578063a457c2d71161007c578063a457c2d71461042b578063a9059cbb14610457578063b9990ede14610483578063ca15c8731461048b578063d547741f146104a8578063dd62ed3e146104d45761014d565b8063589a9e6e1461035e57806370a082311461038a5780639010d07c146103b057806391d14854146103ef57806395d89b411461041b578063a217fddf146104235761014d565b8063248a9ca311610115578063248a9ca3146102975780632f2ff15d146102b4578063313ce567146102e057806336568abe146102fe578063395093511461032a57806356cf02d9146103565761014d565b806306fdde0314610152578063095ea7b3146101cf578063131160d31461020f57806318160ddd1461024757806323b872dd14610261575b600080fd5b61015a610502565b6040805160208082528351818301528351919283929083019185019080838360005b8381101561019457818101518382015260200161017c565b50505050905090810190601f1680156101c15780820380516001836020036101000a031916815260200191505b509250505060405180910390f35b6101fb600480360360408110156101e557600080fd5b506001600160a01b038135169060200135610598565b604080519115158252519081900360200190f35b6102456004803603606081101561022557600080fd5b506001600160a01b038135811691602081013590911690604001356105b6565b005b61024f61068a565b60408051918252519081900360200190f35b6101fb6004803603606081101561027757600080fd5b506001600160a01b03813581169160208101359091169060400135610690565b61024f600480360360208110156102ad57600080fd5b5035610717565b610245600480360360408110156102ca57600080fd5b50803590602001356001600160a01b031661072c565b6102e8610798565b6040805160ff9092168252519081900360200190f35b6102456004803603604081101561031457600080fd5b50803590602001356001600160a01b03166107a1565b6101fb6004803603604081101561034057600080fd5b506001600160a01b038135169060200135610802565b61024f610850565b6102456004803603604081101561037457600080fd5b506001600160a01b038135169060200135610863565b61024f600480360360208110156103a057600080fd5b50356001600160a01b03166108ca565b6103d3600480360360408110156103c657600080fd5b50803590602001356108e5565b604080516001600160a01b039092168252519081900360200190f35b6101fb6004803603604081101561040557600080fd5b50803590602001356001600160a01b0316610904565b61015a61091c565b61024f61097d565b6101fb6004803603604081101561044157600080fd5b506001600160a01b038135169060200135610982565b6101fb6004803603604081101561046d57600080fd5b506001600160a01b0381351690602001356109ea565b6103d36109fe565b61024f600480360360208110156104a157600080fd5b5035610a0d565b610245600480360360408110156104be57600080fd5b50803590602001356001600160a01b0316610a24565b61024f600480360360408110156104ea57600080fd5b506001600160a01b0381358116916020013516610a7d565b60038054604080516020601f600260001961010060018816150201909516949094049384018190048102820181019092528281526060939092909183018282801561058e5780601f106105635761010080835404028352916020019161058e565b820191906000526020600020905b81548152906001019060200180831161057157829003601f168201915b5050505050905090565b60006105ac6105a5610abd565b8484610ac1565b5060015b92915050565b6105cf6b43524f535345525f524f4c4560a01b33610904565b610620576040805162461bcd60e51b815260206004820152601d60248201527f426f724253433a3a63616c6c6572206973206e6f742063726f73736572000000604482015290519081900360640190fd5b61062a8282610bad565b600754604080516001600160a01b03928316815230602082015285831681830152918416606083015260808201839052517fb7951a942da1eacc6c018bd5878e884ef5eecc2426451257c8658a6f07aff0c69181900360a00190a1505050565b60025490565b600061069d848484610c9d565b61070d846106a9610abd565b610708856040518060600160405280602881526020016113de602891396001600160a01b038a166000908152600160205260408120906106e7610abd565b6001600160a01b031681526020810191909152604001600020549190610df8565b610ac1565b5060019392505050565b60009081526006602052604090206002015490565b60008281526006602052604090206002015461074f9061074a610abd565b610904565b61078a5760405162461bcd60e51b815260040180806020018281038252602f815260200180611315602f913960400191505060405180910390fd5b6107948282610e8f565b5050565b60055460ff1690565b6107a9610abd565b6001600160a01b0316816001600160a01b0316146107f85760405162461bcd60e51b815260040180806020018281038252602f815260200180611495602f913960400191505060405180910390fd5b6107948282610ef8565b60006105ac61080f610abd565b846107088560016000610820610abd565b6001600160a01b03908116825260208083019390935260409182016000908120918c168152925290205490610f61565b6b43524f535345525f524f4c4560a01b81565b61086d3382610fbb565b600754604080516001600160a01b0392831681523060208201523381830152918416606083015260808201839052517f63db45e521861dc5b6514d863ebf6814df6c1079c65b0d1b49a59ac5c5d4aebc9181900360a00190a15050565b6001600160a01b031660009081526020819052604090205490565b60008281526006602052604081206108fd90836110b7565b9392505050565b60008281526006602052604081206108fd90836110c3565b60048054604080516020601f600260001961010060018816150201909516949094049384018190048102820181019092528281526060939092909183018282801561058e5780601f106105635761010080835404028352916020019161058e565b600081565b60006105ac61098f610abd565b846107088560405180606001604052806025815260200161147060259139600160006109b9610abd565b6001600160a01b03908116825260208083019390935260409182016000908120918d16815292529020549190610df8565b60006105ac6109f7610abd565b8484610c9d565b6007546001600160a01b031681565b60008181526006602052604081206105b0906110d8565b600082815260066020526040902060020154610a429061074a610abd565b6107f85760405162461bcd60e51b81526004018080602001828103825260308152602001806113ae6030913960400191505060405180910390fd5b6001600160a01b03918216600090815260016020908152604080832093909416825291909152205490565b60006108fd836001600160a01b0384166110e3565b3390565b6001600160a01b038316610b065760405162461bcd60e51b815260040180806020018281038252602481526020018061144c6024913960400191505060405180910390fd5b6001600160a01b038216610b4b5760405162461bcd60e51b81526004018080602001828103825260228152602001806113666022913960400191505060405180910390fd5b6001600160a01b03808416600081815260016020908152604080832094871680845294825291829020859055815185815291517f8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b9259281900390910190a3505050565b6001600160a01b038216610c08576040805162461bcd60e51b815260206004820152601f60248201527f45524332303a206d696e7420746f20746865207a65726f206164647265737300604482015290519081900360640190fd5b610c146000838361112d565b600254610c219082610f61565b6002556001600160a01b038216600090815260208190526040902054610c479082610f61565b6001600160a01b0383166000818152602081815260408083209490945583518581529351929391927fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef9281900390910190a35050565b6001600160a01b038316610ce25760405162461bcd60e51b81526004018080602001828103825260258152602001806114276025913960400191505060405180910390fd5b6001600160a01b038216610d275760405162461bcd60e51b81526004018080602001828103825260238152602001806112f26023913960400191505060405180910390fd5b610d3283838361112d565b610d6f81604051806060016040528060268152602001611388602691396001600160a01b0386166000908152602081905260409020549190610df8565b6001600160a01b038085166000908152602081905260408082209390935590841681522054610d9e9082610f61565b6001600160a01b038084166000818152602081815260409182902094909455805185815290519193928716927fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef92918290030190a3505050565b60008184841115610e875760405162461bcd60e51b81526004018080602001828103825283818151815260200191508051906020019080838360005b83811015610e4c578181015183820152602001610e34565b50505050905090810190601f168015610e795780820380516001836020036101000a031916815260200191505b509250505060405180910390fd5b505050900390565b6000828152600660205260409020610ea79082610aa8565b1561079457610eb4610abd565b6001600160a01b0316816001600160a01b0316837f2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d60405160405180910390a45050565b6000828152600660205260409020610f109082611132565b1561079457610f1d610abd565b6001600160a01b0316816001600160a01b0316837ff6391f5c32d9c69d2a47ea670b442974b53935d1edc7fd64eb21e047a839171b60405160405180910390a45050565b6000828201838110156108fd576040805162461bcd60e51b815260206004820152601b60248201527f536166654d6174683a206164646974696f6e206f766572666c6f770000000000604482015290519081900360640190fd5b6001600160a01b0382166110005760405162461bcd60e51b81526004018080602001828103825260218152602001806114066021913960400191505060405180910390fd5b61100c8260008361112d565b61104981604051806060016040528060228152602001611344602291396001600160a01b0385166000908152602081905260409020549190610df8565b6001600160a01b03831660009081526020819052604090205560025461106f9082611147565b6002556040805182815290516000916001600160a01b038516917fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef9181900360200190a35050565b60006108fd8383611189565b60006108fd836001600160a01b0384166111ed565b60006105b082611205565b60006110ef83836111ed565b611125575081546001818101845560008481526020808220909301849055845484825282860190935260409020919091556105b0565b5060006105b0565b505050565b60006108fd836001600160a01b038416611209565b60006108fd83836040518060400160405280601e81526020017f536166654d6174683a207375627472616374696f6e206f766572666c6f770000815250610df8565b815460009082106111cb5760405162461bcd60e51b81526004018080602001828103825260228152602001806112d06022913960400191505060405180910390fd5b8260000182815481106111da57fe5b9060005260206000200154905092915050565b60009081526001919091016020526040902054151590565b5490565b600081815260018301602052604081205480156112c5578354600019808301919081019060009087908390811061123c57fe5b906000526020600020015490508087600001848154811061125957fe5b60009182526020808320909101929092558281526001898101909252604090209084019055865487908061128957fe5b600190038181906000526020600020016000905590558660010160008781526020019081526020016000206000905560019450505050506105b0565b60009150506105b056fe456e756d657261626c655365743a20696e646578206f7574206f6620626f756e647345524332303a207472616e7366657220746f20746865207a65726f2061646472657373416363657373436f6e74726f6c3a2073656e646572206d75737420626520616e2061646d696e20746f206772616e7445524332303a206275726e20616d6f756e7420657863656564732062616c616e636545524332303a20617070726f766520746f20746865207a65726f206164647265737345524332303a207472616e7366657220616d6f756e7420657863656564732062616c616e6365416363657373436f6e74726f6c3a2073656e646572206d75737420626520616e2061646d696e20746f207265766f6b6545524332303a207472616e7366657220616d6f756e74206578636565647320616c6c6f77616e636545524332303a206275726e2066726f6d20746865207a65726f206164647265737345524332303a207472616e736665722066726f6d20746865207a65726f206164647265737345524332303a20617070726f76652066726f6d20746865207a65726f206164647265737345524332303a2064656372656173656420616c6c6f77616e63652062656c6f77207a65726f416363657373436f6e74726f6c3a2063616e206f6e6c792072656e6f756e636520726f6c657320666f722073656c66a26469706673582212201c492b6bbd592d6297f906b44f3fde5a7eac1a5bab575dbfca3dc5501b8c414864736f6c634300060c0033"
 
 // DeployBorBSC deploys a new Ethereum contract, binding an instance of BorBSC to it.
-func DeployBorBSC(auth *bind.TransactOpts, backend bind.ContractBackend, _name string, _symbol string, _crosser common.Address) (common.Address, *types.Transaction, *BorBSC, error) {
+func DeployBorBSC(auth *bind.TransactOpts, backend bind.ContractBackend, _name string, _symbol string, _crosser common.Address, _ethBor common.Address) (common.Address, *types.Transaction, *BorBSC, error) {
 	parsed, err := abi.JSON(strings.NewReader(BorBSCABI))
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}
 
-	address, tx, contract, err := bind.DeployContract(auth, parsed, common.FromHex(BorBSCBin), backend, _name, _symbol, _crosser)
+	address, tx, contract, err := bind.DeployContract(auth, parsed, common.FromHex(BorBSCBin), backend, _name, _symbol, _crosser, _ethBor)
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}
@@ -372,6 +1235,68 @@ func (_BorBSC *BorBSCTransactorRaw) Transact(opts *bind.TransactOpts, method str
 	return _BorBSC.Contract.contract.Transact(opts, method, params...)
 }
 
+// CROSSERROLE is a free data retrieval call binding the contract method 0x56cf02d9.
+//
+// Solidity: function CROSSER_ROLE() view returns(bytes32)
+func (_BorBSC *BorBSCCaller) CROSSERROLE(opts *bind.CallOpts) ([32]byte, error) {
+	var out []interface{}
+	err := _BorBSC.contract.Call(opts, &out, "CROSSER_ROLE")
+
+	if err != nil {
+		return *new([32]byte), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
+
+	return out0, err
+
+}
+
+// CROSSERROLE is a free data retrieval call binding the contract method 0x56cf02d9.
+//
+// Solidity: function CROSSER_ROLE() view returns(bytes32)
+func (_BorBSC *BorBSCSession) CROSSERROLE() ([32]byte, error) {
+	return _BorBSC.Contract.CROSSERROLE(&_BorBSC.CallOpts)
+}
+
+// CROSSERROLE is a free data retrieval call binding the contract method 0x56cf02d9.
+//
+// Solidity: function CROSSER_ROLE() view returns(bytes32)
+func (_BorBSC *BorBSCCallerSession) CROSSERROLE() ([32]byte, error) {
+	return _BorBSC.Contract.CROSSERROLE(&_BorBSC.CallOpts)
+}
+
+// DEFAULTADMINROLE is a free data retrieval call binding the contract method 0xa217fddf.
+//
+// Solidity: function DEFAULT_ADMIN_ROLE() view returns(bytes32)
+func (_BorBSC *BorBSCCaller) DEFAULTADMINROLE(opts *bind.CallOpts) ([32]byte, error) {
+	var out []interface{}
+	err := _BorBSC.contract.Call(opts, &out, "DEFAULT_ADMIN_ROLE")
+
+	if err != nil {
+		return *new([32]byte), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
+
+	return out0, err
+
+}
+
+// DEFAULTADMINROLE is a free data retrieval call binding the contract method 0xa217fddf.
+//
+// Solidity: function DEFAULT_ADMIN_ROLE() view returns(bytes32)
+func (_BorBSC *BorBSCSession) DEFAULTADMINROLE() ([32]byte, error) {
+	return _BorBSC.Contract.DEFAULTADMINROLE(&_BorBSC.CallOpts)
+}
+
+// DEFAULTADMINROLE is a free data retrieval call binding the contract method 0xa217fddf.
+//
+// Solidity: function DEFAULT_ADMIN_ROLE() view returns(bytes32)
+func (_BorBSC *BorBSCCallerSession) DEFAULTADMINROLE() ([32]byte, error) {
+	return _BorBSC.Contract.DEFAULTADMINROLE(&_BorBSC.CallOpts)
+}
+
 // Allowance is a free data retrieval call binding the contract method 0xdd62ed3e.
 //
 // Solidity: function allowance(address owner, address spender) view returns(uint256)
@@ -434,37 +1359,6 @@ func (_BorBSC *BorBSCCallerSession) BalanceOf(account common.Address) (*big.Int,
 	return _BorBSC.Contract.BalanceOf(&_BorBSC.CallOpts, account)
 }
 
-// Crosser is a free data retrieval call binding the contract method 0xbb75ba2c.
-//
-// Solidity: function crosser() view returns(address)
-func (_BorBSC *BorBSCCaller) Crosser(opts *bind.CallOpts) (common.Address, error) {
-	var out []interface{}
-	err := _BorBSC.contract.Call(opts, &out, "crosser")
-
-	if err != nil {
-		return *new(common.Address), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
-
-	return out0, err
-
-}
-
-// Crosser is a free data retrieval call binding the contract method 0xbb75ba2c.
-//
-// Solidity: function crosser() view returns(address)
-func (_BorBSC *BorBSCSession) Crosser() (common.Address, error) {
-	return _BorBSC.Contract.Crosser(&_BorBSC.CallOpts)
-}
-
-// Crosser is a free data retrieval call binding the contract method 0xbb75ba2c.
-//
-// Solidity: function crosser() view returns(address)
-func (_BorBSC *BorBSCCallerSession) Crosser() (common.Address, error) {
-	return _BorBSC.Contract.Crosser(&_BorBSC.CallOpts)
-}
-
 // Decimals is a free data retrieval call binding the contract method 0x313ce567.
 //
 // Solidity: function decimals() view returns(uint8)
@@ -496,6 +1390,161 @@ func (_BorBSC *BorBSCCallerSession) Decimals() (uint8, error) {
 	return _BorBSC.Contract.Decimals(&_BorBSC.CallOpts)
 }
 
+// EthBor is a free data retrieval call binding the contract method 0xb9990ede.
+//
+// Solidity: function ethBor() view returns(address)
+func (_BorBSC *BorBSCCaller) EthBor(opts *bind.CallOpts) (common.Address, error) {
+	var out []interface{}
+	err := _BorBSC.contract.Call(opts, &out, "ethBor")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// EthBor is a free data retrieval call binding the contract method 0xb9990ede.
+//
+// Solidity: function ethBor() view returns(address)
+func (_BorBSC *BorBSCSession) EthBor() (common.Address, error) {
+	return _BorBSC.Contract.EthBor(&_BorBSC.CallOpts)
+}
+
+// EthBor is a free data retrieval call binding the contract method 0xb9990ede.
+//
+// Solidity: function ethBor() view returns(address)
+func (_BorBSC *BorBSCCallerSession) EthBor() (common.Address, error) {
+	return _BorBSC.Contract.EthBor(&_BorBSC.CallOpts)
+}
+
+// GetRoleAdmin is a free data retrieval call binding the contract method 0x248a9ca3.
+//
+// Solidity: function getRoleAdmin(bytes32 role) view returns(bytes32)
+func (_BorBSC *BorBSCCaller) GetRoleAdmin(opts *bind.CallOpts, role [32]byte) ([32]byte, error) {
+	var out []interface{}
+	err := _BorBSC.contract.Call(opts, &out, "getRoleAdmin", role)
+
+	if err != nil {
+		return *new([32]byte), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
+
+	return out0, err
+
+}
+
+// GetRoleAdmin is a free data retrieval call binding the contract method 0x248a9ca3.
+//
+// Solidity: function getRoleAdmin(bytes32 role) view returns(bytes32)
+func (_BorBSC *BorBSCSession) GetRoleAdmin(role [32]byte) ([32]byte, error) {
+	return _BorBSC.Contract.GetRoleAdmin(&_BorBSC.CallOpts, role)
+}
+
+// GetRoleAdmin is a free data retrieval call binding the contract method 0x248a9ca3.
+//
+// Solidity: function getRoleAdmin(bytes32 role) view returns(bytes32)
+func (_BorBSC *BorBSCCallerSession) GetRoleAdmin(role [32]byte) ([32]byte, error) {
+	return _BorBSC.Contract.GetRoleAdmin(&_BorBSC.CallOpts, role)
+}
+
+// GetRoleMember is a free data retrieval call binding the contract method 0x9010d07c.
+//
+// Solidity: function getRoleMember(bytes32 role, uint256 index) view returns(address)
+func (_BorBSC *BorBSCCaller) GetRoleMember(opts *bind.CallOpts, role [32]byte, index *big.Int) (common.Address, error) {
+	var out []interface{}
+	err := _BorBSC.contract.Call(opts, &out, "getRoleMember", role, index)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// GetRoleMember is a free data retrieval call binding the contract method 0x9010d07c.
+//
+// Solidity: function getRoleMember(bytes32 role, uint256 index) view returns(address)
+func (_BorBSC *BorBSCSession) GetRoleMember(role [32]byte, index *big.Int) (common.Address, error) {
+	return _BorBSC.Contract.GetRoleMember(&_BorBSC.CallOpts, role, index)
+}
+
+// GetRoleMember is a free data retrieval call binding the contract method 0x9010d07c.
+//
+// Solidity: function getRoleMember(bytes32 role, uint256 index) view returns(address)
+func (_BorBSC *BorBSCCallerSession) GetRoleMember(role [32]byte, index *big.Int) (common.Address, error) {
+	return _BorBSC.Contract.GetRoleMember(&_BorBSC.CallOpts, role, index)
+}
+
+// GetRoleMemberCount is a free data retrieval call binding the contract method 0xca15c873.
+//
+// Solidity: function getRoleMemberCount(bytes32 role) view returns(uint256)
+func (_BorBSC *BorBSCCaller) GetRoleMemberCount(opts *bind.CallOpts, role [32]byte) (*big.Int, error) {
+	var out []interface{}
+	err := _BorBSC.contract.Call(opts, &out, "getRoleMemberCount", role)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// GetRoleMemberCount is a free data retrieval call binding the contract method 0xca15c873.
+//
+// Solidity: function getRoleMemberCount(bytes32 role) view returns(uint256)
+func (_BorBSC *BorBSCSession) GetRoleMemberCount(role [32]byte) (*big.Int, error) {
+	return _BorBSC.Contract.GetRoleMemberCount(&_BorBSC.CallOpts, role)
+}
+
+// GetRoleMemberCount is a free data retrieval call binding the contract method 0xca15c873.
+//
+// Solidity: function getRoleMemberCount(bytes32 role) view returns(uint256)
+func (_BorBSC *BorBSCCallerSession) GetRoleMemberCount(role [32]byte) (*big.Int, error) {
+	return _BorBSC.Contract.GetRoleMemberCount(&_BorBSC.CallOpts, role)
+}
+
+// HasRole is a free data retrieval call binding the contract method 0x91d14854.
+//
+// Solidity: function hasRole(bytes32 role, address account) view returns(bool)
+func (_BorBSC *BorBSCCaller) HasRole(opts *bind.CallOpts, role [32]byte, account common.Address) (bool, error) {
+	var out []interface{}
+	err := _BorBSC.contract.Call(opts, &out, "hasRole", role, account)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
+}
+
+// HasRole is a free data retrieval call binding the contract method 0x91d14854.
+//
+// Solidity: function hasRole(bytes32 role, address account) view returns(bool)
+func (_BorBSC *BorBSCSession) HasRole(role [32]byte, account common.Address) (bool, error) {
+	return _BorBSC.Contract.HasRole(&_BorBSC.CallOpts, role, account)
+}
+
+// HasRole is a free data retrieval call binding the contract method 0x91d14854.
+//
+// Solidity: function hasRole(bytes32 role, address account) view returns(bool)
+func (_BorBSC *BorBSCCallerSession) HasRole(role [32]byte, account common.Address) (bool, error) {
+	return _BorBSC.Contract.HasRole(&_BorBSC.CallOpts, role, account)
+}
+
 // Name is a free data retrieval call binding the contract method 0x06fdde03.
 //
 // Solidity: function name() view returns(string)
@@ -525,37 +1574,6 @@ func (_BorBSC *BorBSCSession) Name() (string, error) {
 // Solidity: function name() view returns(string)
 func (_BorBSC *BorBSCCallerSession) Name() (string, error) {
 	return _BorBSC.Contract.Name(&_BorBSC.CallOpts)
-}
-
-// Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
-//
-// Solidity: function owner() view returns(address)
-func (_BorBSC *BorBSCCaller) Owner(opts *bind.CallOpts) (common.Address, error) {
-	var out []interface{}
-	err := _BorBSC.contract.Call(opts, &out, "owner")
-
-	if err != nil {
-		return *new(common.Address), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
-
-	return out0, err
-
-}
-
-// Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
-//
-// Solidity: function owner() view returns(address)
-func (_BorBSC *BorBSCSession) Owner() (common.Address, error) {
-	return _BorBSC.Contract.Owner(&_BorBSC.CallOpts)
-}
-
-// Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
-//
-// Solidity: function owner() view returns(address)
-func (_BorBSC *BorBSCCallerSession) Owner() (common.Address, error) {
-	return _BorBSC.Contract.Owner(&_BorBSC.CallOpts)
 }
 
 // Symbol is a free data retrieval call binding the contract method 0x95d89b41.
@@ -662,25 +1680,25 @@ func (_BorBSC *BorBSCTransactorSession) CrossBurn(recipient common.Address, amou
 	return _BorBSC.Contract.CrossBurn(&_BorBSC.TransactOpts, recipient, amount)
 }
 
-// CrossMint is a paid mutator transaction binding the contract method 0x306c68a6.
+// CrossMint is a paid mutator transaction binding the contract method 0x131160d3.
 //
-// Solidity: function crossMint(address recepient, uint256 amount) returns()
-func (_BorBSC *BorBSCTransactor) CrossMint(opts *bind.TransactOpts, recepient common.Address, amount *big.Int) (*types.Transaction, error) {
-	return _BorBSC.contract.Transact(opts, "crossMint", recepient, amount)
+// Solidity: function crossMint(address addrFromETH, address recepient, uint256 amount) returns()
+func (_BorBSC *BorBSCTransactor) CrossMint(opts *bind.TransactOpts, addrFromETH common.Address, recepient common.Address, amount *big.Int) (*types.Transaction, error) {
+	return _BorBSC.contract.Transact(opts, "crossMint", addrFromETH, recepient, amount)
 }
 
-// CrossMint is a paid mutator transaction binding the contract method 0x306c68a6.
+// CrossMint is a paid mutator transaction binding the contract method 0x131160d3.
 //
-// Solidity: function crossMint(address recepient, uint256 amount) returns()
-func (_BorBSC *BorBSCSession) CrossMint(recepient common.Address, amount *big.Int) (*types.Transaction, error) {
-	return _BorBSC.Contract.CrossMint(&_BorBSC.TransactOpts, recepient, amount)
+// Solidity: function crossMint(address addrFromETH, address recepient, uint256 amount) returns()
+func (_BorBSC *BorBSCSession) CrossMint(addrFromETH common.Address, recepient common.Address, amount *big.Int) (*types.Transaction, error) {
+	return _BorBSC.Contract.CrossMint(&_BorBSC.TransactOpts, addrFromETH, recepient, amount)
 }
 
-// CrossMint is a paid mutator transaction binding the contract method 0x306c68a6.
+// CrossMint is a paid mutator transaction binding the contract method 0x131160d3.
 //
-// Solidity: function crossMint(address recepient, uint256 amount) returns()
-func (_BorBSC *BorBSCTransactorSession) CrossMint(recepient common.Address, amount *big.Int) (*types.Transaction, error) {
-	return _BorBSC.Contract.CrossMint(&_BorBSC.TransactOpts, recepient, amount)
+// Solidity: function crossMint(address addrFromETH, address recepient, uint256 amount) returns()
+func (_BorBSC *BorBSCTransactorSession) CrossMint(addrFromETH common.Address, recepient common.Address, amount *big.Int) (*types.Transaction, error) {
+	return _BorBSC.Contract.CrossMint(&_BorBSC.TransactOpts, addrFromETH, recepient, amount)
 }
 
 // DecreaseAllowance is a paid mutator transaction binding the contract method 0xa457c2d7.
@@ -704,6 +1722,27 @@ func (_BorBSC *BorBSCTransactorSession) DecreaseAllowance(spender common.Address
 	return _BorBSC.Contract.DecreaseAllowance(&_BorBSC.TransactOpts, spender, subtractedValue)
 }
 
+// GrantRole is a paid mutator transaction binding the contract method 0x2f2ff15d.
+//
+// Solidity: function grantRole(bytes32 role, address account) returns()
+func (_BorBSC *BorBSCTransactor) GrantRole(opts *bind.TransactOpts, role [32]byte, account common.Address) (*types.Transaction, error) {
+	return _BorBSC.contract.Transact(opts, "grantRole", role, account)
+}
+
+// GrantRole is a paid mutator transaction binding the contract method 0x2f2ff15d.
+//
+// Solidity: function grantRole(bytes32 role, address account) returns()
+func (_BorBSC *BorBSCSession) GrantRole(role [32]byte, account common.Address) (*types.Transaction, error) {
+	return _BorBSC.Contract.GrantRole(&_BorBSC.TransactOpts, role, account)
+}
+
+// GrantRole is a paid mutator transaction binding the contract method 0x2f2ff15d.
+//
+// Solidity: function grantRole(bytes32 role, address account) returns()
+func (_BorBSC *BorBSCTransactorSession) GrantRole(role [32]byte, account common.Address) (*types.Transaction, error) {
+	return _BorBSC.Contract.GrantRole(&_BorBSC.TransactOpts, role, account)
+}
+
 // IncreaseAllowance is a paid mutator transaction binding the contract method 0x39509351.
 //
 // Solidity: function increaseAllowance(address spender, uint256 addedValue) returns(bool)
@@ -725,46 +1764,46 @@ func (_BorBSC *BorBSCTransactorSession) IncreaseAllowance(spender common.Address
 	return _BorBSC.Contract.IncreaseAllowance(&_BorBSC.TransactOpts, spender, addedValue)
 }
 
-// RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
+// RenounceRole is a paid mutator transaction binding the contract method 0x36568abe.
 //
-// Solidity: function renounceOwnership() returns()
-func (_BorBSC *BorBSCTransactor) RenounceOwnership(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _BorBSC.contract.Transact(opts, "renounceOwnership")
+// Solidity: function renounceRole(bytes32 role, address account) returns()
+func (_BorBSC *BorBSCTransactor) RenounceRole(opts *bind.TransactOpts, role [32]byte, account common.Address) (*types.Transaction, error) {
+	return _BorBSC.contract.Transact(opts, "renounceRole", role, account)
 }
 
-// RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
+// RenounceRole is a paid mutator transaction binding the contract method 0x36568abe.
 //
-// Solidity: function renounceOwnership() returns()
-func (_BorBSC *BorBSCSession) RenounceOwnership() (*types.Transaction, error) {
-	return _BorBSC.Contract.RenounceOwnership(&_BorBSC.TransactOpts)
+// Solidity: function renounceRole(bytes32 role, address account) returns()
+func (_BorBSC *BorBSCSession) RenounceRole(role [32]byte, account common.Address) (*types.Transaction, error) {
+	return _BorBSC.Contract.RenounceRole(&_BorBSC.TransactOpts, role, account)
 }
 
-// RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
+// RenounceRole is a paid mutator transaction binding the contract method 0x36568abe.
 //
-// Solidity: function renounceOwnership() returns()
-func (_BorBSC *BorBSCTransactorSession) RenounceOwnership() (*types.Transaction, error) {
-	return _BorBSC.Contract.RenounceOwnership(&_BorBSC.TransactOpts)
+// Solidity: function renounceRole(bytes32 role, address account) returns()
+func (_BorBSC *BorBSCTransactorSession) RenounceRole(role [32]byte, account common.Address) (*types.Transaction, error) {
+	return _BorBSC.Contract.RenounceRole(&_BorBSC.TransactOpts, role, account)
 }
 
-// SetCrosser is a paid mutator transaction binding the contract method 0xb8c0799e.
+// RevokeRole is a paid mutator transaction binding the contract method 0xd547741f.
 //
-// Solidity: function setCrosser(address account) returns()
-func (_BorBSC *BorBSCTransactor) SetCrosser(opts *bind.TransactOpts, account common.Address) (*types.Transaction, error) {
-	return _BorBSC.contract.Transact(opts, "setCrosser", account)
+// Solidity: function revokeRole(bytes32 role, address account) returns()
+func (_BorBSC *BorBSCTransactor) RevokeRole(opts *bind.TransactOpts, role [32]byte, account common.Address) (*types.Transaction, error) {
+	return _BorBSC.contract.Transact(opts, "revokeRole", role, account)
 }
 
-// SetCrosser is a paid mutator transaction binding the contract method 0xb8c0799e.
+// RevokeRole is a paid mutator transaction binding the contract method 0xd547741f.
 //
-// Solidity: function setCrosser(address account) returns()
-func (_BorBSC *BorBSCSession) SetCrosser(account common.Address) (*types.Transaction, error) {
-	return _BorBSC.Contract.SetCrosser(&_BorBSC.TransactOpts, account)
+// Solidity: function revokeRole(bytes32 role, address account) returns()
+func (_BorBSC *BorBSCSession) RevokeRole(role [32]byte, account common.Address) (*types.Transaction, error) {
+	return _BorBSC.Contract.RevokeRole(&_BorBSC.TransactOpts, role, account)
 }
 
-// SetCrosser is a paid mutator transaction binding the contract method 0xb8c0799e.
+// RevokeRole is a paid mutator transaction binding the contract method 0xd547741f.
 //
-// Solidity: function setCrosser(address account) returns()
-func (_BorBSC *BorBSCTransactorSession) SetCrosser(account common.Address) (*types.Transaction, error) {
-	return _BorBSC.Contract.SetCrosser(&_BorBSC.TransactOpts, account)
+// Solidity: function revokeRole(bytes32 role, address account) returns()
+func (_BorBSC *BorBSCTransactorSession) RevokeRole(role [32]byte, account common.Address) (*types.Transaction, error) {
+	return _BorBSC.Contract.RevokeRole(&_BorBSC.TransactOpts, role, account)
 }
 
 // Transfer is a paid mutator transaction binding the contract method 0xa9059cbb.
@@ -807,27 +1846,6 @@ func (_BorBSC *BorBSCSession) TransferFrom(sender common.Address, recipient comm
 // Solidity: function transferFrom(address sender, address recipient, uint256 amount) returns(bool)
 func (_BorBSC *BorBSCTransactorSession) TransferFrom(sender common.Address, recipient common.Address, amount *big.Int) (*types.Transaction, error) {
 	return _BorBSC.Contract.TransferFrom(&_BorBSC.TransactOpts, sender, recipient, amount)
-}
-
-// TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
-//
-// Solidity: function transferOwnership(address newOwner) returns()
-func (_BorBSC *BorBSCTransactor) TransferOwnership(opts *bind.TransactOpts, newOwner common.Address) (*types.Transaction, error) {
-	return _BorBSC.contract.Transact(opts, "transferOwnership", newOwner)
-}
-
-// TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
-//
-// Solidity: function transferOwnership(address newOwner) returns()
-func (_BorBSC *BorBSCSession) TransferOwnership(newOwner common.Address) (*types.Transaction, error) {
-	return _BorBSC.Contract.TransferOwnership(&_BorBSC.TransactOpts, newOwner)
-}
-
-// TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
-//
-// Solidity: function transferOwnership(address newOwner) returns()
-func (_BorBSC *BorBSCTransactorSession) TransferOwnership(newOwner common.Address) (*types.Transaction, error) {
-	return _BorBSC.Contract.TransferOwnership(&_BorBSC.TransactOpts, newOwner)
 }
 
 // BorBSCApprovalIterator is returned from FilterApproval and is used to iterate over the raw logs and unpacked data for Approval events raised by the BorBSC contract.
@@ -1052,15 +2070,17 @@ func (it *BorBSCCrossBurnIterator) Close() error {
 
 // BorBSCCrossBurn represents a CrossBurn event raised by the BorBSC contract.
 type BorBSCCrossBurn struct {
-	From      common.Address
-	Recipient common.Address
-	Amount    *big.Int
-	Raw       types.Log // Blockchain specific contextual infos
+	EthToken common.Address
+	BscToken common.Address
+	From     common.Address
+	To       common.Address
+	Amount   *big.Int
+	Raw      types.Log // Blockchain specific contextual infos
 }
 
-// FilterCrossBurn is a free log retrieval operation binding the contract event 0x70ea7a039ca3c689576222a1dc7943d0587d25c0fc8bb7016063a61f4906585c.
+// FilterCrossBurn is a free log retrieval operation binding the contract event 0x63db45e521861dc5b6514d863ebf6814df6c1079c65b0d1b49a59ac5c5d4aebc.
 //
-// Solidity: event CrossBurn(address from, address recipient, uint256 amount)
+// Solidity: event CrossBurn(address ethToken, address bscToken, address from, address to, uint256 amount)
 func (_BorBSC *BorBSCFilterer) FilterCrossBurn(opts *bind.FilterOpts) (*BorBSCCrossBurnIterator, error) {
 
 	logs, sub, err := _BorBSC.contract.FilterLogs(opts, "CrossBurn")
@@ -1070,9 +2090,9 @@ func (_BorBSC *BorBSCFilterer) FilterCrossBurn(opts *bind.FilterOpts) (*BorBSCCr
 	return &BorBSCCrossBurnIterator{contract: _BorBSC.contract, event: "CrossBurn", logs: logs, sub: sub}, nil
 }
 
-// WatchCrossBurn is a free log subscription operation binding the contract event 0x70ea7a039ca3c689576222a1dc7943d0587d25c0fc8bb7016063a61f4906585c.
+// WatchCrossBurn is a free log subscription operation binding the contract event 0x63db45e521861dc5b6514d863ebf6814df6c1079c65b0d1b49a59ac5c5d4aebc.
 //
-// Solidity: event CrossBurn(address from, address recipient, uint256 amount)
+// Solidity: event CrossBurn(address ethToken, address bscToken, address from, address to, uint256 amount)
 func (_BorBSC *BorBSCFilterer) WatchCrossBurn(opts *bind.WatchOpts, sink chan<- *BorBSCCrossBurn) (event.Subscription, error) {
 
 	logs, sub, err := _BorBSC.contract.WatchLogs(opts, "CrossBurn")
@@ -1107,9 +2127,9 @@ func (_BorBSC *BorBSCFilterer) WatchCrossBurn(opts *bind.WatchOpts, sink chan<- 
 	}), nil
 }
 
-// ParseCrossBurn is a log parse operation binding the contract event 0x70ea7a039ca3c689576222a1dc7943d0587d25c0fc8bb7016063a61f4906585c.
+// ParseCrossBurn is a log parse operation binding the contract event 0x63db45e521861dc5b6514d863ebf6814df6c1079c65b0d1b49a59ac5c5d4aebc.
 //
-// Solidity: event CrossBurn(address from, address recipient, uint256 amount)
+// Solidity: event CrossBurn(address ethToken, address bscToken, address from, address to, uint256 amount)
 func (_BorBSC *BorBSCFilterer) ParseCrossBurn(log types.Log) (*BorBSCCrossBurn, error) {
 	event := new(BorBSCCrossBurn)
 	if err := _BorBSC.contract.UnpackLog(event, "CrossBurn", log); err != nil {
@@ -1187,14 +2207,17 @@ func (it *BorBSCCrossMintIterator) Close() error {
 
 // BorBSCCrossMint represents a CrossMint event raised by the BorBSC contract.
 type BorBSCCrossMint struct {
-	To     common.Address
-	Amount *big.Int
-	Raw    types.Log // Blockchain specific contextual infos
+	EthTokenr common.Address
+	BscToken  common.Address
+	From      common.Address
+	To        common.Address
+	Amount    *big.Int
+	Raw       types.Log // Blockchain specific contextual infos
 }
 
-// FilterCrossMint is a free log retrieval operation binding the contract event 0xd1ea2a72a31654a3d3ef37b4c6d0fe63e2d462e14a6390499348ff4ab8c24b87.
+// FilterCrossMint is a free log retrieval operation binding the contract event 0xb7951a942da1eacc6c018bd5878e884ef5eecc2426451257c8658a6f07aff0c6.
 //
-// Solidity: event CrossMint(address to, uint256 amount)
+// Solidity: event CrossMint(address ethTokenr, address bscToken, address from, address to, uint256 amount)
 func (_BorBSC *BorBSCFilterer) FilterCrossMint(opts *bind.FilterOpts) (*BorBSCCrossMintIterator, error) {
 
 	logs, sub, err := _BorBSC.contract.FilterLogs(opts, "CrossMint")
@@ -1204,9 +2227,9 @@ func (_BorBSC *BorBSCFilterer) FilterCrossMint(opts *bind.FilterOpts) (*BorBSCCr
 	return &BorBSCCrossMintIterator{contract: _BorBSC.contract, event: "CrossMint", logs: logs, sub: sub}, nil
 }
 
-// WatchCrossMint is a free log subscription operation binding the contract event 0xd1ea2a72a31654a3d3ef37b4c6d0fe63e2d462e14a6390499348ff4ab8c24b87.
+// WatchCrossMint is a free log subscription operation binding the contract event 0xb7951a942da1eacc6c018bd5878e884ef5eecc2426451257c8658a6f07aff0c6.
 //
-// Solidity: event CrossMint(address to, uint256 amount)
+// Solidity: event CrossMint(address ethTokenr, address bscToken, address from, address to, uint256 amount)
 func (_BorBSC *BorBSCFilterer) WatchCrossMint(opts *bind.WatchOpts, sink chan<- *BorBSCCrossMint) (event.Subscription, error) {
 
 	logs, sub, err := _BorBSC.contract.WatchLogs(opts, "CrossMint")
@@ -1241,9 +2264,9 @@ func (_BorBSC *BorBSCFilterer) WatchCrossMint(opts *bind.WatchOpts, sink chan<- 
 	}), nil
 }
 
-// ParseCrossMint is a log parse operation binding the contract event 0xd1ea2a72a31654a3d3ef37b4c6d0fe63e2d462e14a6390499348ff4ab8c24b87.
+// ParseCrossMint is a log parse operation binding the contract event 0xb7951a942da1eacc6c018bd5878e884ef5eecc2426451257c8658a6f07aff0c6.
 //
-// Solidity: event CrossMint(address to, uint256 amount)
+// Solidity: event CrossMint(address ethTokenr, address bscToken, address from, address to, uint256 amount)
 func (_BorBSC *BorBSCFilterer) ParseCrossMint(log types.Log) (*BorBSCCrossMint, error) {
 	event := new(BorBSCCrossMint)
 	if err := _BorBSC.contract.UnpackLog(event, "CrossMint", log); err != nil {
@@ -1252,9 +2275,9 @@ func (_BorBSC *BorBSCFilterer) ParseCrossMint(log types.Log) (*BorBSCCrossMint, 
 	return event, nil
 }
 
-// BorBSCOwnershipTransferredIterator is returned from FilterOwnershipTransferred and is used to iterate over the raw logs and unpacked data for OwnershipTransferred events raised by the BorBSC contract.
-type BorBSCOwnershipTransferredIterator struct {
-	Event *BorBSCOwnershipTransferred // Event containing the contract specifics and raw log
+// BorBSCRoleAdminChangedIterator is returned from FilterRoleAdminChanged and is used to iterate over the raw logs and unpacked data for RoleAdminChanged events raised by the BorBSC contract.
+type BorBSCRoleAdminChangedIterator struct {
+	Event *BorBSCRoleAdminChanged // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -1268,7 +2291,7 @@ type BorBSCOwnershipTransferredIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *BorBSCOwnershipTransferredIterator) Next() bool {
+func (it *BorBSCRoleAdminChangedIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -1277,7 +2300,7 @@ func (it *BorBSCOwnershipTransferredIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(BorBSCOwnershipTransferred)
+			it.Event = new(BorBSCRoleAdminChanged)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -1292,7 +2315,7 @@ func (it *BorBSCOwnershipTransferredIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(BorBSCOwnershipTransferred)
+		it.Event = new(BorBSCRoleAdminChanged)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -1308,60 +2331,69 @@ func (it *BorBSCOwnershipTransferredIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *BorBSCOwnershipTransferredIterator) Error() error {
+func (it *BorBSCRoleAdminChangedIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *BorBSCOwnershipTransferredIterator) Close() error {
+func (it *BorBSCRoleAdminChangedIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// BorBSCOwnershipTransferred represents a OwnershipTransferred event raised by the BorBSC contract.
-type BorBSCOwnershipTransferred struct {
-	PreviousOwner common.Address
-	NewOwner      common.Address
-	Raw           types.Log // Blockchain specific contextual infos
+// BorBSCRoleAdminChanged represents a RoleAdminChanged event raised by the BorBSC contract.
+type BorBSCRoleAdminChanged struct {
+	Role              [32]byte
+	PreviousAdminRole [32]byte
+	NewAdminRole      [32]byte
+	Raw               types.Log // Blockchain specific contextual infos
 }
 
-// FilterOwnershipTransferred is a free log retrieval operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
+// FilterRoleAdminChanged is a free log retrieval operation binding the contract event 0xbd79b86ffe0ab8e8776151514217cd7cacd52c909f66475c3af44e129f0b00ff.
 //
-// Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
-func (_BorBSC *BorBSCFilterer) FilterOwnershipTransferred(opts *bind.FilterOpts, previousOwner []common.Address, newOwner []common.Address) (*BorBSCOwnershipTransferredIterator, error) {
+// Solidity: event RoleAdminChanged(bytes32 indexed role, bytes32 indexed previousAdminRole, bytes32 indexed newAdminRole)
+func (_BorBSC *BorBSCFilterer) FilterRoleAdminChanged(opts *bind.FilterOpts, role [][32]byte, previousAdminRole [][32]byte, newAdminRole [][32]byte) (*BorBSCRoleAdminChangedIterator, error) {
 
-	var previousOwnerRule []interface{}
-	for _, previousOwnerItem := range previousOwner {
-		previousOwnerRule = append(previousOwnerRule, previousOwnerItem)
+	var roleRule []interface{}
+	for _, roleItem := range role {
+		roleRule = append(roleRule, roleItem)
 	}
-	var newOwnerRule []interface{}
-	for _, newOwnerItem := range newOwner {
-		newOwnerRule = append(newOwnerRule, newOwnerItem)
+	var previousAdminRoleRule []interface{}
+	for _, previousAdminRoleItem := range previousAdminRole {
+		previousAdminRoleRule = append(previousAdminRoleRule, previousAdminRoleItem)
+	}
+	var newAdminRoleRule []interface{}
+	for _, newAdminRoleItem := range newAdminRole {
+		newAdminRoleRule = append(newAdminRoleRule, newAdminRoleItem)
 	}
 
-	logs, sub, err := _BorBSC.contract.FilterLogs(opts, "OwnershipTransferred", previousOwnerRule, newOwnerRule)
+	logs, sub, err := _BorBSC.contract.FilterLogs(opts, "RoleAdminChanged", roleRule, previousAdminRoleRule, newAdminRoleRule)
 	if err != nil {
 		return nil, err
 	}
-	return &BorBSCOwnershipTransferredIterator{contract: _BorBSC.contract, event: "OwnershipTransferred", logs: logs, sub: sub}, nil
+	return &BorBSCRoleAdminChangedIterator{contract: _BorBSC.contract, event: "RoleAdminChanged", logs: logs, sub: sub}, nil
 }
 
-// WatchOwnershipTransferred is a free log subscription operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
+// WatchRoleAdminChanged is a free log subscription operation binding the contract event 0xbd79b86ffe0ab8e8776151514217cd7cacd52c909f66475c3af44e129f0b00ff.
 //
-// Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
-func (_BorBSC *BorBSCFilterer) WatchOwnershipTransferred(opts *bind.WatchOpts, sink chan<- *BorBSCOwnershipTransferred, previousOwner []common.Address, newOwner []common.Address) (event.Subscription, error) {
+// Solidity: event RoleAdminChanged(bytes32 indexed role, bytes32 indexed previousAdminRole, bytes32 indexed newAdminRole)
+func (_BorBSC *BorBSCFilterer) WatchRoleAdminChanged(opts *bind.WatchOpts, sink chan<- *BorBSCRoleAdminChanged, role [][32]byte, previousAdminRole [][32]byte, newAdminRole [][32]byte) (event.Subscription, error) {
 
-	var previousOwnerRule []interface{}
-	for _, previousOwnerItem := range previousOwner {
-		previousOwnerRule = append(previousOwnerRule, previousOwnerItem)
+	var roleRule []interface{}
+	for _, roleItem := range role {
+		roleRule = append(roleRule, roleItem)
 	}
-	var newOwnerRule []interface{}
-	for _, newOwnerItem := range newOwner {
-		newOwnerRule = append(newOwnerRule, newOwnerItem)
+	var previousAdminRoleRule []interface{}
+	for _, previousAdminRoleItem := range previousAdminRole {
+		previousAdminRoleRule = append(previousAdminRoleRule, previousAdminRoleItem)
+	}
+	var newAdminRoleRule []interface{}
+	for _, newAdminRoleItem := range newAdminRole {
+		newAdminRoleRule = append(newAdminRoleRule, newAdminRoleItem)
 	}
 
-	logs, sub, err := _BorBSC.contract.WatchLogs(opts, "OwnershipTransferred", previousOwnerRule, newOwnerRule)
+	logs, sub, err := _BorBSC.contract.WatchLogs(opts, "RoleAdminChanged", roleRule, previousAdminRoleRule, newAdminRoleRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1371,8 +2403,8 @@ func (_BorBSC *BorBSCFilterer) WatchOwnershipTransferred(opts *bind.WatchOpts, s
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(BorBSCOwnershipTransferred)
-				if err := _BorBSC.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+				event := new(BorBSCRoleAdminChanged)
+				if err := _BorBSC.contract.UnpackLog(event, "RoleAdminChanged", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -1393,12 +2425,334 @@ func (_BorBSC *BorBSCFilterer) WatchOwnershipTransferred(opts *bind.WatchOpts, s
 	}), nil
 }
 
-// ParseOwnershipTransferred is a log parse operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
+// ParseRoleAdminChanged is a log parse operation binding the contract event 0xbd79b86ffe0ab8e8776151514217cd7cacd52c909f66475c3af44e129f0b00ff.
 //
-// Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
-func (_BorBSC *BorBSCFilterer) ParseOwnershipTransferred(log types.Log) (*BorBSCOwnershipTransferred, error) {
-	event := new(BorBSCOwnershipTransferred)
-	if err := _BorBSC.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+// Solidity: event RoleAdminChanged(bytes32 indexed role, bytes32 indexed previousAdminRole, bytes32 indexed newAdminRole)
+func (_BorBSC *BorBSCFilterer) ParseRoleAdminChanged(log types.Log) (*BorBSCRoleAdminChanged, error) {
+	event := new(BorBSCRoleAdminChanged)
+	if err := _BorBSC.contract.UnpackLog(event, "RoleAdminChanged", log); err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
+// BorBSCRoleGrantedIterator is returned from FilterRoleGranted and is used to iterate over the raw logs and unpacked data for RoleGranted events raised by the BorBSC contract.
+type BorBSCRoleGrantedIterator struct {
+	Event *BorBSCRoleGranted // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *BorBSCRoleGrantedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(BorBSCRoleGranted)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(BorBSCRoleGranted)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *BorBSCRoleGrantedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *BorBSCRoleGrantedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// BorBSCRoleGranted represents a RoleGranted event raised by the BorBSC contract.
+type BorBSCRoleGranted struct {
+	Role    [32]byte
+	Account common.Address
+	Sender  common.Address
+	Raw     types.Log // Blockchain specific contextual infos
+}
+
+// FilterRoleGranted is a free log retrieval operation binding the contract event 0x2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d.
+//
+// Solidity: event RoleGranted(bytes32 indexed role, address indexed account, address indexed sender)
+func (_BorBSC *BorBSCFilterer) FilterRoleGranted(opts *bind.FilterOpts, role [][32]byte, account []common.Address, sender []common.Address) (*BorBSCRoleGrantedIterator, error) {
+
+	var roleRule []interface{}
+	for _, roleItem := range role {
+		roleRule = append(roleRule, roleItem)
+	}
+	var accountRule []interface{}
+	for _, accountItem := range account {
+		accountRule = append(accountRule, accountItem)
+	}
+	var senderRule []interface{}
+	for _, senderItem := range sender {
+		senderRule = append(senderRule, senderItem)
+	}
+
+	logs, sub, err := _BorBSC.contract.FilterLogs(opts, "RoleGranted", roleRule, accountRule, senderRule)
+	if err != nil {
+		return nil, err
+	}
+	return &BorBSCRoleGrantedIterator{contract: _BorBSC.contract, event: "RoleGranted", logs: logs, sub: sub}, nil
+}
+
+// WatchRoleGranted is a free log subscription operation binding the contract event 0x2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d.
+//
+// Solidity: event RoleGranted(bytes32 indexed role, address indexed account, address indexed sender)
+func (_BorBSC *BorBSCFilterer) WatchRoleGranted(opts *bind.WatchOpts, sink chan<- *BorBSCRoleGranted, role [][32]byte, account []common.Address, sender []common.Address) (event.Subscription, error) {
+
+	var roleRule []interface{}
+	for _, roleItem := range role {
+		roleRule = append(roleRule, roleItem)
+	}
+	var accountRule []interface{}
+	for _, accountItem := range account {
+		accountRule = append(accountRule, accountItem)
+	}
+	var senderRule []interface{}
+	for _, senderItem := range sender {
+		senderRule = append(senderRule, senderItem)
+	}
+
+	logs, sub, err := _BorBSC.contract.WatchLogs(opts, "RoleGranted", roleRule, accountRule, senderRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(BorBSCRoleGranted)
+				if err := _BorBSC.contract.UnpackLog(event, "RoleGranted", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseRoleGranted is a log parse operation binding the contract event 0x2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d.
+//
+// Solidity: event RoleGranted(bytes32 indexed role, address indexed account, address indexed sender)
+func (_BorBSC *BorBSCFilterer) ParseRoleGranted(log types.Log) (*BorBSCRoleGranted, error) {
+	event := new(BorBSCRoleGranted)
+	if err := _BorBSC.contract.UnpackLog(event, "RoleGranted", log); err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
+// BorBSCRoleRevokedIterator is returned from FilterRoleRevoked and is used to iterate over the raw logs and unpacked data for RoleRevoked events raised by the BorBSC contract.
+type BorBSCRoleRevokedIterator struct {
+	Event *BorBSCRoleRevoked // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *BorBSCRoleRevokedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(BorBSCRoleRevoked)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(BorBSCRoleRevoked)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *BorBSCRoleRevokedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *BorBSCRoleRevokedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// BorBSCRoleRevoked represents a RoleRevoked event raised by the BorBSC contract.
+type BorBSCRoleRevoked struct {
+	Role    [32]byte
+	Account common.Address
+	Sender  common.Address
+	Raw     types.Log // Blockchain specific contextual infos
+}
+
+// FilterRoleRevoked is a free log retrieval operation binding the contract event 0xf6391f5c32d9c69d2a47ea670b442974b53935d1edc7fd64eb21e047a839171b.
+//
+// Solidity: event RoleRevoked(bytes32 indexed role, address indexed account, address indexed sender)
+func (_BorBSC *BorBSCFilterer) FilterRoleRevoked(opts *bind.FilterOpts, role [][32]byte, account []common.Address, sender []common.Address) (*BorBSCRoleRevokedIterator, error) {
+
+	var roleRule []interface{}
+	for _, roleItem := range role {
+		roleRule = append(roleRule, roleItem)
+	}
+	var accountRule []interface{}
+	for _, accountItem := range account {
+		accountRule = append(accountRule, accountItem)
+	}
+	var senderRule []interface{}
+	for _, senderItem := range sender {
+		senderRule = append(senderRule, senderItem)
+	}
+
+	logs, sub, err := _BorBSC.contract.FilterLogs(opts, "RoleRevoked", roleRule, accountRule, senderRule)
+	if err != nil {
+		return nil, err
+	}
+	return &BorBSCRoleRevokedIterator{contract: _BorBSC.contract, event: "RoleRevoked", logs: logs, sub: sub}, nil
+}
+
+// WatchRoleRevoked is a free log subscription operation binding the contract event 0xf6391f5c32d9c69d2a47ea670b442974b53935d1edc7fd64eb21e047a839171b.
+//
+// Solidity: event RoleRevoked(bytes32 indexed role, address indexed account, address indexed sender)
+func (_BorBSC *BorBSCFilterer) WatchRoleRevoked(opts *bind.WatchOpts, sink chan<- *BorBSCRoleRevoked, role [][32]byte, account []common.Address, sender []common.Address) (event.Subscription, error) {
+
+	var roleRule []interface{}
+	for _, roleItem := range role {
+		roleRule = append(roleRule, roleItem)
+	}
+	var accountRule []interface{}
+	for _, accountItem := range account {
+		accountRule = append(accountRule, accountItem)
+	}
+	var senderRule []interface{}
+	for _, senderItem := range sender {
+		senderRule = append(senderRule, senderItem)
+	}
+
+	logs, sub, err := _BorBSC.contract.WatchLogs(opts, "RoleRevoked", roleRule, accountRule, senderRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(BorBSCRoleRevoked)
+				if err := _BorBSC.contract.UnpackLog(event, "RoleRevoked", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseRoleRevoked is a log parse operation binding the contract event 0xf6391f5c32d9c69d2a47ea670b442974b53935d1edc7fd64eb21e047a839171b.
+//
+// Solidity: event RoleRevoked(bytes32 indexed role, address indexed account, address indexed sender)
+func (_BorBSC *BorBSCFilterer) ParseRoleRevoked(log types.Log) (*BorBSCRoleRevoked, error) {
+	event := new(BorBSCRoleRevoked)
+	if err := _BorBSC.contract.UnpackLog(event, "RoleRevoked", log); err != nil {
 		return nil, err
 	}
 	return event, nil
@@ -3277,6 +4631,168 @@ func (_ERC20Burnable *ERC20BurnableFilterer) ParseTransfer(log types.Log) (*ERC2
 	return event, nil
 }
 
+// EnumerableSetABI is the input ABI used to generate the binding from.
+const EnumerableSetABI = "[]"
+
+// EnumerableSetBin is the compiled bytecode used for deploying new contracts.
+var EnumerableSetBin = "0x60566023600b82828239805160001a607314601657fe5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea264697066735822122024d916dc4c465deaa8f603624ec37ed2ca70b24234aaaba8d1d81201a642d24364736f6c634300060c0033"
+
+// DeployEnumerableSet deploys a new Ethereum contract, binding an instance of EnumerableSet to it.
+func DeployEnumerableSet(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *EnumerableSet, error) {
+	parsed, err := abi.JSON(strings.NewReader(EnumerableSetABI))
+	if err != nil {
+		return common.Address{}, nil, nil, err
+	}
+
+	address, tx, contract, err := bind.DeployContract(auth, parsed, common.FromHex(EnumerableSetBin), backend)
+	if err != nil {
+		return common.Address{}, nil, nil, err
+	}
+	return address, tx, &EnumerableSet{EnumerableSetCaller: EnumerableSetCaller{contract: contract}, EnumerableSetTransactor: EnumerableSetTransactor{contract: contract}, EnumerableSetFilterer: EnumerableSetFilterer{contract: contract}}, nil
+}
+
+// EnumerableSet is an auto generated Go binding around an Ethereum contract.
+type EnumerableSet struct {
+	EnumerableSetCaller     // Read-only binding to the contract
+	EnumerableSetTransactor // Write-only binding to the contract
+	EnumerableSetFilterer   // Log filterer for contract events
+}
+
+// EnumerableSetCaller is an auto generated read-only Go binding around an Ethereum contract.
+type EnumerableSetCaller struct {
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+}
+
+// EnumerableSetTransactor is an auto generated write-only Go binding around an Ethereum contract.
+type EnumerableSetTransactor struct {
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+}
+
+// EnumerableSetFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
+type EnumerableSetFilterer struct {
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+}
+
+// EnumerableSetSession is an auto generated Go binding around an Ethereum contract,
+// with pre-set call and transact options.
+type EnumerableSetSession struct {
+	Contract     *EnumerableSet    // Generic contract binding to set the session for
+	CallOpts     bind.CallOpts     // Call options to use throughout this session
+	TransactOpts bind.TransactOpts // Transaction auth options to use throughout this session
+}
+
+// EnumerableSetCallerSession is an auto generated read-only Go binding around an Ethereum contract,
+// with pre-set call options.
+type EnumerableSetCallerSession struct {
+	Contract *EnumerableSetCaller // Generic contract caller binding to set the session for
+	CallOpts bind.CallOpts        // Call options to use throughout this session
+}
+
+// EnumerableSetTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
+// with pre-set transact options.
+type EnumerableSetTransactorSession struct {
+	Contract     *EnumerableSetTransactor // Generic contract transactor binding to set the session for
+	TransactOpts bind.TransactOpts        // Transaction auth options to use throughout this session
+}
+
+// EnumerableSetRaw is an auto generated low-level Go binding around an Ethereum contract.
+type EnumerableSetRaw struct {
+	Contract *EnumerableSet // Generic contract binding to access the raw methods on
+}
+
+// EnumerableSetCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
+type EnumerableSetCallerRaw struct {
+	Contract *EnumerableSetCaller // Generic read-only contract binding to access the raw methods on
+}
+
+// EnumerableSetTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
+type EnumerableSetTransactorRaw struct {
+	Contract *EnumerableSetTransactor // Generic write-only contract binding to access the raw methods on
+}
+
+// NewEnumerableSet creates a new instance of EnumerableSet, bound to a specific deployed contract.
+func NewEnumerableSet(address common.Address, backend bind.ContractBackend) (*EnumerableSet, error) {
+	contract, err := bindEnumerableSet(address, backend, backend, backend)
+	if err != nil {
+		return nil, err
+	}
+	return &EnumerableSet{EnumerableSetCaller: EnumerableSetCaller{contract: contract}, EnumerableSetTransactor: EnumerableSetTransactor{contract: contract}, EnumerableSetFilterer: EnumerableSetFilterer{contract: contract}}, nil
+}
+
+// NewEnumerableSetCaller creates a new read-only instance of EnumerableSet, bound to a specific deployed contract.
+func NewEnumerableSetCaller(address common.Address, caller bind.ContractCaller) (*EnumerableSetCaller, error) {
+	contract, err := bindEnumerableSet(address, caller, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &EnumerableSetCaller{contract: contract}, nil
+}
+
+// NewEnumerableSetTransactor creates a new write-only instance of EnumerableSet, bound to a specific deployed contract.
+func NewEnumerableSetTransactor(address common.Address, transactor bind.ContractTransactor) (*EnumerableSetTransactor, error) {
+	contract, err := bindEnumerableSet(address, nil, transactor, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &EnumerableSetTransactor{contract: contract}, nil
+}
+
+// NewEnumerableSetFilterer creates a new log filterer instance of EnumerableSet, bound to a specific deployed contract.
+func NewEnumerableSetFilterer(address common.Address, filterer bind.ContractFilterer) (*EnumerableSetFilterer, error) {
+	contract, err := bindEnumerableSet(address, nil, nil, filterer)
+	if err != nil {
+		return nil, err
+	}
+	return &EnumerableSetFilterer{contract: contract}, nil
+}
+
+// bindEnumerableSet binds a generic wrapper to an already deployed contract.
+func bindEnumerableSet(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
+	parsed, err := abi.JSON(strings.NewReader(EnumerableSetABI))
+	if err != nil {
+		return nil, err
+	}
+	return bind.NewBoundContract(address, parsed, caller, transactor, filterer), nil
+}
+
+// Call invokes the (constant) contract method with params as input values and
+// sets the output to result. The result type might be a single field for simple
+// returns, a slice of interfaces for anonymous returns and a struct for named
+// returns.
+func (_EnumerableSet *EnumerableSetRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
+	return _EnumerableSet.Contract.EnumerableSetCaller.contract.Call(opts, result, method, params...)
+}
+
+// Transfer initiates a plain transaction to move funds to the contract, calling
+// its default method if one is available.
+func (_EnumerableSet *EnumerableSetRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _EnumerableSet.Contract.EnumerableSetTransactor.contract.Transfer(opts)
+}
+
+// Transact invokes the (paid) contract method with params as input values.
+func (_EnumerableSet *EnumerableSetRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _EnumerableSet.Contract.EnumerableSetTransactor.contract.Transact(opts, method, params...)
+}
+
+// Call invokes the (constant) contract method with params as input values and
+// sets the output to result. The result type might be a single field for simple
+// returns, a slice of interfaces for anonymous returns and a struct for named
+// returns.
+func (_EnumerableSet *EnumerableSetCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
+	return _EnumerableSet.Contract.contract.Call(opts, result, method, params...)
+}
+
+// Transfer initiates a plain transaction to move funds to the contract, calling
+// its default method if one is available.
+func (_EnumerableSet *EnumerableSetTransactorRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _EnumerableSet.Contract.contract.Transfer(opts)
+}
+
+// Transact invokes the (paid) contract method with params as input values.
+func (_EnumerableSet *EnumerableSetTransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _EnumerableSet.Contract.contract.Transact(opts, method, params...)
+}
+
 // IERC20ABI is the input ABI used to generate the binding from.
 const IERC20ABI = "[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Approval\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"}],\"name\":\"allowance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"approve\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"totalSupply\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"transfer\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"transferFrom\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
 
@@ -3889,383 +5405,6 @@ func (_IERC20 *IERC20Filterer) WatchTransfer(opts *bind.WatchOpts, sink chan<- *
 func (_IERC20 *IERC20Filterer) ParseTransfer(log types.Log) (*IERC20Transfer, error) {
 	event := new(IERC20Transfer)
 	if err := _IERC20.contract.UnpackLog(event, "Transfer", log); err != nil {
-		return nil, err
-	}
-	return event, nil
-}
-
-// OwnableABI is the input ABI used to generate the binding from.
-const OwnableABI = "[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
-
-// OwnableFuncSigs maps the 4-byte function signature to its string representation.
-var OwnableFuncSigs = map[string]string{
-	"8da5cb5b": "owner()",
-	"715018a6": "renounceOwnership()",
-	"f2fde38b": "transferOwnership(address)",
-}
-
-// Ownable is an auto generated Go binding around an Ethereum contract.
-type Ownable struct {
-	OwnableCaller     // Read-only binding to the contract
-	OwnableTransactor // Write-only binding to the contract
-	OwnableFilterer   // Log filterer for contract events
-}
-
-// OwnableCaller is an auto generated read-only Go binding around an Ethereum contract.
-type OwnableCaller struct {
-	contract *bind.BoundContract // Generic contract wrapper for the low level calls
-}
-
-// OwnableTransactor is an auto generated write-only Go binding around an Ethereum contract.
-type OwnableTransactor struct {
-	contract *bind.BoundContract // Generic contract wrapper for the low level calls
-}
-
-// OwnableFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
-type OwnableFilterer struct {
-	contract *bind.BoundContract // Generic contract wrapper for the low level calls
-}
-
-// OwnableSession is an auto generated Go binding around an Ethereum contract,
-// with pre-set call and transact options.
-type OwnableSession struct {
-	Contract     *Ownable          // Generic contract binding to set the session for
-	CallOpts     bind.CallOpts     // Call options to use throughout this session
-	TransactOpts bind.TransactOpts // Transaction auth options to use throughout this session
-}
-
-// OwnableCallerSession is an auto generated read-only Go binding around an Ethereum contract,
-// with pre-set call options.
-type OwnableCallerSession struct {
-	Contract *OwnableCaller // Generic contract caller binding to set the session for
-	CallOpts bind.CallOpts  // Call options to use throughout this session
-}
-
-// OwnableTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
-// with pre-set transact options.
-type OwnableTransactorSession struct {
-	Contract     *OwnableTransactor // Generic contract transactor binding to set the session for
-	TransactOpts bind.TransactOpts  // Transaction auth options to use throughout this session
-}
-
-// OwnableRaw is an auto generated low-level Go binding around an Ethereum contract.
-type OwnableRaw struct {
-	Contract *Ownable // Generic contract binding to access the raw methods on
-}
-
-// OwnableCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
-type OwnableCallerRaw struct {
-	Contract *OwnableCaller // Generic read-only contract binding to access the raw methods on
-}
-
-// OwnableTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
-type OwnableTransactorRaw struct {
-	Contract *OwnableTransactor // Generic write-only contract binding to access the raw methods on
-}
-
-// NewOwnable creates a new instance of Ownable, bound to a specific deployed contract.
-func NewOwnable(address common.Address, backend bind.ContractBackend) (*Ownable, error) {
-	contract, err := bindOwnable(address, backend, backend, backend)
-	if err != nil {
-		return nil, err
-	}
-	return &Ownable{OwnableCaller: OwnableCaller{contract: contract}, OwnableTransactor: OwnableTransactor{contract: contract}, OwnableFilterer: OwnableFilterer{contract: contract}}, nil
-}
-
-// NewOwnableCaller creates a new read-only instance of Ownable, bound to a specific deployed contract.
-func NewOwnableCaller(address common.Address, caller bind.ContractCaller) (*OwnableCaller, error) {
-	contract, err := bindOwnable(address, caller, nil, nil)
-	if err != nil {
-		return nil, err
-	}
-	return &OwnableCaller{contract: contract}, nil
-}
-
-// NewOwnableTransactor creates a new write-only instance of Ownable, bound to a specific deployed contract.
-func NewOwnableTransactor(address common.Address, transactor bind.ContractTransactor) (*OwnableTransactor, error) {
-	contract, err := bindOwnable(address, nil, transactor, nil)
-	if err != nil {
-		return nil, err
-	}
-	return &OwnableTransactor{contract: contract}, nil
-}
-
-// NewOwnableFilterer creates a new log filterer instance of Ownable, bound to a specific deployed contract.
-func NewOwnableFilterer(address common.Address, filterer bind.ContractFilterer) (*OwnableFilterer, error) {
-	contract, err := bindOwnable(address, nil, nil, filterer)
-	if err != nil {
-		return nil, err
-	}
-	return &OwnableFilterer{contract: contract}, nil
-}
-
-// bindOwnable binds a generic wrapper to an already deployed contract.
-func bindOwnable(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
-	parsed, err := abi.JSON(strings.NewReader(OwnableABI))
-	if err != nil {
-		return nil, err
-	}
-	return bind.NewBoundContract(address, parsed, caller, transactor, filterer), nil
-}
-
-// Call invokes the (constant) contract method with params as input values and
-// sets the output to result. The result type might be a single field for simple
-// returns, a slice of interfaces for anonymous returns and a struct for named
-// returns.
-func (_Ownable *OwnableRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
-	return _Ownable.Contract.OwnableCaller.contract.Call(opts, result, method, params...)
-}
-
-// Transfer initiates a plain transaction to move funds to the contract, calling
-// its default method if one is available.
-func (_Ownable *OwnableRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _Ownable.Contract.OwnableTransactor.contract.Transfer(opts)
-}
-
-// Transact invokes the (paid) contract method with params as input values.
-func (_Ownable *OwnableRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
-	return _Ownable.Contract.OwnableTransactor.contract.Transact(opts, method, params...)
-}
-
-// Call invokes the (constant) contract method with params as input values and
-// sets the output to result. The result type might be a single field for simple
-// returns, a slice of interfaces for anonymous returns and a struct for named
-// returns.
-func (_Ownable *OwnableCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
-	return _Ownable.Contract.contract.Call(opts, result, method, params...)
-}
-
-// Transfer initiates a plain transaction to move funds to the contract, calling
-// its default method if one is available.
-func (_Ownable *OwnableTransactorRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _Ownable.Contract.contract.Transfer(opts)
-}
-
-// Transact invokes the (paid) contract method with params as input values.
-func (_Ownable *OwnableTransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
-	return _Ownable.Contract.contract.Transact(opts, method, params...)
-}
-
-// Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
-//
-// Solidity: function owner() view returns(address)
-func (_Ownable *OwnableCaller) Owner(opts *bind.CallOpts) (common.Address, error) {
-	var out []interface{}
-	err := _Ownable.contract.Call(opts, &out, "owner")
-
-	if err != nil {
-		return *new(common.Address), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
-
-	return out0, err
-
-}
-
-// Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
-//
-// Solidity: function owner() view returns(address)
-func (_Ownable *OwnableSession) Owner() (common.Address, error) {
-	return _Ownable.Contract.Owner(&_Ownable.CallOpts)
-}
-
-// Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
-//
-// Solidity: function owner() view returns(address)
-func (_Ownable *OwnableCallerSession) Owner() (common.Address, error) {
-	return _Ownable.Contract.Owner(&_Ownable.CallOpts)
-}
-
-// RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
-//
-// Solidity: function renounceOwnership() returns()
-func (_Ownable *OwnableTransactor) RenounceOwnership(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _Ownable.contract.Transact(opts, "renounceOwnership")
-}
-
-// RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
-//
-// Solidity: function renounceOwnership() returns()
-func (_Ownable *OwnableSession) RenounceOwnership() (*types.Transaction, error) {
-	return _Ownable.Contract.RenounceOwnership(&_Ownable.TransactOpts)
-}
-
-// RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
-//
-// Solidity: function renounceOwnership() returns()
-func (_Ownable *OwnableTransactorSession) RenounceOwnership() (*types.Transaction, error) {
-	return _Ownable.Contract.RenounceOwnership(&_Ownable.TransactOpts)
-}
-
-// TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
-//
-// Solidity: function transferOwnership(address newOwner) returns()
-func (_Ownable *OwnableTransactor) TransferOwnership(opts *bind.TransactOpts, newOwner common.Address) (*types.Transaction, error) {
-	return _Ownable.contract.Transact(opts, "transferOwnership", newOwner)
-}
-
-// TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
-//
-// Solidity: function transferOwnership(address newOwner) returns()
-func (_Ownable *OwnableSession) TransferOwnership(newOwner common.Address) (*types.Transaction, error) {
-	return _Ownable.Contract.TransferOwnership(&_Ownable.TransactOpts, newOwner)
-}
-
-// TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
-//
-// Solidity: function transferOwnership(address newOwner) returns()
-func (_Ownable *OwnableTransactorSession) TransferOwnership(newOwner common.Address) (*types.Transaction, error) {
-	return _Ownable.Contract.TransferOwnership(&_Ownable.TransactOpts, newOwner)
-}
-
-// OwnableOwnershipTransferredIterator is returned from FilterOwnershipTransferred and is used to iterate over the raw logs and unpacked data for OwnershipTransferred events raised by the Ownable contract.
-type OwnableOwnershipTransferredIterator struct {
-	Event *OwnableOwnershipTransferred // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *OwnableOwnershipTransferredIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(OwnableOwnershipTransferred)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(OwnableOwnershipTransferred)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *OwnableOwnershipTransferredIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *OwnableOwnershipTransferredIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// OwnableOwnershipTransferred represents a OwnershipTransferred event raised by the Ownable contract.
-type OwnableOwnershipTransferred struct {
-	PreviousOwner common.Address
-	NewOwner      common.Address
-	Raw           types.Log // Blockchain specific contextual infos
-}
-
-// FilterOwnershipTransferred is a free log retrieval operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
-//
-// Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
-func (_Ownable *OwnableFilterer) FilterOwnershipTransferred(opts *bind.FilterOpts, previousOwner []common.Address, newOwner []common.Address) (*OwnableOwnershipTransferredIterator, error) {
-
-	var previousOwnerRule []interface{}
-	for _, previousOwnerItem := range previousOwner {
-		previousOwnerRule = append(previousOwnerRule, previousOwnerItem)
-	}
-	var newOwnerRule []interface{}
-	for _, newOwnerItem := range newOwner {
-		newOwnerRule = append(newOwnerRule, newOwnerItem)
-	}
-
-	logs, sub, err := _Ownable.contract.FilterLogs(opts, "OwnershipTransferred", previousOwnerRule, newOwnerRule)
-	if err != nil {
-		return nil, err
-	}
-	return &OwnableOwnershipTransferredIterator{contract: _Ownable.contract, event: "OwnershipTransferred", logs: logs, sub: sub}, nil
-}
-
-// WatchOwnershipTransferred is a free log subscription operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
-//
-// Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
-func (_Ownable *OwnableFilterer) WatchOwnershipTransferred(opts *bind.WatchOpts, sink chan<- *OwnableOwnershipTransferred, previousOwner []common.Address, newOwner []common.Address) (event.Subscription, error) {
-
-	var previousOwnerRule []interface{}
-	for _, previousOwnerItem := range previousOwner {
-		previousOwnerRule = append(previousOwnerRule, previousOwnerItem)
-	}
-	var newOwnerRule []interface{}
-	for _, newOwnerItem := range newOwner {
-		newOwnerRule = append(newOwnerRule, newOwnerItem)
-	}
-
-	logs, sub, err := _Ownable.contract.WatchLogs(opts, "OwnershipTransferred", previousOwnerRule, newOwnerRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(OwnableOwnershipTransferred)
-				if err := _Ownable.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseOwnershipTransferred is a log parse operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
-//
-// Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
-func (_Ownable *OwnableFilterer) ParseOwnershipTransferred(log types.Log) (*OwnableOwnershipTransferred, error) {
-	event := new(OwnableOwnershipTransferred)
-	if err := _Ownable.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
 		return nil, err
 	}
 	return event, nil

@@ -88,7 +88,11 @@ func (b *Bridge) listenEthCocoC() {
 			handle := func() {
 				b.logger.Infof("========> start handle bsc transaction...")
 				defer b.logger.Infof("========> end handle bsc transaction...")
-				err := b.bscMnt.CrossMint(coco.Recipient, coco.Amount)
+				if b.ethMnt.HasTx(coco.TxId) {
+					b.logger.WithField("tx", coco.TxId).Error("has handled the interchain event")
+					return
+				}
+				err := b.bscMnt.CrossMint(coco.Sender, coco.Recipient, coco.Amount)
 				if err != nil {
 					b.logger.Panic(err)
 				}
@@ -111,7 +115,12 @@ func (b *Bridge) listenBscCocoC() {
 			handle := func() {
 				b.logger.Infof("========> start handle eth transaction...")
 				defer b.logger.Infof("========> end handle eth transaction...")
-				err := b.ethMnt.UnlockBor(b.ethMnt.BorAddr, coco.Recipient, coco.Amount)
+				if b.bscMnt.HasTx(coco.TxId) {
+					b.logger.WithField("tx", coco.TxId).Error("has handled the interchain event")
+					return
+				}
+
+				err := b.ethMnt.UnlockBor(coco.EthToken, coco.Sender, coco.Recipient, coco.Amount)
 				if err != nil {
 					b.logger.Panic(err)
 				}

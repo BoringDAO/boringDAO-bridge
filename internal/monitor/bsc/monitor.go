@@ -37,6 +37,8 @@ type Coco struct {
 	Amount      *big.Int       `json:"amount"`
 	TxId        string         `json:"tx_id"`
 	BlockHeight uint64         `json:"block_height"`
+	EthToken    common.Address `json:"eth_token"`
+	BscToken    common.Address `json:"bsc_token"`
 }
 
 type Monitor struct {
@@ -183,8 +185,10 @@ func (m *Monitor) handleCross(lock *BorBSCCrossBurn, isHistory bool) {
 	coco := &Coco{
 		IsHistory:   isHistory,
 		Sender:      lock.From,
-		Recipient:   lock.Recipient,
+		Recipient:   lock.To,
 		Amount:      lock.Amount,
+		EthToken:    lock.EthToken,
+		BscToken:    lock.BscToken,
 		TxId:        lock.Raw.TxHash.String(),
 		BlockHeight: lock.Raw.BlockNumber,
 	}
@@ -192,6 +196,8 @@ func (m *Monitor) handleCross(lock *BorBSCCrossBurn, isHistory bool) {
 	m.logger.WithFields(logrus.Fields{
 		"Sender":       coco.Sender.String(),
 		"Recipient":    coco.Recipient.String(),
+		"EthToken":     coco.EthToken.String(),
+		"BscToken":     coco.BscToken.String(),
 		"amount":       coco.Amount.String(),
 		"txId":         lock.Raw.TxHash.String(),
 		"block_height": lock.Raw.BlockNumber,
@@ -210,7 +216,7 @@ func (m *Monitor) handleCross(lock *BorBSCCrossBurn, isHistory bool) {
 		return
 	}
 
-	m.logger.Info("confirmEvent")
+	m.logger.WithField("tx", lock.Raw.TxHash.String()).Info("confirmEvent")
 
 	m.cocoC <- coco
 	m.persistBBlockHeight(lock.Raw.TxHash.String(), lock.Raw.BlockNumber)
@@ -239,7 +245,7 @@ func (m *Monitor) HandleCocoC() chan *Coco {
 	return m.cocoC
 }
 
-func (m *Monitor) CrossMint(recipient common.Address, amount *big.Int) error {
+func (m *Monitor) CrossMint(addrFromEth common.Address, recipient common.Address, amount *big.Int) error {
 	m.mux.Lock()
 	defer m.mux.Unlock()
 
@@ -255,7 +261,7 @@ func (m *Monitor) CrossMint(recipient common.Address, amount *big.Int) error {
 		"amount":    amount.String(),
 	}).Info("will crossMint")
 
-	transaction, err := m.session.CrossMint(recipient, amount)
+	transaction, err := m.session.CrossMint(addrFromEth, recipient, amount)
 	if err != nil {
 		return fmt.Errorf("crossMint error:%v", err)
 	}
@@ -304,8 +310,10 @@ func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
 				}
 				return &Coco{
 					Sender:      lock.From,
-					Recipient:   lock.Recipient,
+					Recipient:   lock.To,
 					Amount:      lock.Amount,
+					EthToken:    lock.EthToken,
+					BscToken:    lock.BscToken,
 					TxId:        log.TxHash.String(),
 					BlockHeight: receipt.BlockNumber.Uint64(),
 				}, nil
@@ -363,6 +371,10 @@ func (m *Monitor) persistBBlockHeight(txId string, height uint64) {
 		}
 		time.Sleep(500 * time.Millisecond)
 	}
+}
+
+func (m *Monitor) HasTx(txId string) bool {
+	return m.storage.Has(TxKey(txId))
 }
 
 func (m *Monitor) persistBHeight(height uint64) {
