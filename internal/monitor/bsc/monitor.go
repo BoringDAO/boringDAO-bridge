@@ -92,7 +92,7 @@ func New(config *repo.Config, logger logrus.FieldLogger) (*Monitor, error) {
 		minConfirms = int(config.Bsc.MinConfirms)
 	}
 
-	broker, err := NewBorBSC(common.HexToAddress(config.Bsc.CrossContract), etherCli)
+	broker, err := NewBorBSC(common.HexToAddress(config.Bsc.BorBscContract), etherCli)
 	if err != nil {
 		return nil, fmt.Errorf("failed to instantiate a cross contract: %w", err)
 	}
@@ -118,7 +118,7 @@ func New(config *repo.Config, logger logrus.FieldLogger) (*Monitor, error) {
 		ethClient:   etherCli,
 		address:     address,
 		borBscAbi:   borAbi,
-		borBscAddr:  common.HexToAddress(config.Bsc.CrossContract),
+		borBscAddr:  common.HexToAddress(config.Bsc.BorBscContract),
 		minConfirms: uint64(minConfirms),
 		cocoC:       make(chan *Coco),
 		logger:      logger,
@@ -176,7 +176,7 @@ func (m *Monitor) listenLockEvent() {
 }
 
 func (m *Monitor) handleCross(lock *BorBSCCrossBurn, isHistory bool) {
-	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Bsc.CrossContract) {
+	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Bsc.BorBscContract) {
 		return
 	}
 	if m.storage.Has(TxKey(lock.Raw.TxHash.String())) {
@@ -294,7 +294,7 @@ func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
 		return nil, err
 	}
 	for _, log := range receipt.Logs {
-		if !strings.EqualFold(log.Address.String(), m.config.Bsc.CrossContract) {
+		if !strings.EqualFold(log.Address.String(), m.config.Bsc.BorBscContract) {
 			continue
 		}
 

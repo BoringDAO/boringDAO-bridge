@@ -44,20 +44,19 @@ type LogModule struct {
 }
 
 type Eth struct {
-	Addr         string `toml:"addr" json:"addr"`
-	MinConfirms  uint64 `toml:"minConfirms" json:"minConfirms"`
-	PrivKey      string `toml:"privKey" json:"privKey"`
-	GasLimit     uint64 `toml:"gasLimit" json:"gasLimit"`
-	BorContract  string `toml:"borContract" json:"borContract"`
-	LockContract string `toml:"lockContract" json:"lockContract"`
+	Addr              string `toml:"addr" json:"addr"`
+	MinConfirms       uint64 `toml:"minConfirms" json:"minConfirms"`
+	PrivKey           string `toml:"privKey" json:"privKey"`
+	GasLimit          uint64 `toml:"gasLimit" json:"gasLimit"`
+	CrossLockContract string `toml:"crossLockContract" json:"crossLockContract"`
 }
 
 type Bsc struct {
-	Addr          string `toml:"addr" json:"addr"`
-	MinConfirms   uint64 `toml:"minConfirms" json:"minConfirms"`
-	PrivKey       string `toml:"privKey" json:"privKey"`
-	GasLimit      uint64 `toml:"gasLimit" json:"gasLimit"`
-	CrossContract string `toml:"crossContract" json:"crossContract"`
+	Addr           string `toml:"addr" json:"addr"`
+	MinConfirms    uint64 `toml:"minConfirms" json:"minConfirms"`
+	PrivKey        string `toml:"privKey" json:"privKey"`
+	GasLimit       uint64 `toml:"gasLimit" json:"gasLimit"`
+	BorBscContract string `toml:"borBscContract" json:"borBscContract"`
 }
 
 func (c *Config) Bytes() ([]byte, error) {

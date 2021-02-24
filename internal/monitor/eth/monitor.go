@@ -93,7 +93,7 @@ func New(config *repo.Config, logger logrus.FieldLogger) (*Monitor, error) {
 		minConfirms = int(config.Eth.MinConfirms)
 	}
 
-	broker, err := NewCrossLock(common.HexToAddress(config.Eth.LockContract), etherCli)
+	broker, err := NewCrossLock(common.HexToAddress(config.Eth.CrossLockContract), etherCli)
 	if err != nil {
 		return nil, fmt.Errorf("failed to instantiate a lock contract: %w", err)
 	}
@@ -119,8 +119,7 @@ func New(config *repo.Config, logger logrus.FieldLogger) (*Monitor, error) {
 		ethClient:   etherCli,
 		address:     address,
 		lockAbi:     lockBorAbi,
-		lockAddr:    common.HexToAddress(config.Eth.LockContract),
-		BorAddr:     common.HexToAddress(config.Eth.BorContract),
+		lockAddr:    common.HexToAddress(config.Eth.CrossLockContract),
 		minConfirms: uint64(minConfirms),
 		cocoC:       make(chan *Coco),
 		logger:      logger,
@@ -182,7 +181,7 @@ func (m *Monitor) HandleCocoC() chan *Coco {
 }
 
 func (m *Monitor) handleLock(lock *CrossLockLock, isHistory bool) {
-	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Eth.LockContract) {
+	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Eth.CrossLockContract) {
 		return
 	}
 	if m.storage.Has(TxKey(lock.Raw.TxHash.String())) {
@@ -259,7 +258,9 @@ func (m *Monitor) UnlockBor(txId string, token common.Address, from common.Addre
 	m.session.TransactOpts.GasPrice = gasPrice.BigInt()
 
 	m.logger.WithFields(logrus.Fields{
+		"tx_id":     txId,
 		"token":     token.String(),
+		"sender":    from.String(),
 		"recipient": recipient.String(),
 		"amount":    amount.String(),
 	}).Info("will unlock")
@@ -297,7 +298,7 @@ func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
 		return nil, err
 	}
 	for _, log := range receipt.Logs {
-		if !strings.EqualFold(log.Address.String(), m.config.Eth.LockContract) {
+		if !strings.EqualFold(log.Address.String(), m.config.Eth.CrossLockContract) {
 			continue
 		}
 
