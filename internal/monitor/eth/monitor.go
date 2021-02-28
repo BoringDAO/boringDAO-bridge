@@ -181,12 +181,6 @@ func (m *Monitor) HandleCocoC() chan *Coco {
 }
 
 func (m *Monitor) handleLock(lock *CrossLockLock, isHistory bool) {
-	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Eth.CrossLockContract) {
-		return
-	}
-	if m.storage.Has(TxKey(lock.Raw.TxHash.String())) {
-		return
-	}
 	coco := &Coco{
 		IsHistory:   isHistory,
 		EthToken:    lock.EthToken,
@@ -208,6 +202,13 @@ func (m *Monitor) handleLock(lock *CrossLockLock, isHistory bool) {
 		"block_height": lock.Raw.BlockNumber,
 		"removed":      lock.Raw.Removed,
 	}).Info("LockBorLock")
+
+	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Eth.CrossLockContract) {
+		return
+	}
+	if m.storage.Has(TxKey(lock.Raw.TxHash.String())) {
+		return
+	}
 
 	if lock.Raw.Removed {
 		return
@@ -356,6 +357,11 @@ func (m *Monitor) loadHeightFromStorage() {
 		m.persistLHeight(m.lHeight)
 	} else {
 		m.lHeight = binary.LittleEndian.Uint64(b)
+
+	}
+
+	if m.config.Eth.Height != 0 {
+		m.lHeight = m.config.Eth.Height
 	}
 
 	m.logger.WithFields(logrus.Fields{

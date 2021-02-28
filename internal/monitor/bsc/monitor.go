@@ -354,6 +354,10 @@ func (m *Monitor) loadHeightFromStorage() {
 		m.bHeight = binary.LittleEndian.Uint64(b)
 	}
 
+	if m.config.Bsc.Height != 0 {
+		m.bHeight = m.config.Bsc.Height
+	}
+
 	m.logger.WithFields(logrus.Fields{
 		"bsc_height": m.bHeight,
 	}).Info("Subscribe")

@@ -48,6 +48,7 @@ type Eth struct {
 	MinConfirms       uint64 `toml:"minConfirms" json:"minConfirms"`
 	PrivKey           string `toml:"privKey" json:"privKey"`
 	GasLimit          uint64 `toml:"gasLimit" json:"gasLimit"`
+	Height            uint64 `toml:"height" json:"height"`
 	CrossLockContract string `toml:"crossLockContract" json:"crossLockContract"`
 }
 
@@ -56,6 +57,7 @@ type Bsc struct {
 	MinConfirms    uint64 `toml:"minConfirms" json:"minConfirms"`
 	PrivKey        string `toml:"privKey" json:"privKey"`
 	GasLimit       uint64 `toml:"gasLimit" json:"gasLimit"`
+	Height         uint64 `toml:"height" json:"height"`
 	BorBscContract string `toml:"borBscContract" json:"borBscContract"`
 }
 
