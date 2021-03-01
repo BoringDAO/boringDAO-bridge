@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/boringdao/bridge/internal/monitor/bsc"
@@ -23,6 +24,7 @@ type Bridge struct {
 	bscMnt  *bsc.Monitor
 	storage storage.Storage
 	logger  logrus.FieldLogger
+	mux     sync.Mutex
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -86,6 +88,8 @@ func (b *Bridge) listenEthCocoC() {
 		select {
 		case coco := <-cocoC:
 			handle := func() {
+				b.mux.Lock()
+				defer b.mux.Unlock()
 				b.logger.Infof("========> start handle bsc transaction...")
 				defer b.logger.Infof("========> end handle bsc transaction...")
 				if b.ethMnt.HasTx(coco.TxId) {
@@ -113,6 +117,8 @@ func (b *Bridge) listenBscCocoC() {
 		select {
 		case coco := <-cocoC:
 			handle := func() {
+				b.mux.Lock()
+				defer b.mux.Unlock()
 				b.logger.Infof("========> start handle eth transaction...")
 				defer b.logger.Infof("========> end handle eth transaction...")
 				if b.bscMnt.HasTx(coco.TxId) {

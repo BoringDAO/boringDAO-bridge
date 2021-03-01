@@ -156,6 +156,7 @@ func (m *Monitor) listenLockEvent() {
 	for filter.Next() {
 		m.handleLock(filter.Event, true)
 		if filter.done {
+			m.logger.Infof("CrossLockLockIterator end")
 			break
 		}
 	}
@@ -192,6 +193,10 @@ func (m *Monitor) handleLock(lock *CrossLockLock, isHistory bool) {
 		BlockHeight: lock.Raw.BlockNumber,
 	}
 
+	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Eth.CrossLockContract) {
+		return
+	}
+
 	m.logger.WithFields(logrus.Fields{
 		"eth_token":    coco.EthToken.String(),
 		"bsc_token":    coco.BscToken.String(),
@@ -203,10 +208,12 @@ func (m *Monitor) handleLock(lock *CrossLockLock, isHistory bool) {
 		"removed":      lock.Raw.Removed,
 	}).Info("LockBorLock")
 
-	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Eth.CrossLockContract) {
-		return
-	}
 	if m.storage.Has(TxKey(lock.Raw.TxHash.String())) {
+		m.logger.WithFields(logrus.Fields{
+			"txId":         lock.Raw.TxHash.String(),
+			"block_height": lock.Raw.BlockNumber,
+		}).Info("LockBorLock handled")
+
 		return
 	}
 
@@ -251,12 +258,16 @@ func (m *Monitor) UnlockBor(txId string, token common.Address, from common.Addre
 	m.mux.Lock()
 	defer m.mux.Unlock()
 
-	price, err := m.ethClient.SuggestGasPrice(context.TODO())
+	unlocked, err := m.session.TxUnlocked(txId)
 	if err != nil {
-		return err
+		m.logger.Infof("find txUnlocked error:%w", err)
+		return nil
 	}
-	gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
-	m.session.TransactOpts.GasPrice = gasPrice.BigInt()
+
+	if unlocked {
+		m.logger.Infof("find txUnlocked bsc txId:%s", txId)
+		return nil
+	}
 
 	m.logger.WithFields(logrus.Fields{
 		"tx_id":     txId,
@@ -265,6 +276,13 @@ func (m *Monitor) UnlockBor(txId string, token common.Address, from common.Addre
 		"recipient": recipient.String(),
 		"amount":    amount.String(),
 	}).Info("will unlock")
+
+	price, err := m.ethClient.SuggestGasPrice(context.TODO())
+	if err != nil {
+		return err
+	}
+	gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
+	m.session.TransactOpts.GasPrice = gasPrice.BigInt()
 
 	transaction, err := m.session.Unlock(token, from, recipient, amount, txId)
 	if err != nil {
@@ -289,6 +307,7 @@ func (m *Monitor) UnlockBor(txId string, token common.Address, from common.Addre
 		m.logger.WithField("tx_hash", transaction.Hash().String()).Info("unlock success")
 	} else {
 		m.logger.Errorf("unlock fail:%s", transaction.Hash().String())
+		return nil
 	}
 	return nil
 }

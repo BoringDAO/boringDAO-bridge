@@ -155,6 +155,7 @@ func (m *Monitor) listenLockEvent() {
 	for filter.Next() {
 		m.handleCross(filter.Event, true)
 		if filter.done {
+			m.logger.Infof("BorBSCCrossBurnIterator end")
 			break
 		}
 	}
@@ -179,9 +180,7 @@ func (m *Monitor) handleCross(lock *BorBSCCrossBurn, isHistory bool) {
 	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Bsc.BorBscContract) {
 		return
 	}
-	if m.storage.Has(TxKey(lock.Raw.TxHash.String())) {
-		return
-	}
+
 	coco := &Coco{
 		IsHistory:   isHistory,
 		Sender:      lock.From,
@@ -203,6 +202,14 @@ func (m *Monitor) handleCross(lock *BorBSCCrossBurn, isHistory bool) {
 		"block_height": lock.Raw.BlockNumber,
 		"removed":      lock.Raw.Removed,
 	}).Info("CrossBurn")
+
+	if m.storage.Has(TxKey(lock.Raw.TxHash.String())) {
+		m.logger.WithFields(logrus.Fields{
+			"txId":         lock.Raw.TxHash.String(),
+			"block_height": lock.Raw.BlockNumber,
+		}).Info("CrossBurn handled")
+		return
+	}
 
 	if lock.Raw.Removed {
 		return
@@ -249,6 +256,17 @@ func (m *Monitor) CrossMint(txId string, addrFromEth common.Address, recipient c
 	m.mux.Lock()
 	defer m.mux.Unlock()
 
+	unlocked, err := m.session.TxMinted(txId)
+	if err != nil {
+		m.logger.Infof("find TxMinted error:%w", err)
+		return nil
+	}
+
+	if unlocked {
+		m.logger.Infof("find TxMinted eth txId:%s", txId)
+		return nil
+	}
+
 	price, err := m.ethClient.SuggestGasPrice(context.TODO())
 	if err != nil {
 		return err
@@ -284,6 +302,7 @@ func (m *Monitor) CrossMint(txId string, addrFromEth common.Address, recipient c
 		m.logger.WithField("tx_hash", transaction.Hash().String()).Info("crossMint success")
 	} else {
 		m.logger.Errorf("crossMint fail:%s", transaction.Hash().String())
+		return fmt.Errorf("crossMint fail:%s", transaction.Hash().String())
 	}
 	return nil
 }
