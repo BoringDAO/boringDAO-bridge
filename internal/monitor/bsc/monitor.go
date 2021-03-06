@@ -154,11 +154,10 @@ func (m *Monitor) listenLockEvent() {
 	}
 	for filter.Next() {
 		m.handleCross(filter.Event, true)
-		if filter.done {
-			m.logger.Infof("BorBSCCrossBurnIterator end")
-			break
-		}
 	}
+
+	m.logger.Infof("BorBSCCrossBurnIterator end")
+
 	sink := make(chan *BorBSCCrossBurn, 0)
 	event.Resubscribe(100*time.Millisecond, func(ctx context.Context) (event.Subscription, error) {
 		sub, err := m.borBsc.WatchCrossBurn(&bind.WatchOpts{
@@ -301,7 +300,6 @@ func (m *Monitor) CrossMint(txId string, addrFromEth common.Address, recipient c
 	if receipt.Status == 1 {
 		m.logger.WithField("tx_hash", transaction.Hash().String()).Info("crossMint success")
 	} else {
-		m.logger.Errorf("crossMint fail:%s", transaction.Hash().String())
 		return fmt.Errorf("crossMint fail:%s", transaction.Hash().String())
 	}
 	return nil

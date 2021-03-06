@@ -155,11 +155,10 @@ func (m *Monitor) listenLockEvent() {
 	}
 	for filter.Next() {
 		m.handleLock(filter.Event, true)
-		if filter.done {
-			m.logger.Infof("CrossLockLockIterator end")
-			break
-		}
 	}
+
+	m.logger.Infof("CrossLockLockIterator end")
+
 	sink := make(chan *CrossLockLock, 0)
 	event.Resubscribe(100*time.Millisecond, func(ctx context.Context) (event.Subscription, error) {
 		sub, err := m.lock.WatchLock(&bind.WatchOpts{
@@ -306,8 +305,7 @@ func (m *Monitor) UnlockBor(txId string, token common.Address, from common.Addre
 	if receipt.Status == 1 {
 		m.logger.WithField("tx_hash", transaction.Hash().String()).Info("unlock success")
 	} else {
-		m.logger.Errorf("unlock fail:%s", transaction.Hash().String())
-		return nil
+		return fmt.Errorf("unlock fail:%s", transaction.Hash().String())
 	}
 	return nil
 }
