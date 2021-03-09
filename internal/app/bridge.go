@@ -6,7 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/boringdao/bridge/internal/monitor/bsc"
+	"github.com/boringdao/bridge/internal/monitor/okchain"
+
 	"github.com/boringdao/bridge/internal/monitor/eth"
 
 	"github.com/boringdao/bridge/internal/loggers"
@@ -21,7 +22,7 @@ import (
 type Bridge struct {
 	repo    *repo.Repo
 	ethMnt  *eth.Monitor
-	bscMnt  *bsc.Monitor
+	okMnt   *okchain.Monitor
 	storage storage.Storage
 	logger  logrus.FieldLogger
 	mux     sync.Mutex
@@ -42,7 +43,7 @@ func New(repoRoot *repo.Repo) (*Bridge, error) {
 		return nil, err
 	}
 
-	bscMnt, err := bsc.New(repoRoot.Config, loggers.Logger(loggers.BSC))
+	okMnt, err := okchain.New(repoRoot.Config, loggers.Logger(loggers.OkCHAIN))
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +52,7 @@ func New(repoRoot *repo.Repo) (*Bridge, error) {
 	return &Bridge{
 		repo:    repoRoot,
 		ethMnt:  ethMnt,
-		bscMnt:  bscMnt,
+		okMnt:   okMnt,
 		storage: boringStorage,
 		logger:  loggers.Logger(loggers.APP),
 		ctx:     ctx,
@@ -65,7 +66,7 @@ func (b *Bridge) Start() error {
 		return err
 	}
 
-	err = b.bscMnt.Start()
+	err = b.okMnt.Start()
 	if err != nil {
 		return err
 	}
@@ -96,7 +97,7 @@ func (b *Bridge) listenEthCocoC() {
 					b.logger.WithField("tx", coco.TxId).Error("has handled the interchain event")
 					return
 				}
-				err := b.bscMnt.CrossMint(coco.TxId, coco.Sender, coco.Recipient, coco.Amount)
+				err := b.okMnt.CrossMint(coco.TxId, coco.Sender, coco.Recipient, coco.Amount)
 				if err != nil {
 					b.logger.Panic(err)
 				}
@@ -112,7 +113,7 @@ func (b *Bridge) listenEthCocoC() {
 }
 
 func (b *Bridge) listenBscCocoC() {
-	cocoC := b.bscMnt.HandleCocoC()
+	cocoC := b.okMnt.HandleCocoC()
 	for {
 		select {
 		case coco := <-cocoC:
@@ -121,7 +122,7 @@ func (b *Bridge) listenBscCocoC() {
 				defer b.mux.Unlock()
 				b.logger.Infof("========> start handle eth transaction...")
 				defer b.logger.Infof("========> end handle eth transaction...")
-				if b.bscMnt.HasTx(coco.TxId) {
+				if b.okMnt.HasTx(coco.TxId) {
 					b.logger.WithField("tx", coco.TxId).Error("has handled the interchain event")
 					return
 				}
@@ -131,7 +132,7 @@ func (b *Bridge) listenBscCocoC() {
 					b.logger.Panic(err)
 				}
 
-				b.bscMnt.PutTxID(coco.TxId, coco)
+				b.okMnt.PutTxID(coco.TxId, coco)
 
 			}
 			handle()

@@ -60,7 +60,7 @@ func start(ctx *cli.Context) error {
 		return err
 	}
 	repo.Config.Eth.PrivKey = ethKey
-	repo.Config.Bsc.PrivKey = ethKey
+	repo.Config.OkChain.PrivKey = ethKey
 
 	bridge, err := app.New(repo)
 	if err != nil {
@@ -82,7 +82,7 @@ func start(ctx *cli.Context) error {
 }
 
 func ethKey() (string, error) {
-	key, err := gopass.GetPasswdPrompt("Please input eth/bsc private key: ", true, os.Stdin, os.Stdout)
+	key, err := gopass.GetPasswdPrompt("Please input eth/okchain private key: ", true, os.Stdin, os.Stdout)
 	priv, err := crypto.ToECDSA(hexutil.Decode(string(key)))
 	if err != nil || priv == nil {
 		return "", fmt.Errorf("eth private key format error:%w", err)

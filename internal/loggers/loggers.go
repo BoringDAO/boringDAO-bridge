@@ -7,9 +7,10 @@ import (
 )
 
 const (
-	APP = "app"
-	BSC = "bsc"
-	ETH = "eth"
+	APP     = "app"
+	BSC     = "bsc"
+	OkCHAIN = "okchain"
+	ETH     = "eth"
 )
 
 var w *loggerWrapper
@@ -22,8 +23,8 @@ func Initialize(config *repo.Config) {
 	m := make(map[string]*logrus.Entry)
 	m[APP] = log.NewWithModule(APP)
 	m[APP].Logger.SetLevel(log.ParseLevel(config.Log.Module.APP))
-	m[BSC] = log.NewWithModule(BSC)
-	m[BSC].Logger.SetLevel(log.ParseLevel(config.Log.Module.BSC))
+	m[OkCHAIN] = log.NewWithModule(OkCHAIN)
+	m[OkCHAIN].Logger.SetLevel(log.ParseLevel(config.Log.Module.OkChain))
 	m[ETH] = log.NewWithModule(ETH)
 	m[ETH].Logger.SetLevel(log.ParseLevel(config.Log.Module.ETH))
 

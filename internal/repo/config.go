@@ -26,6 +26,7 @@ type Config struct {
 	Title    string `json:"title"`
 	Eth      `json:"eth"`
 	Bsc      `json:"bsc"`
+	OkChain  `json:"okchain"`
 	Log      `json:"log"`
 }
 
@@ -38,9 +39,10 @@ type Log struct {
 }
 
 type LogModule struct {
-	BSC string `toml:"bsc" json:"bsc"`
-	ETH string `toml:"eth" json:"eth"`
-	APP string `toml:"app" json:"app"`
+	BSC     string `toml:"bsc" json:"bsc"`
+	OkChain string `toml:"okchain" json:"okchain"`
+	ETH     string `toml:"eth" json:"eth"`
+	APP     string `toml:"app" json:"app"`
 }
 
 type Eth struct {
@@ -53,6 +55,16 @@ type Eth struct {
 }
 
 type Bsc struct {
+	Addr           string `toml:"addr" json:"addr"`
+	MinConfirms    uint64 `toml:"minConfirms" json:"minConfirms"`
+	PrivKey        string `toml:"privKey" json:"privKey"`
+	GasLimit       uint64 `toml:"gasLimit" json:"gasLimit"`
+	Height         uint64 `toml:"height" json:"height"`
+	BorBscContract string `toml:"borBscContract" json:"borBscContract"`
+}
+
+type OkChain struct {
+	RpcAddr        string `toml:"rpcaddr" json:"rpcaddr"`
 	Addr           string `toml:"addr" json:"addr"`
 	MinConfirms    uint64 `toml:"minConfirms" json:"minConfirms"`
 	PrivKey        string `toml:"privKey" json:"privKey"`
