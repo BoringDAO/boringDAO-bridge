@@ -23,7 +23,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/ethereum/go-ethereum/event"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 )
@@ -163,43 +162,41 @@ func (m *Monitor) Stop() error {
 }
 
 func (m *Monitor) listenLockEvent() {
-	var filter *BorBSCCrossBurnIterator
-	var err error
-	err = retry.Retry(func(attempt uint) error {
-		filter, err = m.rpcBorBsc.FilterCrossBurn(&bind.FilterOpts{Start: m.bHeight, End: nil, Context: m.ctx})
-		if err != nil {
-			m.logger.Errorf("FilterCrossBurn error:%w", err)
-		}
-		return err
-	}, strategy.Wait(3*time.Second))
-	if err != nil {
-		m.logger.Error(err)
-	}
-	for filter.Next() {
-		m.handleCross(filter.Event, true)
-	}
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
 
-	m.logger.Infof("BorBSCCrossBurnIterator end")
+	for {
+		select {
+		case <-ticker.C:
+			var filter *BorBSCCrossBurnIterator
+			var err error
+			err = retry.Retry(func(attempt uint) error {
+				filter, err = m.rpcBorBsc.FilterCrossBurn(&bind.FilterOpts{Start: m.bHeight, End: nil, Context: m.ctx})
+				if err != nil {
+					m.logger.Errorf("FilterCrossBurn error:%w", err)
+				}
+				return err
+			}, strategy.Wait(3*time.Second))
+			if err != nil {
+				m.logger.Error(err)
+			}
+			for filter.Next() {
+				m.handleCross(filter.Event, true)
+			}
 
-	sink := make(chan *BorBSCCrossBurn, 0)
-	event.Resubscribe(100*time.Millisecond, func(ctx context.Context) (event.Subscription, error) {
-		sub, err := m.borBsc.WatchCrossBurn(&bind.WatchOpts{
-			Start:   &m.bHeight,
-			Context: ctx,
-		}, sink)
-		if err != nil {
-			m.logger.Error(err)
-			return nil, err
+			m.logger.Infof("BorBSCCrossBurnIterator end")
+		case <-m.ctx.Done():
+			return
 		}
-		return sub, nil
-	})
-	for be := range sink {
-		m.handleCross(be, false)
 	}
 }
 
 func (m *Monitor) handleCross(lock *BorBSCCrossBurn, isHistory bool) {
 	if !strings.EqualFold(lock.Raw.Address.String(), m.config.OkChain.BorBscContract) {
+		return
+	}
+
+	if m.storage.Has(TxKey(lock.Raw.TxHash.String())) {
 		return
 	}
 
@@ -224,14 +221,6 @@ func (m *Monitor) handleCross(lock *BorBSCCrossBurn, isHistory bool) {
 		"block_height": lock.Raw.BlockNumber,
 		"removed":      lock.Raw.Removed,
 	}).Info("CrossBurn")
-
-	if m.storage.Has(TxKey(lock.Raw.TxHash.String())) {
-		m.logger.WithFields(logrus.Fields{
-			"txId":         lock.Raw.TxHash.String(),
-			"block_height": lock.Raw.BlockNumber,
-		}).Info("CrossBurn handled")
-		return
-	}
 
 	if lock.Raw.Removed {
 		return
