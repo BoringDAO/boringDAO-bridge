@@ -69,10 +69,10 @@ func New(config *repo.Config, logger logrus.FieldLogger) (*Monitor, error) {
 		return nil, err
 	}
 
-	etherCli, err := ethclient.Dial(config.OkChain.Addr)
-	if err != nil {
-		return nil, fmt.Errorf("dial okchain node: %w", err)
-	}
+	//etherCli, err := ethclient.Dial(config.OkChain.Addr)
+	//if err != nil {
+	//	return nil, fmt.Errorf("dial okchain node: %w", err)
+	//}
 
 	rpcCli, err := ethclient.Dial(config.OkChain.RpcAddr)
 	if err != nil {
@@ -98,17 +98,17 @@ func New(config *repo.Config, logger logrus.FieldLogger) (*Monitor, error) {
 		minConfirms = int(config.OkChain.MinConfirms)
 	}
 
-	broker, err := NewBorBSC(common.HexToAddress(config.OkChain.BorBscContract), etherCli)
-	if err != nil {
-		return nil, fmt.Errorf("failed to instantiate a cross contract: %w", err)
-	}
-	session := &BorBSCSession{
-		Contract: broker,
-		CallOpts: bind.CallOpts{
-			Pending: false,
-		},
-		TransactOpts: *auth,
-	}
+	//broker, err := NewBorBSC(common.HexToAddress(config.OkChain.BorBscContract), etherCli)
+	//if err != nil {
+	//	return nil, fmt.Errorf("failed to instantiate a cross contract: %w", err)
+	//}
+	//session := &BorBSCSession{
+	//	Contract: broker,
+	//	CallOpts: bind.CallOpts{
+	//		Pending: false,
+	//	},
+	//	TransactOpts: *auth,
+	//}
 
 	rpcBroker, err := NewBorBSC(common.HexToAddress(config.OkChain.BorBscContract), rpcCli)
 	if err != nil {
@@ -129,13 +129,13 @@ func New(config *repo.Config, logger logrus.FieldLogger) (*Monitor, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &Monitor{
-		config:      config,
-		storage:     ethStorage,
-		session:     session,
-		rpcSession:  rpcSession,
-		borBsc:      broker,
-		rpcBorBsc:   rpcBroker,
-		ethClient:   etherCli,
+		config:  config,
+		storage: ethStorage,
+		//session:     session,
+		rpcSession: rpcSession,
+		//borBsc:      broker,
+		rpcBorBsc: rpcBroker,
+		//ethClient:   etherCli,
 		rpcClient:   rpcCli,
 		address:     address,
 		borBscAbi:   borAbi,
@@ -269,8 +269,8 @@ func (m *Monitor) CrossMint(txId string, addrFromEth common.Address, recipient c
 
 	unlocked, err := m.rpcSession.TxMinted(txId)
 	if err != nil {
-		m.logger.Infof("find TxMinted error:%w", err)
-		return nil
+		m.logger.Errorf("find TxMinted error:%w", err)
+		return err
 	}
 
 	if unlocked {
