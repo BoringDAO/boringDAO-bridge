@@ -252,8 +252,8 @@ func (m *Monitor) CrossMint(txId string, addrFromEth common.Address, recipient c
 
 	unlocked, err := m.session.TxMinted(txId)
 	if err != nil {
-		m.logger.Infof("find TxMinted error:%w", err)
-		return nil
+		m.logger.Errorf("find TxMinted error:%w", err)
+		return err
 	}
 
 	if unlocked {

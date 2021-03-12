@@ -252,8 +252,8 @@ func (m *Monitor) UnlockBor(txId string, token common.Address, from common.Addre
 
 	unlocked, err := m.session.TxUnlocked(txId)
 	if err != nil {
-		m.logger.Infof("find txUnlocked error:%w", err)
-		return nil
+		m.logger.Errorf("find txUnlocked error:%w", err)
+		return err
 	}
 
 	if unlocked {
