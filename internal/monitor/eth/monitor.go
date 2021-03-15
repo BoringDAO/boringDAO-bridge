@@ -23,7 +23,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/ethereum/go-ethereum/event"
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
@@ -141,38 +140,38 @@ func (m *Monitor) Stop() error {
 }
 
 func (m *Monitor) listenLockEvent() {
-	var filter *CrossLockLockIterator
-	var err error
-	err = retry.Retry(func(attempt uint) error {
-		filter, err = m.lock.FilterLock(&bind.FilterOpts{Start: m.lHeight, End: nil, Context: m.ctx})
-		if err != nil {
-			m.logger.Errorf("FilterLock error:%w", err)
-		}
-		return err
-	}, strategy.Wait(3*time.Second))
-	if err != nil {
-		m.logger.Error(err)
-	}
-	for filter.Next() {
-		m.handleLock(filter.Event, true)
-	}
+	ticker := time.NewTicker(60 * time.Second)
+	defer ticker.Stop()
 
-	m.logger.Infof("CrossLockLockIterator end")
+	for {
+		select {
+		case <-ticker.C:
+			num := m.fetchBlockNum()
+			end := num - m.minConfirms
+			if end < m.lHeight {
+				continue
+			}
+			var filter *CrossLockLockIterator
+			var err error
+			err = retry.Retry(func(attempt uint) error {
+				filter, err = m.lock.FilterLock(&bind.FilterOpts{Start: m.lHeight, End: nil, Context: m.ctx})
+				if err != nil {
+					m.logger.Errorf("FilterLock error:%w", err)
+				}
+				return err
+			}, strategy.Wait(3*time.Second))
+			if err != nil {
+				m.logger.Error(err)
+			}
+			for filter.Next() {
+				m.handleLock(filter.Event, true)
+			}
 
-	sink := make(chan *CrossLockLock, 0)
-	event.Resubscribe(100*time.Millisecond, func(ctx context.Context) (event.Subscription, error) {
-		sub, err := m.lock.WatchLock(&bind.WatchOpts{
-			Start:   &m.lHeight,
-			Context: ctx,
-		}, sink)
-		if err != nil {
-			m.logger.Error(err)
-			return nil, err
+			m.logger.WithFields(logrus.Fields{"start": m.lHeight, "end": end}).Infof("CrossLockLockIterator")
+		case <-m.ctx.Done():
+			m.logger.Info("CrossLockLockIterator done")
+			return
 		}
-		return sub, nil
-	})
-	for be := range sink {
-		m.handleLock(be, false)
 	}
 }
 
