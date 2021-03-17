@@ -180,6 +180,14 @@ func (m *Monitor) HandleCocoC() chan *Coco {
 }
 
 func (m *Monitor) handleLock(lock *CrossLockLock, isHistory bool) {
+	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Eth.CrossLockContract) {
+		return
+	}
+
+	if m.storage.Has(TxKey(lock.Raw.TxHash.String())) {
+		return
+	}
+
 	coco := &Coco{
 		IsHistory:   isHistory,
 		EthToken:    lock.EthToken,
@@ -189,10 +197,6 @@ func (m *Monitor) handleLock(lock *CrossLockLock, isHistory bool) {
 		Amount:      lock.Amount,
 		TxId:        lock.Raw.TxHash.String(),
 		BlockHeight: lock.Raw.BlockNumber,
-	}
-
-	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Eth.CrossLockContract) {
-		return
 	}
 
 	m.logger.WithFields(logrus.Fields{
@@ -205,15 +209,6 @@ func (m *Monitor) handleLock(lock *CrossLockLock, isHistory bool) {
 		"block_height": lock.Raw.BlockNumber,
 		"removed":      lock.Raw.Removed,
 	}).Info("LockBorLock")
-
-	if m.storage.Has(TxKey(lock.Raw.TxHash.String())) {
-		m.logger.WithFields(logrus.Fields{
-			"txId":         lock.Raw.TxHash.String(),
-			"block_height": lock.Raw.BlockNumber,
-		}).Info("LockBorLock handled")
-
-		return
-	}
 
 	if lock.Raw.Removed {
 		return
