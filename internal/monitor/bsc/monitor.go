@@ -46,8 +46,8 @@ type Monitor struct {
 	ethClient   *ethclient.Client
 	topic       common.Hash
 	cocoC       chan *Coco
-	borBsc      *BorBSC
-	session     *BorBSCSession
+	borBsc      *Bridge
+	session     *BridgeSession
 	logger      logrus.FieldLogger
 	storage     storage.Storage
 	config      *repo.Config
@@ -91,11 +91,11 @@ func New(config *repo.Config, logger logrus.FieldLogger) (*Monitor, error) {
 		minConfirms = int(config.Bsc.MinConfirms)
 	}
 
-	broker, err := NewBorBSC(common.HexToAddress(config.Bsc.BorBscContract), etherCli)
+	broker, err := NewBridge(common.HexToAddress(config.Bsc.BorBscContract), etherCli)
 	if err != nil {
 		return nil, fmt.Errorf("failed to instantiate a cross contract: %w", err)
 	}
-	session := &BorBSCSession{
+	session := &BridgeSession{
 		Contract: broker,
 		CallOpts: bind.CallOpts{
 			Pending: false,
@@ -103,7 +103,7 @@ func New(config *repo.Config, logger logrus.FieldLogger) (*Monitor, error) {
 		TransactOpts: *auth,
 	}
 
-	borAbi, err := abi.JSON(bytes.NewReader([]byte(BorBSCABI)))
+	borAbi, err := abi.JSON(bytes.NewReader([]byte(BridgeABI)))
 	if err != nil {
 		return nil, fmt.Errorf("abi unmarshal: %s", err.Error())
 	}
@@ -150,7 +150,7 @@ func (m *Monitor) listenLockEvent() {
 			if end < m.bHeight {
 				continue
 			}
-			var filter *BorBSCCrossBurnIterator
+			var filter *BridgeCrossBurnIterator
 			var err error
 			err = retry.Retry(func(attempt uint) error {
 				filter, err = m.borBsc.FilterCrossBurn(&bind.FilterOpts{Start: m.bHeight, End: &end, Context: m.ctx})
@@ -174,7 +174,7 @@ func (m *Monitor) listenLockEvent() {
 
 }
 
-func (m *Monitor) handleCross(lock *BorBSCCrossBurn, isHistory bool) {
+func (m *Monitor) handleCross(lock *BridgeCrossBurn, isHistory bool) {
 	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Bsc.BorBscContract) {
 		return
 	}
@@ -188,8 +188,8 @@ func (m *Monitor) handleCross(lock *BorBSCCrossBurn, isHistory bool) {
 		Sender:      lock.From,
 		Recipient:   lock.To,
 		Amount:      lock.Amount,
-		EthToken:    lock.EthToken,
-		BscToken:    lock.BscToken,
+		EthToken:    lock.Token0,
+		BscToken:    lock.Token1,
 		TxId:        lock.Raw.TxHash.String(),
 		BlockHeight: lock.Raw.BlockNumber,
 	}
@@ -315,7 +315,7 @@ func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
 		}
 		for _, topic := range log.Topics {
 			if strings.EqualFold(topic.String(), m.borBscAbi.Events["CrossBurn"].ID.String()) {
-				var lock BorBSCCrossBurn
+				var lock BridgeCrossBurn
 				if err := m.borBscAbi.UnpackIntoInterface(&lock, "CrossBurn", log.Data); err != nil {
 					m.logger.Error(err)
 					continue
@@ -324,8 +324,8 @@ func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
 					Sender:      lock.From,
 					Recipient:   lock.To,
 					Amount:      lock.Amount,
-					EthToken:    lock.EthToken,
-					BscToken:    lock.BscToken,
+					EthToken:    lock.Token0,
+					BscToken:    lock.Token1,
 					TxId:        log.TxHash.String(),
 					BlockHeight: receipt.BlockNumber.Uint64(),
 				}, nil
