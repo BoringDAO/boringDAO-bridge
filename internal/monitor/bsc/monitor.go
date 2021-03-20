@@ -142,18 +142,20 @@ func (m *Monitor) listenLockEvent() {
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
+	start := m.bHeight + 1
+
 	for {
 		select {
 		case <-ticker.C:
 			num := m.fetchBlockNum()
 			end := num - m.minConfirms
-			if end < m.bHeight {
+			if end < start {
 				continue
 			}
 			var filter *BridgeCrossBurnIterator
 			var err error
 			err = retry.Retry(func(attempt uint) error {
-				filter, err = m.bridge.FilterCrossBurn(&bind.FilterOpts{Start: m.bHeight, End: &end, Context: m.ctx})
+				filter, err = m.bridge.FilterCrossBurn(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
 				if err != nil {
 					m.logger.Errorf("FilterCrossBurn error:%w", err)
 				}
@@ -165,7 +167,9 @@ func (m *Monitor) listenLockEvent() {
 			for filter.Next() {
 				m.handleCross(filter.Event, true)
 			}
-			m.logger.WithFields(logrus.Fields{"start": m.bHeight, "end": end}).Infof("BridgeCrossBurnIterator")
+			m.logger.WithFields(logrus.Fields{"start": start, "end": end}).Infof("BridgeCrossBurnIterator")
+
+			start = end + 1
 		case <-m.ctx.Done():
 			m.logger.Info("BridgeCrossBurnIterator done")
 			return
@@ -361,13 +365,15 @@ func (m *Monitor) loadHeightFromStorage() {
 	b := m.storage.Get(bHeightKey())
 	if b == nil {
 		m.bHeight = header.Number.Uint64() - m.minConfirms
+		if m.config.Bsc.Height != 0 && m.config.Bsc.Height < m.bHeight {
+			m.bHeight = m.config.Bsc.Height
+		}
 		m.persistBHeight(m.bHeight)
 	} else {
 		m.bHeight = binary.LittleEndian.Uint64(b)
-	}
-
-	if m.config.Bsc.Height != 0 {
-		m.bHeight = m.config.Bsc.Height
+		if m.config.Bsc.Height != 0 {
+			m.bHeight = m.config.Bsc.Height
+		}
 	}
 
 	m.logger.WithFields(logrus.Fields{
@@ -397,9 +403,8 @@ func (m *Monitor) persistBHeight(height uint64) {
 	buf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(buf, height)
 	m.storage.Put(bHeightKey(), buf)
-	m.bHeight = height
 	m.logger.WithFields(logrus.Fields{
-		"height": m.bHeight,
+		"height": height,
 	}).Info("Persist Bsc Block Height")
 }
 

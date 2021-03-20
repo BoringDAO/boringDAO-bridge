@@ -143,18 +143,20 @@ func (m *Monitor) listenLockEvent() {
 	ticker := time.NewTicker(60 * time.Second)
 	defer ticker.Stop()
 
+	start := m.lHeight + 1
+
 	for {
 		select {
 		case <-ticker.C:
 			num := m.fetchBlockNum()
 			end := num - m.minConfirms
-			if end < m.lHeight {
+			if end < start {
 				continue
 			}
 			var filter *CrossLockLockIterator
 			var err error
 			err = retry.Retry(func(attempt uint) error {
-				filter, err = m.lock.FilterLock(&bind.FilterOpts{Start: m.lHeight, End: nil, Context: m.ctx})
+				filter, err = m.lock.FilterLock(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
 				if err != nil {
 					m.logger.Errorf("FilterLock error:%w", err)
 				}
@@ -167,7 +169,9 @@ func (m *Monitor) listenLockEvent() {
 				m.handleLock(filter.Event, true)
 			}
 
-			m.logger.WithFields(logrus.Fields{"start": m.lHeight, "end": end}).Infof("CrossLockLockIterator")
+			m.logger.WithFields(logrus.Fields{"start": start, "end": end}).Infof("CrossLockLockIterator")
+
+			start = end + 1
 		case <-m.ctx.Done():
 			m.logger.Info("CrossLockLockIterator done")
 			return
@@ -364,14 +368,16 @@ func (m *Monitor) loadHeightFromStorage() {
 	b := m.storage.Get(lHeightKey())
 	if b == nil {
 		m.lHeight = header.Number.Uint64() - m.minConfirms
+		if m.config.Eth.Height != 0 && m.config.Eth.Height < m.lHeight {
+			m.lHeight = m.config.Eth.Height
+		}
+
 		m.persistLHeight(m.lHeight)
 	} else {
 		m.lHeight = binary.LittleEndian.Uint64(b)
-
-	}
-
-	if m.config.Eth.Height != 0 {
-		m.lHeight = m.config.Eth.Height
+		if m.config.Eth.Height != 0 {
+			m.lHeight = m.config.Eth.Height
+		}
 	}
 
 	m.logger.WithFields(logrus.Fields{
@@ -401,9 +407,8 @@ func (m *Monitor) persistLHeight(height uint64) {
 	buf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(buf, height)
 	m.storage.Put(lHeightKey(), buf)
-	m.lHeight = height
 	m.logger.WithFields(logrus.Fields{
-		"height": m.lHeight,
+		"height": height,
 	}).Info("Persist Lock Block Height")
 }
 
