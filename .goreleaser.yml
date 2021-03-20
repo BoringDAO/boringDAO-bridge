@@ -14,6 +14,7 @@ builds:
       - windows
       - darwin
     main: ./cmd/bridge/
+    binary: bridge
     ldflags:
       - -s -w -X main.version={{.Version}} -X main.commit={{.ShortCommit}} -X main.date={{.Date}} -X main.builtBy=goreleaser
 archives:
