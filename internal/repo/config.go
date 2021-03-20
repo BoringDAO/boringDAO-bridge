@@ -58,7 +58,7 @@ type Bsc struct {
 	PrivKey        string `toml:"privKey" json:"privKey"`
 	GasLimit       uint64 `toml:"gasLimit" json:"gasLimit"`
 	Height         uint64 `toml:"height" json:"height"`
-	BorBscContract string `toml:"borBscContract" json:"borBscContract"`
+	BridgeContract string `toml:"bridgeContract" json:"bridgeContract"`
 }
 
 func (c *Config) Bytes() ([]byte, error) {

@@ -42,18 +42,18 @@ type Coco struct {
 
 type Monitor struct {
 	bHeight     uint64
-	borBscAbi   abi.ABI
+	bridgeAbi   abi.ABI
 	ethClient   *ethclient.Client
 	topic       common.Hash
 	cocoC       chan *Coco
-	borBsc      *Bridge
+	bridge      *Bridge
 	session     *BridgeSession
 	logger      logrus.FieldLogger
 	storage     storage.Storage
 	config      *repo.Config
 	minConfirms uint64
 	mux         sync.Mutex
-	borBscAddr  common.Address
+	bridgeAddr  common.Address
 	address     common.Address
 
 	ctx    context.Context
@@ -91,7 +91,7 @@ func New(config *repo.Config, logger logrus.FieldLogger) (*Monitor, error) {
 		minConfirms = int(config.Bsc.MinConfirms)
 	}
 
-	broker, err := NewBridge(common.HexToAddress(config.Bsc.BorBscContract), etherCli)
+	broker, err := NewBridge(common.HexToAddress(config.Bsc.BridgeContract), etherCli)
 	if err != nil {
 		return nil, fmt.Errorf("failed to instantiate a cross contract: %w", err)
 	}
@@ -113,11 +113,11 @@ func New(config *repo.Config, logger logrus.FieldLogger) (*Monitor, error) {
 		config:      config,
 		storage:     ethStorage,
 		session:     session,
-		borBsc:      broker,
+		bridge:      broker,
 		ethClient:   etherCli,
 		address:     address,
-		borBscAbi:   borAbi,
-		borBscAddr:  common.HexToAddress(config.Bsc.BorBscContract),
+		bridgeAbi:   borAbi,
+		bridgeAddr:  common.HexToAddress(config.Bsc.BridgeContract),
 		minConfirms: uint64(minConfirms),
 		cocoC:       make(chan *Coco),
 		logger:      logger,
@@ -153,7 +153,7 @@ func (m *Monitor) listenLockEvent() {
 			var filter *BridgeCrossBurnIterator
 			var err error
 			err = retry.Retry(func(attempt uint) error {
-				filter, err = m.borBsc.FilterCrossBurn(&bind.FilterOpts{Start: m.bHeight, End: &end, Context: m.ctx})
+				filter, err = m.bridge.FilterCrossBurn(&bind.FilterOpts{Start: m.bHeight, End: &end, Context: m.ctx})
 				if err != nil {
 					m.logger.Errorf("FilterCrossBurn error:%w", err)
 				}
@@ -165,9 +165,9 @@ func (m *Monitor) listenLockEvent() {
 			for filter.Next() {
 				m.handleCross(filter.Event, true)
 			}
-			m.logger.WithFields(logrus.Fields{"start": m.bHeight, "end": end}).Infof("BorBSCCrossBurnIterator")
+			m.logger.WithFields(logrus.Fields{"start": m.bHeight, "end": end}).Infof("BridgeCrossBurnIterator")
 		case <-m.ctx.Done():
-			m.logger.Info("BorBSCCrossBurnIterator done")
+			m.logger.Info("BridgeCrossBurnIterator done")
 			return
 		}
 	}
@@ -175,7 +175,7 @@ func (m *Monitor) listenLockEvent() {
 }
 
 func (m *Monitor) handleCross(lock *BridgeCrossBurn, isHistory bool) {
-	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Bsc.BorBscContract) {
+	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Bsc.BridgeContract) {
 		return
 	}
 
@@ -306,7 +306,7 @@ func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
 		return nil, err
 	}
 	for _, log := range receipt.Logs {
-		if !strings.EqualFold(log.Address.String(), m.config.Bsc.BorBscContract) {
+		if !strings.EqualFold(log.Address.String(), m.config.Bsc.BridgeContract) {
 			continue
 		}
 
@@ -314,9 +314,9 @@ func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
 			continue
 		}
 		for _, topic := range log.Topics {
-			if strings.EqualFold(topic.String(), m.borBscAbi.Events["CrossBurn"].ID.String()) {
+			if strings.EqualFold(topic.String(), m.bridgeAbi.Events["CrossBurn"].ID.String()) {
 				var lock BridgeCrossBurn
-				if err := m.borBscAbi.UnpackIntoInterface(&lock, "CrossBurn", log.Data); err != nil {
+				if err := m.bridgeAbi.UnpackIntoInterface(&lock, "CrossBurn", log.Data); err != nil {
 					m.logger.Error(err)
 					continue
 				}
@@ -332,7 +332,7 @@ func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
 			}
 		}
 	}
-	return nil, fmt.Errorf("not found BorBSCCrossBurn log in tx:%s", txId)
+	return nil, fmt.Errorf("not found BridgeCrossBurn log in tx:%s", txId)
 }
 
 func (m *Monitor) fetchBlockNum() uint64 {
