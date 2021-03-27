@@ -2,14 +2,20 @@ title = "Bridge configuration file"
 
 
 [eth]
-  addr = "https://ropsten.infura.io/v3/3e8a2d2286964b62bc6b1d67c379badd"
+  addrs = [
+    "https://ropsten.infura.io/v3/3e8a2d2286964b62bc6b1d67c379badd",
+    "https://ropsten.infura.io/v3/3e8a2d2286964b62bc6b1d67c379badd"
+  ]
   minConfirms = 5 # min confirms
   gasLimit = 1500000 # gas Limit
   height = 9868259
   crossLockContract = "0xbD187d9D7403eb026Cc67a854c30205828CD5d0C" # crosslock contract address
 
 [bsc]
-  addr = "https://data-seed-prebsc-1-s1.binance.org:8545"
+  addrs = [
+    "https://data-seed-prebsc-1-s1.binance.org:8545",
+    "https://data-seed-prebsc-1-s1.binance.org:8545"
+  ]
   minConfirms = 5 # min confirms
   gasLimit = 1500000 # gas Limit
   height = 7240344
