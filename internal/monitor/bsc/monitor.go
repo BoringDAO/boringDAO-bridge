@@ -22,7 +22,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
@@ -41,20 +40,18 @@ type Coco struct {
 }
 
 type Monitor struct {
-	bHeight     uint64
-	bridgeAbi   abi.ABI
-	ethClient   *ethclient.Client
-	topic       common.Hash
-	cocoC       chan *Coco
-	bridge      *Bridge
-	session     *BridgeSession
-	logger      logrus.FieldLogger
-	storage     storage.Storage
-	config      *repo.Config
-	minConfirms uint64
-	mux         sync.Mutex
-	bridgeAddr  common.Address
-	address     common.Address
+	bHeight       uint64
+	bridgeAbi     abi.ABI
+	topic         common.Hash
+	cocoC         chan *Coco
+	bridgeWrapper *BridgeWrapper
+	logger        logrus.FieldLogger
+	storage       storage.Storage
+	config        *repo.Config
+	minConfirms   uint64
+	mux           sync.Mutex
+	bridgeAddr    common.Address
+	address       common.Address
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -67,11 +64,6 @@ func New(config *repo.Config, logger logrus.FieldLogger) (*Monitor, error) {
 		return nil, err
 	}
 
-	etherCli, err := ethclient.Dial(config.Bsc.Addr)
-	if err != nil {
-		return nil, fmt.Errorf("dial bsc node: %w", err)
-	}
-
 	privKey, err := crypto.ToECDSA(hexutil.Decode(config.Bsc.PrivKey))
 	if err != nil {
 		return nil, err
@@ -79,28 +71,14 @@ func New(config *repo.Config, logger logrus.FieldLogger) (*Monitor, error) {
 
 	address := crypto.PubkeyToAddress(privKey.PublicKey)
 
-	auth := bind.NewKeyedTransactor(privKey)
-	if config.Bsc.GasLimit < 800000 {
-		auth.GasLimit = 1500000
-	} else {
-		auth.GasLimit = config.Bsc.GasLimit
-	}
-
 	minConfirms := 0
 	if config.Bsc.MinConfirms > 0 {
 		minConfirms = int(config.Bsc.MinConfirms)
 	}
 
-	broker, err := NewBridge(common.HexToAddress(config.Bsc.BridgeContract), etherCli)
+	bw, err := NewBridgeWrapper(&config.Bsc, logger)
 	if err != nil {
-		return nil, fmt.Errorf("failed to instantiate a cross contract: %w", err)
-	}
-	session := &BridgeSession{
-		Contract: broker,
-		CallOpts: bind.CallOpts{
-			Pending: false,
-		},
-		TransactOpts: *auth,
+		return nil, err
 	}
 
 	borAbi, err := abi.JSON(bytes.NewReader([]byte(BridgeABI)))
@@ -110,19 +88,17 @@ func New(config *repo.Config, logger logrus.FieldLogger) (*Monitor, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &Monitor{
-		config:      config,
-		storage:     ethStorage,
-		session:     session,
-		bridge:      broker,
-		ethClient:   etherCli,
-		address:     address,
-		bridgeAbi:   borAbi,
-		bridgeAddr:  common.HexToAddress(config.Bsc.BridgeContract),
-		minConfirms: uint64(minConfirms),
-		cocoC:       make(chan *Coco),
-		logger:      logger,
-		ctx:         ctx,
-		cancel:      cancel,
+		config:        config,
+		storage:       ethStorage,
+		bridgeWrapper: bw,
+		address:       address,
+		bridgeAbi:     borAbi,
+		bridgeAddr:    common.HexToAddress(config.Bsc.BridgeContract),
+		minConfirms:   uint64(minConfirms),
+		cocoC:         make(chan *Coco),
+		logger:        logger,
+		ctx:           ctx,
+		cancel:        cancel,
 	}, nil
 }
 
@@ -134,7 +110,7 @@ func (m *Monitor) Start() error {
 
 func (m *Monitor) Stop() error {
 	m.cancel()
-	m.ethClient.Close()
+	m.bridgeWrapper.Close()
 	return nil
 }
 
@@ -142,7 +118,7 @@ func (m *Monitor) listenLockEvent() {
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
-	start := m.bHeight + 1
+	start := m.bHeight
 
 	for {
 		select {
@@ -155,7 +131,7 @@ func (m *Monitor) listenLockEvent() {
 			var filter *BridgeCrossBurnIterator
 			var err error
 			err = retry.Retry(func(attempt uint) error {
-				filter, err = m.bridge.FilterCrossBurn(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
+				filter, err = m.bridgeWrapper.FilterCrossBurn(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
 				if err != nil {
 					m.logger.Errorf("FilterCrossBurn error:%w", err)
 				}
@@ -254,7 +230,7 @@ func (m *Monitor) CrossMint(txId string, addrFromEth common.Address, recipient c
 	m.mux.Lock()
 	defer m.mux.Unlock()
 
-	unlocked, err := m.session.TxMinted(txId)
+	unlocked, err := m.bridgeWrapper.TxMinted(txId)
 	if err != nil {
 		m.logger.Errorf("find TxMinted error:%w", err)
 		return err
@@ -265,25 +241,25 @@ func (m *Monitor) CrossMint(txId string, addrFromEth common.Address, recipient c
 		return nil
 	}
 
-	price, err := m.ethClient.SuggestGasPrice(context.TODO())
+	price, err := m.bridgeWrapper.SuggestGasPrice(context.TODO())
 	if err != nil {
 		return err
 	}
 	gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
-	m.session.TransactOpts.GasPrice = gasPrice.BigInt()
+	m.bridgeWrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
 
 	m.logger.WithFields(logrus.Fields{
 		"recipient": recipient.String(),
 		"amount":    amount.String(),
 	}).Info("will crossMint")
 
-	transaction, err := m.session.CrossMint(addrFromEth, recipient, amount, txId)
+	transaction, err := m.bridgeWrapper.CrossMint(addrFromEth, recipient, amount, txId)
 	if err != nil {
 		return fmt.Errorf("crossMint error:%v", err)
 	}
 	var receipt *types.Receipt
 	err = retry.Retry(func(attempt uint) error {
-		receipt, err = m.ethClient.TransactionReceipt(context.TODO(), transaction.Hash())
+		receipt, err = m.bridgeWrapper.TransactionReceipt(context.TODO(), transaction.Hash())
 		if err != nil {
 			return err
 		}
@@ -305,7 +281,7 @@ func (m *Monitor) CrossMint(txId string, addrFromEth common.Address, recipient c
 }
 
 func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
-	receipt, err := m.ethClient.TransactionReceipt(context.TODO(), common.HexToHash(txId))
+	receipt, err := m.bridgeWrapper.TransactionReceipt(context.TODO(), common.HexToHash(txId))
 	if err != nil {
 		return nil, err
 	}
@@ -340,7 +316,7 @@ func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
 }
 
 func (m *Monitor) fetchBlockNum() uint64 {
-	header, err := m.ethClient.HeaderByNumber(context.TODO(), nil)
+	header, err := m.bridgeWrapper.HeaderByNumber(context.TODO(), nil)
 	if err != nil {
 		m.logger.Error(err)
 		return 0
@@ -352,7 +328,7 @@ func (m *Monitor) loadHeightFromStorage() {
 	var header *types.Header
 	var err error
 	if err = retry.Retry(func(attempt uint) error {
-		header, err = m.ethClient.HeaderByNumber(context.TODO(), nil)
+		header, err = m.bridgeWrapper.HeaderByNumber(context.TODO(), nil)
 		if err != nil {
 			m.logger.Errorf("HeaderByNumber error:%v", err)
 		}
