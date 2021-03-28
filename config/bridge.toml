@@ -4,7 +4,7 @@ title = "Bridge configuration file"
 [eth]
   addrs = [
     "https://ropsten.infura.io/v3/3e8a2d2286964b62bc6b1d67c379badd",
-    "https://ropsten.infura.io/v3/3e8a2d2286964b62bc6b1d67c379badd"
+    "https://eth-ropsten.alchemyapi.io/v2/K36BtEv6HiX4gn-b_XEB-l1mjqtm7FEI"
   ]
   minConfirms = 5 # min confirms
   gasLimit = 1500000 # gas Limit

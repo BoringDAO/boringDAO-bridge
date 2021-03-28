@@ -26,7 +26,7 @@ type LockWrapper struct {
 
 func NewLockWrapper(config *repo.Eth, logger logrus.FieldLogger) (*LockWrapper, error) {
 	if len(config.Addrs) == 0 {
-		return nil, fmt.Errorf("addrs for bsc session wrapper is empty")
+		return nil, fmt.Errorf("addrs for eth session wrapper is empty")
 	}
 
 	etherCli, err := ethclient.Dial(config.Addrs[0])
