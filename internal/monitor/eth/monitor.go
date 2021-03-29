@@ -22,7 +22,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
@@ -42,11 +41,9 @@ type Coco struct {
 type Monitor struct {
 	lHeight     uint64
 	lockAbi     abi.ABI
-	ethClient   *ethclient.Client
+	ethWrapper  *EthWrapper
 	topic       common.Hash
 	cocoC       chan *Coco
-	lock        *CrossLock
-	session     *CrossLockSession
 	logger      logrus.FieldLogger
 	storage     storage.Storage
 	config      *repo.Config
@@ -54,8 +51,7 @@ type Monitor struct {
 	mux         sync.Mutex
 	lockAddr    common.Address
 	address     common.Address
-
-	BorAddr common.Address
+	BorAddr     common.Address
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -66,11 +62,6 @@ func New(config *repo.Config, logger logrus.FieldLogger) (*Monitor, error) {
 	ethStorage, err := leveldb.New(storagePath)
 	if err != nil {
 		return nil, err
-	}
-
-	etherCli, err := ethclient.Dial(config.Eth.Addr)
-	if err != nil {
-		return nil, fmt.Errorf("dial ethereum node: %w", err)
 	}
 
 	privKey, err := crypto.ToECDSA(hexutil.Decode(config.Eth.PrivKey))
@@ -92,31 +83,23 @@ func New(config *repo.Config, logger logrus.FieldLogger) (*Monitor, error) {
 		minConfirms = int(config.Eth.MinConfirms)
 	}
 
-	broker, err := NewCrossLock(common.HexToAddress(config.Eth.CrossLockContract), etherCli)
-	if err != nil {
-		return nil, fmt.Errorf("failed to instantiate a lock contract: %w", err)
-	}
-	session := &CrossLockSession{
-		Contract: broker,
-		CallOpts: bind.CallOpts{
-			Pending: false,
-		},
-		TransactOpts: *auth,
-	}
-
 	lockBorAbi, err := abi.JSON(bytes.NewReader([]byte(CrossLockABI)))
 	if err != nil {
 		return nil, fmt.Errorf("abi unmarshal: %s", err.Error())
 	}
+
+	ethWrapper, err := NewEthWrapper(&config.Eth, logger)
+	if err != nil {
+		return nil, err
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &Monitor{
 		config:      config,
 		storage:     ethStorage,
-		session:     session,
-		lock:        broker,
-		ethClient:   etherCli,
 		address:     address,
+		ethWrapper:  ethWrapper,
 		lockAbi:     lockBorAbi,
 		lockAddr:    common.HexToAddress(config.Eth.CrossLockContract),
 		minConfirms: uint64(minConfirms),
@@ -135,7 +118,7 @@ func (m *Monitor) Start() error {
 
 func (m *Monitor) Stop() error {
 	m.cancel()
-	m.ethClient.Close()
+	m.ethWrapper.Close()
 	return nil
 }
 
@@ -154,7 +137,7 @@ func (m *Monitor) listenLockEvent() {
 			var filter *CrossLockLockIterator
 			var err error
 			err = retry.Retry(func(attempt uint) error {
-				filter, err = m.lock.FilterLock(&bind.FilterOpts{Start: m.lHeight, End: nil, Context: m.ctx})
+				filter, err = m.ethWrapper.FilterLock(&bind.FilterOpts{Start: m.lHeight, End: nil, Context: m.ctx})
 				if err != nil {
 					m.logger.Errorf("FilterLock error:%w", err)
 				}
@@ -250,7 +233,7 @@ func (m *Monitor) UnlockBor(txId string, token common.Address, from common.Addre
 	m.mux.Lock()
 	defer m.mux.Unlock()
 
-	unlocked, err := m.session.TxUnlocked(txId)
+	unlocked, err := m.ethWrapper.TxUnlocked(txId)
 	if err != nil {
 		m.logger.Errorf("find txUnlocked error:%w", err)
 		return err
@@ -269,20 +252,20 @@ func (m *Monitor) UnlockBor(txId string, token common.Address, from common.Addre
 		"amount":    amount.String(),
 	}).Info("will unlock")
 
-	price, err := m.ethClient.SuggestGasPrice(context.TODO())
+	price, err := m.ethWrapper.SuggestGasPrice(context.TODO())
 	if err != nil {
 		return err
 	}
 	gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
-	m.session.TransactOpts.GasPrice = gasPrice.BigInt()
+	m.ethWrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
 
-	transaction, err := m.session.Unlock(token, from, recipient, amount, txId)
+	transaction, err := m.ethWrapper.Unlock(token, from, recipient, amount, txId)
 	if err != nil {
 		return fmt.Errorf("unlock error:%v", err)
 	}
 	var receipt *types.Receipt
 	err = retry.Retry(func(attempt uint) error {
-		receipt, err = m.ethClient.TransactionReceipt(context.TODO(), transaction.Hash())
+		receipt, err = m.ethWrapper.TransactionReceipt(context.TODO(), transaction.Hash())
 		if err != nil {
 			return err
 		}
@@ -304,7 +287,7 @@ func (m *Monitor) UnlockBor(txId string, token common.Address, from common.Addre
 }
 
 func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
-	receipt, err := m.ethClient.TransactionReceipt(context.TODO(), common.HexToHash(txId))
+	receipt, err := m.ethWrapper.TransactionReceipt(context.TODO(), common.HexToHash(txId))
 	if err != nil {
 		return nil, err
 	}
@@ -339,7 +322,7 @@ func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
 }
 
 func (m *Monitor) fetchBlockNum() uint64 {
-	header, err := m.ethClient.HeaderByNumber(context.TODO(), nil)
+	header, err := m.ethWrapper.HeaderByNumber(context.TODO(), nil)
 	if err != nil {
 		m.logger.Error(err)
 		return 0
@@ -351,7 +334,7 @@ func (m *Monitor) loadHeightFromStorage() {
 	var header *types.Header
 	var err error
 	if err = retry.Retry(func(attempt uint) error {
-		header, err = m.ethClient.HeaderByNumber(context.TODO(), nil)
+		header, err = m.ethWrapper.HeaderByNumber(context.TODO(), nil)
 		if err != nil {
 			m.logger.Errorf("HeaderByNumber error:%v", err)
 		}

@@ -5,15 +5,15 @@ APP_NAME = bridge
 APP_VERSION = 1.0.0
 
 # build with verison infos
-VERSION_DIR = github.com/boringdao/${APP_NAME}
+VERSION_DIR = main
 BUILD_DATE = $(shell date +%FT%T)
 GIT_COMMIT = $(shell git log --pretty=format:'%h' -n 1)
 GIT_BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
 
-GOLDFLAGS += -X "${VERSION_DIR}.BuildDate=${BUILD_DATE}"
-GOLDFLAGS += -X "${VERSION_DIR}.CurrentCommit=${GIT_COMMIT}"
-GOLDFLAGS += -X "${VERSION_DIR}.CurrentBranch=${GIT_BRANCH}"
-GOLDFLAGS += -X "${VERSION_DIR}.CurrentVersion=${APP_VERSION}"
+GOLDFLAGS += -X "${VERSION_DIR}.date=${BUILD_DATE}"
+GOLDFLAGS += -X "${VERSION_DIR}.commit=${GIT_COMMIT}"
+GOLDFLAGS += -X "${VERSION_DIR}.branch=${GIT_BRANCH}"
+GOLDFLAGS += -X "${VERSION_DIR}.version=${APP_VERSION}"
 
 STATIC_LDFLAGS += ${GOLDFLAGS}
 STATIC_LDFLAGS += -linkmode external -extldflags -static

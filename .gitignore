@@ -2,7 +2,6 @@
 .DS_Store
 .vscode
 a_main-packr.go
-a_repo-packr.go
 
 bin/*
 datastore
