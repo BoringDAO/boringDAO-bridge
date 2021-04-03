@@ -126,7 +126,7 @@ func (m *Monitor) listenLockEvent() {
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
-	start := m.bHeight + 1
+	start := m.bHeight
 
 	for {
 		select {
@@ -136,8 +136,8 @@ func (m *Monitor) listenLockEvent() {
 			if end < start {
 				continue
 			}
-			if end-start >= 500 {
-				end = start + 500
+			if end-start >= 2000 {
+				end = start + 2000
 			}
 			var filter *BorBSCCrossBurnIterator
 			var err error

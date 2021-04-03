@@ -126,7 +126,7 @@ func (m *Monitor) listenLockEvent() {
 	ticker := time.NewTicker(60 * time.Second)
 	defer ticker.Stop()
 
-	start := m.lHeight + 1
+	start := m.lHeight
 
 	for {
 		select {
