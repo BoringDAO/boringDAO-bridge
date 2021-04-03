@@ -177,7 +177,7 @@ func (m *Monitor) listenLockEvent() {
 			var filter *BorBSCCrossBurnIterator
 			var err error
 			err = retry.Retry(func(attempt uint) error {
-				filter, err = m.borBsc.FilterCrossBurn(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
+				filter, err = m.rpcBorBsc.FilterCrossBurn(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
 				if err != nil {
 					m.logger.Errorf("FilterCrossBurn error:%w", err)
 				}
