@@ -123,7 +123,10 @@ func (m *Monitor) listenLockEvent() {
 	for {
 		select {
 		case <-ticker.C:
-			num := m.fetchBlockNum()
+			num, err := m.fetchBlockNum()
+			if err != nil {
+				continue
+			}
 			end := num - m.minConfirms
 			if end < start {
 				continue
@@ -134,7 +137,6 @@ func (m *Monitor) listenLockEvent() {
 			}
 
 			var filter *BridgeCrossBurnIterator
-			var err error
 			err = retry.Retry(func(attempt uint) error {
 				filter, err = m.bridgeWrapper.FilterCrossBurn(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
 				if err != nil {
@@ -210,7 +212,11 @@ func (m *Monitor) handleCross(lock *BridgeCrossBurn, isHistory bool) {
 
 func (m *Monitor) confirmEvent(event types.Log) bool {
 	for {
-		num := m.fetchBlockNum()
+		num, err := m.fetchBlockNum()
+		if err != nil {
+			time.Sleep(15 * time.Second)
+			continue
+		}
 		isConfirmed := num-event.BlockNumber >= m.minConfirms
 		if !isConfirmed {
 			time.Sleep(15 * time.Second)
@@ -320,13 +326,12 @@ func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
 	return nil, fmt.Errorf("not found BridgeCrossBurn log in tx:%s", txId)
 }
 
-func (m *Monitor) fetchBlockNum() uint64 {
+func (m *Monitor) fetchBlockNum() (uint64, error) {
 	header, err := m.bridgeWrapper.HeaderByNumber(context.TODO(), nil)
 	if err != nil {
-		m.logger.Error(err)
-		return 0
+		return 0, err
 	}
-	return header.Number.Uint64()
+	return header.Number.Uint64(), nil
 }
 
 func (m *Monitor) loadHeightFromStorage() {
