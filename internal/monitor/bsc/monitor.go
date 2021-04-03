@@ -126,18 +126,23 @@ func (m *Monitor) listenLockEvent() {
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
+	start := m.bHeight + 1
+
 	for {
 		select {
 		case <-ticker.C:
 			num := m.fetchBlockNum()
 			end := num - m.minConfirms
-			if end < m.bHeight {
+			if end < start {
 				continue
+			}
+			if end-start >= 500 {
+				end = start + 500
 			}
 			var filter *BorBSCCrossBurnIterator
 			var err error
 			err = retry.Retry(func(attempt uint) error {
-				filter, err = m.bscWrapper.FilterCrossBurn(&bind.FilterOpts{Start: m.bHeight, End: &end, Context: m.ctx})
+				filter, err = m.bscWrapper.FilterCrossBurn(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
 				if err != nil {
 					m.logger.Errorf("FilterCrossBurn error:%w", err)
 				}
@@ -149,9 +154,11 @@ func (m *Monitor) listenLockEvent() {
 			for filter.Next() {
 				m.handleCross(filter.Event, true)
 			}
-			m.logger.WithFields(logrus.Fields{"start": m.bHeight, "end": end}).Infof("BorBSCCrossBurnIterator")
+			m.logger.WithFields(logrus.Fields{"start": start, "end": end}).Infof("BridgeCrossBurnIterator")
+
+			start = end + 1
 		case <-m.ctx.Done():
-			m.logger.Info("BorBSCCrossBurnIterator done")
+			m.logger.Info("BridgeCrossBurnIterator done")
 			return
 		}
 	}
