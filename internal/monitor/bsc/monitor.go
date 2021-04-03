@@ -128,6 +128,11 @@ func (m *Monitor) listenLockEvent() {
 			if end < start {
 				continue
 			}
+
+			if end-start > 2000 {
+				end = start + 2000
+			}
+
 			var filter *BridgeCrossBurnIterator
 			var err error
 			err = retry.Retry(func(attempt uint) error {

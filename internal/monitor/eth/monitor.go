@@ -128,6 +128,11 @@ func (m *Monitor) listenLockEvent() {
 			if num < m.minConfirms || end < start {
 				continue
 			}
+
+			if end-start > 2000 {
+				end = start + 2000
+			}
+
 			var filter *CrossLockLockIterator
 			var err error
 
