@@ -40,16 +40,17 @@ type Coco struct {
 }
 
 type Monitor struct {
-	bHeight     uint64
-	borBscAbi   abi.ABI
-	ethClient   *ethclient.Client
-	rpcClient   *ethclient.Client
-	topic       common.Hash
-	cocoC       chan *Coco
-	borBsc      *BorBSC
-	rpcBorBsc   *BorBSC
-	session     *BorBSCSession
+	bHeight   uint64
+	borBscAbi abi.ABI
+	//ethClient   *ethclient.Client
+	rpcClient *ethclient.Client
+	topic     common.Hash
+	cocoC     chan *Coco
+	//borBsc      *BorBSC
+	rpcBorBsc *BorBSC
+	//session     *BorBSCSession
 	rpcSession  *BorBSCSession
+	nonce       int64
 	logger      logrus.FieldLogger
 	storage     storage.Storage
 	config      *repo.Config
@@ -293,6 +294,19 @@ func (m *Monitor) CrossMint(txId string, addrFromEth common.Address, recipient c
 	gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
 	m.rpcSession.TransactOpts.GasPrice = gasPrice.BigInt()
 
+	nonce := int64(0)
+	if m.nonce == 0 {
+		pendingNonce, err := m.PendingNonce()
+		if err != nil {
+			return err
+		}
+		nonce = int64(pendingNonce)
+	} else {
+		m.nonce++
+		nonce = m.nonce
+	}
+	m.rpcSession.TransactOpts.Nonce = big.NewInt(nonce)
+
 	m.logger.WithFields(logrus.Fields{
 		"recipient": recipient.String(),
 		"amount":    amount.String(),
@@ -434,4 +448,11 @@ func (m *Monitor) PutTxID(txId string, coco *Coco) {
 		m.logger.Error(err)
 	}
 	m.storage.Put(TxKey(txId), data)
+}
+func (m *Monitor) PendingNonce() (uint64, error) {
+	nonce, err := m.rpcClient.PendingNonceAt(context.TODO(), m.address)
+	if err != nil {
+		return 0, err
+	}
+	return nonce, nil
 }
