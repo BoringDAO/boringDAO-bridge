@@ -171,6 +171,10 @@ func (m *Monitor) handleLock(lock *CrossLockLock, isHistory bool) {
 		return
 	}
 
+	if !strings.EqualFold(lock.EthToken.String(), m.config.Eth.Token) {
+		return
+	}
+
 	if m.storage.Has(TxKey(lock.Raw.TxHash.String())) {
 		return
 	}

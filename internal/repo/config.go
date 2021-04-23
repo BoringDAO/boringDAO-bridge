@@ -50,6 +50,7 @@ type Eth struct {
 	GasLimit          uint64   `toml:"gasLimit" json:"gasLimit"`
 	Height            uint64   `toml:"height" json:"height"`
 	CrossLockContract string   `toml:"crossLockContract" json:"crossLockContract"`
+	Token             string   `toml:"token" json:"token"`
 }
 
 type Bsc struct {
