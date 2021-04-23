@@ -10,6 +10,7 @@ title = "Bridge configuration file"
   gasLimit = 1500000 # gas Limit
   height = 9868259
   crossLockContract = "0xbD187d9D7403eb026Cc67a854c30205828CD5d0C" # crosslock contract address
+  token = "" # token address
 
 [bsc]
   addrs = [
