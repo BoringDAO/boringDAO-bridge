@@ -9,7 +9,7 @@ Use below command to initialize the bridge, it will create .bridge directory wit
 bridge init
 ```
 
-You can also specify another place to put the .bridge directory by --repo option:
+You can also specify another place to put the configuration file by --repo option:
 ```shell
 bridge --repo <repo> init
 ```
@@ -27,7 +27,7 @@ Open the bridge.yaml file in .bridge directory, and edit below items:
 1. **addrs**: specify the bsc rpc address this bridge will connect, you can configure more than one
 1. **minConfirms**: minimal blocks to confirm a transaction, a number not less than **15** is recommended
 1. **gasLimit**: set the default transaction gas limit
-1. **height**: set the block number at which the bridge contract is deployed
+1. **height**: set the block number at which the bor bsc contract is deployed
 1. **borBscContract**: specify the bor contract address deployed in bsc network
 
 ### 3. Start the bridge
