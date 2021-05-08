@@ -271,6 +271,12 @@ func (m *Monitor) UnlockBor(txId string, token common.Address, from common.Addre
 	gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
 	m.ethWrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
 
+	nonce, err := m.ethWrapper.NonceAt(context.TODO(), m.address)
+	if err != nil {
+		return err
+	}
+	m.ethWrapper.session.TransactOpts.Nonce = big.NewInt(int64(nonce))
+
 	transaction, err := m.ethWrapper.Unlock(token, from, recipient, amount, txId)
 	if err != nil {
 		return fmt.Errorf("unlock error:%v", err)

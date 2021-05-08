@@ -3,6 +3,9 @@ package eth
 import (
 	"context"
 	"fmt"
+	"math/big"
+	"regexp"
+
 	"github.com/boringdao/bridge/internal/repo"
 	"github.com/boringdao/bridge/pkg/kit/hexutil"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -11,8 +14,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/sirupsen/logrus"
-	"math/big"
-	"regexp"
 )
 
 type EthWrapper struct {
@@ -105,6 +106,17 @@ func (ew *EthWrapper) TxUnlocked(txId string) (bool, error) {
 func (ew *EthWrapper) SuggestGasPrice(ctx context.Context) (*big.Int, error) {
 	for {
 		result, err := ew.ethClient.SuggestGasPrice(ctx)
+		if ew.isNetworkError(err) {
+			ew.switchToNextAddr()
+			continue
+		}
+		return result, err
+	}
+}
+
+func (ew *EthWrapper) NonceAt(ctx context.Context, address common.Address) (uint64, error) {
+	for {
+		result, err := ew.ethClient.NonceAt(ctx, address, nil)
 		if ew.isNetworkError(err) {
 			ew.switchToNextAddr()
 			continue
