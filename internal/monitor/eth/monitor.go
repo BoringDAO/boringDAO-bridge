@@ -139,12 +139,12 @@ func (m *Monitor) listenLockEvent() {
 			if end < m.lHeight {
 				continue
 			}
-			if end-start >= 500 {
-				end = start + 500
+			if end-start >= 2000 {
+				end = start + 2000
 			}
 			var filter *CrossLockLockIterator
 			err = retry.Retry(func(attempt uint) error {
-				filter, err = m.ethWrapper.FilterLock(&bind.FilterOpts{Start: m.lHeight, End: &end, Context: m.ctx})
+				filter, err = m.ethWrapper.FilterLock(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
 				if err != nil {
 					m.logger.Errorf("FilterLock error:%w", err)
 				}
@@ -157,7 +157,7 @@ func (m *Monitor) listenLockEvent() {
 				m.handleLock(filter.Event, true)
 			}
 
-			m.logger.WithFields(logrus.Fields{"start": m.lHeight, "end": end}).Infof("CrossLockLockIterator")
+			m.logger.WithFields(logrus.Fields{"start": start, "end": end}).Infof("CrossLockLockIterator")
 			start = end + 1
 		case <-m.ctx.Done():
 			m.logger.Info("CrossLockLockIterator done")
