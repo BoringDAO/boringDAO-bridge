@@ -20,13 +20,11 @@ Open the bridge.yaml file in .bridge directory, and edit below items:
 #### [eth]
 1. **addrs**: specify the eth rpc address this bridge will connect, you can configure more than one
 1. **minConfirms**: minimal blocks to confirm a transaction, a number not less than **15** is recommended 
-1. **height**: set the block number at which the cross lock contract is deployed
 1. **crossLockContract**: specify the cross lock contract address deployed in eth network
 1. **token**: specify the eth token contract address which will be cross over to bsc network
 #### [bsc]
 1. **addrs**: specify the bsc rpc address this bridge will connect, you can configure more than one
 1. **minConfirms**: minimal blocks to confirm a transaction, a number not less than **15** is recommended
-1. **height**: set the block number at which the bridge contract is deployed
 1. **bridgeContract**: specify the bridge contract address deployed in bsc network
 
 ### 3. Start the bridge

@@ -6,9 +6,8 @@ title = "Bridge configuration file"
     "https://ropsten.infura.io/v3/3e8a2d2286964b62bc6b1d67c379badd",
     "https://eth-ropsten.alchemyapi.io/v2/K36BtEv6HiX4gn-b_XEB-l1mjqtm7FEI"
   ]
-  minConfirms = 5 # min confirms
+  minConfirms = 15 # min confirms
   gasLimit = 1500000 # gas Limit
-  height = 9868259
   crossLockContract = "0xbD187d9D7403eb026Cc67a854c30205828CD5d0C" # crosslock contract address
   token = "" # token address
 
@@ -17,9 +16,8 @@ title = "Bridge configuration file"
     "https://data-seed-prebsc-1-s1.binance.org:8545",
     "https://data-seed-prebsc-1-s1.binance.org:8545"
   ]
-  minConfirms = 5 # min confirms
+  minConfirms = 15 # min confirms
   gasLimit = 1500000 # gas Limit
-  height = 7240344
   bridgeContract = "0xADA4f520213C6c106385072319E2A2bDC2E8c839" # bridge contract address
 
 [log]
