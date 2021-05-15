@@ -13,6 +13,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"math/big"
 	"regexp"
+	"strings"
 )
 
 type LockWrapper struct {
@@ -177,5 +178,6 @@ func (lw *LockWrapper) isNetworkError(err error) bool {
 
 	lw.logger.Infof("check network error for %s", err.Error())
 
-	return regexp.MustCompile("Post .* EOF").MatchString(err.Error())
+	return regexp.MustCompile("Post .* EOF").MatchString(err.Error()) ||
+		strings.Contains(err.Error(), "connection reset by peer")
 }
