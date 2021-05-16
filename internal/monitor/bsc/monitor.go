@@ -163,6 +163,13 @@ func (m *Monitor) listenLockEvent() {
 
 func (m *Monitor) handleCross(lock *BridgeCrossBurn, isHistory bool) {
 	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Bsc.BridgeContract) {
+		m.logger.Debugf("ignore bsc log with contract address: %s", lock.Raw.Address.String())
+		return
+	}
+
+	token1, ok := m.config.Token[lock.Token0.String()]
+	if !ok || !strings.EqualFold(token1, lock.Token1.String()) {
+		m.logger.Debugf("ignore bsc log with token address: %s, %s", lock.Token0.String(), lock.Token1.String())
 		return
 	}
 
@@ -237,7 +244,7 @@ func (m *Monitor) HandleCocoC() chan *Coco {
 	return m.cocoC
 }
 
-func (m *Monitor) CrossMint(txId string, addrFromEth common.Address, recipient common.Address, amount *big.Int) error {
+func (m *Monitor) CrossMint(ethToken common.Address, txId string, addrFromEth common.Address, recipient common.Address, amount *big.Int) error {
 	m.mux.Lock()
 	defer m.mux.Unlock()
 
@@ -264,7 +271,7 @@ func (m *Monitor) CrossMint(txId string, addrFromEth common.Address, recipient c
 		"amount":    amount.String(),
 	}).Info("will crossMint")
 
-	transaction, err := m.bridgeWrapper.CrossMint(addrFromEth, recipient, amount, txId)
+	transaction, err := m.bridgeWrapper.CrossMint(ethToken, addrFromEth, recipient, amount, txId)
 	if err != nil {
 		return fmt.Errorf("crossMint error:%v", err)
 	}

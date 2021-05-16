@@ -114,9 +114,9 @@ func (bw *BridgeWrapper) SuggestGasPrice(ctx context.Context) (*big.Int, error) 
 	}
 }
 
-func (bw *BridgeWrapper) CrossMint(from common.Address, to common.Address, amount *big.Int, txid string) (*types.Transaction, error) {
+func (bw *BridgeWrapper) CrossMint(ethToken common.Address, from common.Address, to common.Address, amount *big.Int, txid string) (*types.Transaction, error) {
 	for {
-		result, err := bw.session.CrossMint(from, to, amount, txid)
+		result, err := bw.session.CrossMint(ethToken, from, to, amount, txid)
 		if err != nil && bw.isNetworkError(err) {
 			bw.switchToNextAddr()
 			continue
