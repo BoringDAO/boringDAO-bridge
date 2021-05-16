@@ -25,8 +25,8 @@ func Load(repoRoot string) (*Repo, error) {
 }
 
 func checkConfig(config *Config) error {
-	if config.Eth.Token == "" {
-		return fmt.Errorf("eth token is not configured")
+	if len(config.Token) == 0 {
+		return fmt.Errorf("token is not configured")
 	}
 
 	if config.Eth.CrossLockContract == "" {
@@ -38,7 +38,7 @@ func checkConfig(config *Config) error {
 	}
 
 	if config.Eth.MinConfirms < 15 {
-		return fmt.Errorf("eth minconfirms should be at least 15")
+		fmt.Println("Warning: eth minconfirms should be at least 15, please change it if it's in prod environment")
 	}
 
 	if config.Bsc.BridgeContract == "" {
@@ -50,7 +50,7 @@ func checkConfig(config *Config) error {
 	}
 
 	if config.Bsc.MinConfirms < 15 {
-		return fmt.Errorf("bsc minconfirms should be at least 15")
+		fmt.Println("Warning: bsc minconfirms should be at least 15, please change it if it's in prod environment")
 	}
 
 	return nil

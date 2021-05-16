@@ -153,10 +153,13 @@ func (m *Monitor) HandleCocoC() chan *Coco {
 
 func (m *Monitor) handleLock(lock *CrossLockLock, isHistory bool) {
 	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Eth.CrossLockContract) {
+		m.logger.Debugf("ignore eth log with contract address: %s", lock.Raw.Address.String())
 		return
 	}
 
-	if !strings.EqualFold(lock.EthToken.String(), m.config.Eth.Token) {
+	token1, ok := m.config.Token[strings.ToLower(lock.Token0.String())]
+	if !ok || !strings.EqualFold(token1, lock.Token1.String()) {
+		m.logger.Debugf("ignore eth log with token address: %s, %s", lock.Token0.String(), lock.Token1.String())
 		return
 	}
 
@@ -165,8 +168,8 @@ func (m *Monitor) handleLock(lock *CrossLockLock, isHistory bool) {
 	}
 	coco := &Coco{
 		IsHistory:   isHistory,
-		EthToken:    lock.EthToken,
-		BscToken:    lock.BscToken,
+		EthToken:    lock.Token0,
+		BscToken:    lock.Token1,
 		Sender:      lock.Locker,
 		Recipient:   lock.To,
 		Amount:      lock.Amount,
@@ -248,6 +251,7 @@ func (m *Monitor) UnlockBor(txId string, token common.Address, from common.Addre
 	)
 
 	m.lockWrapper.session.TransactOpts.Nonce = nil
+	m.lockWrapper.session.TransactOpts.GasPrice = nil
 
 	for {
 		price := m.lockWrapper.SuggestGasPrice(context.TODO())
@@ -260,7 +264,8 @@ func (m *Monitor) UnlockBor(txId string, token common.Address, from common.Addre
 			m.lockWrapper.session.TransactOpts.Nonce = big.NewInt(int64(transaction.Nonce()))
 			hashes = append(hashes, transaction.Hash())
 
-			m.logger.Infof("send UnlockBor tx %s", transaction.Hash().String())
+			m.logger.Infof("send UnlockBor tx %s with gasPrice %s and nonce %d",
+				transaction.Hash().String(), gasPrice.String(), transaction.Nonce())
 		}
 		receipt, err = m.lockWrapper.TransactionReceiptsLimitedRetry(context.TODO(), hashes)
 		if err == nil {
@@ -294,8 +299,8 @@ func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
 					continue
 				}
 				return &Coco{
-					EthToken:    lock.EthToken,
-					BscToken:    lock.BscToken,
+					EthToken:    lock.Token0,
+					BscToken:    lock.Token1,
 					Sender:      lock.Locker,
 					Recipient:   lock.To,
 					Amount:      lock.Amount,

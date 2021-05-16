@@ -158,7 +158,7 @@ func (bw *BridgeWrapper) SuggestGasPrice(ctx context.Context) *big.Int {
 	return result
 }
 
-func (bw *BridgeWrapper) CrossMint(from common.Address, to common.Address, amount *big.Int, txid string) *types.Transaction {
+func (bw *BridgeWrapper) CrossMint(ethToken common.Address, from common.Address, to common.Address, amount *big.Int, txid string) *types.Transaction {
 	var tx *types.Transaction
 	var err error
 
@@ -167,7 +167,7 @@ func (bw *BridgeWrapper) CrossMint(from common.Address, to common.Address, amoun
 		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
 		bw.session.TransactOpts.GasPrice = gasPrice.BigInt()
 
-		tx, err = bw.session.CrossMint(from, to, amount, txid)
+		tx, err = bw.session.CrossMint(ethToken, from, to, amount, txid)
 		if err != nil {
 			bw.logger.Warnf("CrossMint: %s", err.Error())
 
@@ -205,7 +205,7 @@ func (bw *BridgeWrapper) TransactionReceiptsLimitedRetry(ctx context.Context, tx
 		}
 		return err
 	}, strategy.Wait(10*time.Second), strategy.Limit(30)); err != nil {
-		bw.logger.Panic(err)
+		bw.logger.Warnf("retry TransactionReceipt: %s", err.Error())
 	}
 
 	return receipt, err
@@ -273,5 +273,6 @@ func (bw *BridgeWrapper) isNetworkError(err error) bool {
 	}
 
 	return regexp.MustCompile("Post .* EOF").MatchString(err.Error()) ||
-		strings.Contains(err.Error(), "connection reset by peer")
+		strings.Contains(err.Error(), "connection reset by peer") ||
+		strings.Contains(err.Error(), "TLS handshake timeout")
 }

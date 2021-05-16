@@ -204,7 +204,7 @@ func (lw *LockWrapper) TransactionReceiptsLimitedRetry(ctx context.Context, txHa
 		}
 		return err
 	}, strategy.Wait(10*time.Second), strategy.Limit(30)); err != nil {
-		lw.logger.Panic(err)
+		lw.logger.Warnf("retry TransactionReceipt: %s", err.Error())
 	}
 
 	return result, err
@@ -271,8 +271,7 @@ func (lw *LockWrapper) isNetworkError(err error) bool {
 		return false
 	}
 
-	lw.logger.Infof("check network error for %s", err.Error())
-
 	return regexp.MustCompile("Post .* EOF").MatchString(err.Error()) ||
-		strings.Contains(err.Error(), "connection reset by peer")
+		strings.Contains(err.Error(), "connection reset by peer") ||
+		strings.Contains(err.Error(), "TLS handshake timeout")
 }
