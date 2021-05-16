@@ -166,6 +166,11 @@ func (m *Monitor) handleCross(lock *BridgeCrossBurn, isHistory bool) {
 		return
 	}
 
+	token1, ok := m.config.Token[lock.Token0.String()]
+	if !ok || token1 != lock.Token1.String() {
+		return
+	}
+
 	if m.storage.Has(TxKey(lock.Raw.TxHash.String())) {
 		return
 	}
@@ -237,7 +242,7 @@ func (m *Monitor) HandleCocoC() chan *Coco {
 	return m.cocoC
 }
 
-func (m *Monitor) CrossMint(txId string, addrFromEth common.Address, recipient common.Address, amount *big.Int) error {
+func (m *Monitor) CrossMint(ethToken common.Address, txId string, addrFromEth common.Address, recipient common.Address, amount *big.Int) error {
 	m.mux.Lock()
 	defer m.mux.Unlock()
 
@@ -264,7 +269,7 @@ func (m *Monitor) CrossMint(txId string, addrFromEth common.Address, recipient c
 		"amount":    amount.String(),
 	}).Info("will crossMint")
 
-	transaction, err := m.bridgeWrapper.CrossMint(addrFromEth, recipient, amount, txId)
+	transaction, err := m.bridgeWrapper.CrossMint(ethToken, addrFromEth, recipient, amount, txId)
 	if err != nil {
 		return fmt.Errorf("crossMint error:%v", err)
 	}

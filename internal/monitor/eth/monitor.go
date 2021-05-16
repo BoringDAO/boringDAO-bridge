@@ -171,7 +171,8 @@ func (m *Monitor) handleLock(lock *CrossLockLock, isHistory bool) {
 		return
 	}
 
-	if !strings.EqualFold(lock.EthToken.String(), m.config.Eth.Token) {
+	token1, ok := m.config.Token[lock.Token0.String()]
+	if !ok || token1 != lock.Token1.String() {
 		return
 	}
 
@@ -180,8 +181,8 @@ func (m *Monitor) handleLock(lock *CrossLockLock, isHistory bool) {
 	}
 	coco := &Coco{
 		IsHistory:   isHistory,
-		EthToken:    lock.EthToken,
-		BscToken:    lock.BscToken,
+		EthToken:    lock.Token0,
+		BscToken:    lock.Token1,
 		Sender:      lock.Locker,
 		Recipient:   lock.To,
 		Amount:      lock.Amount,
@@ -319,8 +320,8 @@ func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
 					continue
 				}
 				return &Coco{
-					EthToken:    lock.EthToken,
-					BscToken:    lock.BscToken,
+					EthToken:    lock.Token0,
+					BscToken:    lock.Token1,
 					Sender:      lock.Locker,
 					Recipient:   lock.To,
 					Amount:      lock.Amount,

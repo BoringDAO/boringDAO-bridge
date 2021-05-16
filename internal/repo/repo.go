@@ -25,8 +25,8 @@ func Load(repoRoot string) (*Repo, error) {
 }
 
 func checkConfig(config *Config) error {
-	if config.Eth.Token == "" {
-		return fmt.Errorf("eth token is not configured")
+	if len(config.Token) == 0 {
+		return fmt.Errorf("token is not configured")
 	}
 
 	if config.Eth.CrossLockContract == "" {
