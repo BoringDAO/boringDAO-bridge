@@ -136,10 +136,10 @@ func (m *Monitor) listenLockEvent() {
 				continue
 			}
 			end := num - m.minConfirms
-			if end < m.lHeight {
+			if num < m.minConfirms || end < start {
 				continue
 			}
-			if end-start >= 2000 {
+			if end >= start+2000 {
 				end = start + 2000
 			}
 			var filter *CrossLockLockIterator
@@ -157,7 +157,7 @@ func (m *Monitor) listenLockEvent() {
 				m.handleLock(filter.Event, true)
 			}
 
-			m.logger.WithFields(logrus.Fields{"start": start, "end": end}).Infof("CrossLockLockIterator")
+			m.logger.WithFields(logrus.Fields{"start": start, "end": end, "current": num}).Infof("CrossLockLockIterator")
 			start = end + 1
 		case <-m.ctx.Done():
 			m.logger.Info("CrossLockLockIterator done")

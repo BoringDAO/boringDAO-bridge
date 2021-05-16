@@ -137,10 +137,10 @@ func (m *Monitor) listenLockEvent() {
 			}
 
 			end := num - m.minConfirms
-			if end < start {
+			if num < m.minConfirms || end < start {
 				continue
 			}
-			if end-start >= 2000 {
+			if end >= start+2000 {
 				end = start + 2000
 			}
 			var filter *BorBSCCrossBurnIterator
@@ -157,7 +157,7 @@ func (m *Monitor) listenLockEvent() {
 			for filter.Next() {
 				m.handleCross(filter.Event, true)
 			}
-			m.logger.WithFields(logrus.Fields{"start": start, "end": end}).Infof("BridgeCrossBurnIterator")
+			m.logger.WithFields(logrus.Fields{"start": start, "end": end, "current": num}).Infof("BridgeCrossBurnIterator")
 
 			start = end + 1
 		case <-m.ctx.Done():
