@@ -3,6 +3,8 @@ package bsc
 import (
 	"context"
 	"fmt"
+	"github.com/Rican7/retry"
+	"github.com/Rican7/retry/strategy"
 	"github.com/boringdao/bridge/internal/repo"
 	"github.com/boringdao/bridge/pkg/kit/hexutil"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -10,10 +12,12 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"math/big"
 	"regexp"
 	"strings"
+	"time"
 )
 
 type BridgeWrapper struct {
@@ -70,70 +74,139 @@ func NewBridgeWrapper(config *repo.Bsc, logger logrus.FieldLogger) (*BridgeWrapp
 	}, nil
 }
 
-func (bw *BridgeWrapper) HeaderByNumber(ctx context.Context, number *big.Int) (*types.Header, error) {
-	for {
-		header, err := bw.ethClient.HeaderByNumber(ctx, number)
-		if bw.isNetworkError(err) {
-			bw.switchToNextAddr()
-			continue
+func (bw *BridgeWrapper) HeaderByNumber(ctx context.Context, number *big.Int) *types.Header {
+	var header *types.Header
+	var err error
+
+	if err := retry.Retry(func(attempt uint) error {
+		header, err = bw.ethClient.HeaderByNumber(ctx, number)
+		if err != nil {
+			bw.logger.Warnf("HeaderByNumber: %s", err.Error())
+
+			if bw.isNetworkError(err) {
+				bw.switchToNextAddr()
+			}
 		}
-		return header, err
+		return err
+	}, strategy.Wait(10*time.Second)); err != nil {
+		bw.logger.Panic(err)
 	}
+
+	return header
 }
 
-func (bw *BridgeWrapper) FilterCrossBurn(opts *bind.FilterOpts) (*BridgeCrossBurnIterator, error) {
-	for {
-		itrator, err := bw.bridge.FilterCrossBurn(opts)
-		if bw.isNetworkError(err) {
-			bw.switchToNextAddr()
-			continue
+func (bw *BridgeWrapper) FilterCrossBurn(opts *bind.FilterOpts) *BridgeCrossBurnIterator {
+	var iterator *BridgeCrossBurnIterator
+	var err error
+
+	if err := retry.Retry(func(attempt uint) error {
+		iterator, err = bw.bridge.FilterCrossBurn(opts)
+		if err != nil {
+			bw.logger.Warnf("FilterCrossBurn: %s", err.Error())
+
+			if bw.isNetworkError(err) {
+				bw.switchToNextAddr()
+			}
 		}
-		return itrator, err
+		return err
+	}, strategy.Wait(10*time.Second)); err != nil {
+		bw.logger.Panic(err)
 	}
+
+	return iterator
 }
 
-func (bw *BridgeWrapper) TxMinted(txId string) (bool, error) {
-	for {
-		result, err := bw.session.TxMinted(txId)
-		if bw.isNetworkError(err) {
-			bw.switchToNextAddr()
-			continue
+func (bw *BridgeWrapper) TxMinted(txId string) bool {
+	var unlocked bool
+	var err error
+
+	if err := retry.Retry(func(attempt uint) error {
+		unlocked, err = bw.session.TxMinted(txId)
+		if err != nil {
+			bw.logger.Warnf("TxMinted: %s", err.Error())
+
+			if bw.isNetworkError(err) {
+				bw.switchToNextAddr()
+			}
 		}
-		return result, err
+		return err
+	}, strategy.Wait(10*time.Second)); err != nil {
+		bw.logger.Panic(err)
 	}
+
+	return unlocked
 }
 
-func (bw *BridgeWrapper) SuggestGasPrice(ctx context.Context) (*big.Int, error) {
-	for {
-		result, err := bw.ethClient.SuggestGasPrice(ctx)
-		if bw.isNetworkError(err) {
-			bw.switchToNextAddr()
-			continue
+func (bw *BridgeWrapper) SuggestGasPrice(ctx context.Context) *big.Int {
+	var result *big.Int
+	var err error
+
+	if err := retry.Retry(func(attempt uint) error {
+		result, err = bw.ethClient.SuggestGasPrice(ctx)
+		if err != nil {
+			bw.logger.Warnf("SuggestGasPrice: %s", err.Error())
+
+			if bw.isNetworkError(err) {
+				bw.switchToNextAddr()
+			}
 		}
-		return result, err
+		return err
+	}, strategy.Wait(10*time.Second)); err != nil {
+		bw.logger.Panic(err)
 	}
+
+	return result
 }
 
 func (bw *BridgeWrapper) CrossMint(from common.Address, to common.Address, amount *big.Int, txid string) (*types.Transaction, error) {
-	for {
-		result, err := bw.session.CrossMint(from, to, amount, txid)
-		if err != nil && bw.isNetworkError(err) {
-			bw.switchToNextAddr()
-			continue
+	var tx *types.Transaction
+	var err error
+
+	if err := retry.Retry(func(attempt uint) error {
+		price := bw.SuggestGasPrice(context.TODO())
+		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
+		bw.session.TransactOpts.GasPrice = gasPrice.BigInt()
+
+		tx, err = bw.session.CrossMint(from, to, amount, txid)
+		if err != nil {
+			bw.logger.Warnf("CrossMint: %s", err.Error())
+
+			if bw.isNetworkError(err) {
+				bw.switchToNextAddr()
+				return err
+			}
+
+			if strings.Contains(err.Error(), "transaction underpriced") {
+				return err
+			}
 		}
-		return result, err
+		return nil
+	}, strategy.Wait(10*time.Second)); err != nil {
+		bw.logger.Panic(err)
 	}
+
+	return tx, err
 }
 
-func (bw *BridgeWrapper) TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error) {
-	for {
-		result, err := bw.ethClient.TransactionReceipt(ctx, txHash)
-		if bw.isNetworkError(err) {
-			bw.switchToNextAddr()
-			continue
+func (bw *BridgeWrapper) TransactionReceipt(ctx context.Context, txHash common.Hash) *types.Receipt {
+	var receipt *types.Receipt
+	var err error
+
+	if err := retry.Retry(func(attempt uint) error {
+		receipt, err = bw.ethClient.TransactionReceipt(ctx, txHash)
+		if err != nil {
+			bw.logger.Warnf("TransactionReceipt: %s", err.Error())
+
+			if bw.isNetworkError(err) {
+				bw.switchToNextAddr()
+			}
 		}
-		return result, err
+		return err
+	}, strategy.Wait(10*time.Second)); err != nil {
+		bw.logger.Panic(err)
 	}
+
+	return receipt
 }
 
 func (bw *BridgeWrapper) switchToNextAddr() {
@@ -175,8 +248,6 @@ func (bw *BridgeWrapper) isNetworkError(err error) bool {
 	if err == nil {
 		return false
 	}
-
-	bw.logger.Infof("check network error for %s", err.Error())
 
 	return regexp.MustCompile("Post .* EOF").MatchString(err.Error()) ||
 		strings.Contains(err.Error(), "connection reset by peer")
