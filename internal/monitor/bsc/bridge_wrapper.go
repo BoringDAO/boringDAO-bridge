@@ -158,7 +158,7 @@ func (bw *BridgeWrapper) SuggestGasPrice(ctx context.Context) *big.Int {
 	return result
 }
 
-func (bw *BridgeWrapper) CrossMint(from common.Address, to common.Address, amount *big.Int, txid string) (*types.Transaction, error) {
+func (bw *BridgeWrapper) CrossMint(from common.Address, to common.Address, amount *big.Int, txid string) *types.Transaction {
 	var tx *types.Transaction
 	var err error
 
@@ -175,17 +175,40 @@ func (bw *BridgeWrapper) CrossMint(from common.Address, to common.Address, amoun
 				bw.switchToNextAddr()
 				return err
 			}
-
-			if strings.Contains(err.Error(), "transaction underpriced") {
-				return err
-			}
 		}
-		return nil
+		return err
 	}, strategy.Wait(10*time.Second)); err != nil {
 		bw.logger.Panic(err)
 	}
 
-	return tx, err
+	return tx
+}
+
+func (bw *BridgeWrapper) TransactionReceiptsLimitedRetry(ctx context.Context, txHashes []common.Hash) (*types.Receipt, error) {
+	var receipt *types.Receipt
+	var err error
+
+	if err := retry.Retry(func(attempt uint) error {
+		for _, txHash := range txHashes {
+			receipt, err = bw.ethClient.TransactionReceipt(ctx, txHash)
+			if err != nil {
+				bw.logger.Warnf("TransactionReceipt: %s", err.Error())
+
+				if bw.isNetworkError(err) {
+					bw.switchToNextAddr()
+				}
+			}
+
+			if err == nil {
+				return nil
+			}
+		}
+		return err
+	}, strategy.Wait(10*time.Second), strategy.Limit(30)); err != nil {
+		bw.logger.Panic(err)
+	}
+
+	return receipt, err
 }
 
 func (bw *BridgeWrapper) TransactionReceipt(ctx context.Context, txHash common.Hash) *types.Receipt {

@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"github.com/shopspring/decimal"
 	"math/big"
 	"strings"
 	"sync"
@@ -231,12 +232,35 @@ func (m *Monitor) CrossMint(txId string, addrFromEth common.Address, recipient c
 		"amount":    amount.String(),
 	}).Info("will crossMint")
 
-	transaction, err := m.bridgeWrapper.CrossMint(addrFromEth, recipient, amount, txId)
-	if err != nil {
-		return fmt.Errorf("crossMint error:%v", err)
+	var (
+		transaction *types.Transaction
+		receipt     *types.Receipt
+		err         error
+		hashes      []common.Hash
+	)
+
+	m.bridgeWrapper.session.TransactOpts.Nonce = nil
+
+	for {
+		price := m.bridgeWrapper.SuggestGasPrice(context.TODO())
+		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
+		if m.bridgeWrapper.session.TransactOpts.GasPrice == nil ||
+			gasPrice.BigInt().Cmp(m.bridgeWrapper.session.TransactOpts.GasPrice) == 1 {
+			m.bridgeWrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
+
+			transaction = m.bridgeWrapper.CrossMint(addrFromEth, recipient, amount, txId)
+			m.bridgeWrapper.session.TransactOpts.Nonce = big.NewInt(int64(transaction.Nonce()))
+			hashes = append(hashes, transaction.Hash())
+
+			m.logger.Infof("send CrossMint tx %s", transaction.Hash().String())
+		}
+
+		receipt, err = m.bridgeWrapper.TransactionReceiptsLimitedRetry(context.TODO(), hashes)
+		if err == nil {
+			break
+		}
 	}
 
-	receipt := m.bridgeWrapper.TransactionReceipt(context.TODO(), transaction.Hash())
 	if receipt.Status == 1 {
 		m.logger.WithField("tx_hash", transaction.Hash().String()).Info("crossMint success")
 	} else {

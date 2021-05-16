@@ -158,7 +158,7 @@ func (lw *LockWrapper) SuggestGasPrice(ctx context.Context) *big.Int {
 	return result
 }
 
-func (lw *LockWrapper) Unlock(token common.Address, from common.Address, to common.Address, amount *big.Int, txid string) (*types.Transaction, error) {
+func (lw *LockWrapper) Unlock(token common.Address, from common.Address, to common.Address, amount *big.Int, txid string) *types.Transaction {
 	var result *types.Transaction
 	var err error
 
@@ -175,12 +175,35 @@ func (lw *LockWrapper) Unlock(token common.Address, from common.Address, to comm
 				lw.switchToNextAddr()
 			}
 
-			if strings.Contains(err.Error(), "transaction underpriced") {
-				return err
+		}
+		return err
+	}, strategy.Wait(10*time.Second)); err != nil {
+		lw.logger.Panic(err)
+	}
+
+	return result
+}
+
+func (lw *LockWrapper) TransactionReceiptsLimitedRetry(ctx context.Context, txHashes []common.Hash) (*types.Receipt, error) {
+	var result *types.Receipt
+	var err error
+
+	if err := retry.Retry(func(attempt uint) error {
+		for _, txHash := range txHashes {
+			result, err = lw.ethClient.TransactionReceipt(ctx, txHash)
+			if err != nil {
+				lw.logger.Warnf("TransactionReceipt: %s", err.Error())
+
+				if lw.isNetworkError(err) {
+					lw.switchToNextAddr()
+				}
+			}
+			if err == nil {
+				return nil
 			}
 		}
-		return nil
-	}, strategy.Wait(10*time.Second)); err != nil {
+		return err
+	}, strategy.Wait(10*time.Second), strategy.Limit(30)); err != nil {
 		lw.logger.Panic(err)
 	}
 

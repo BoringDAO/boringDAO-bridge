@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"github.com/shopspring/decimal"
 	"math/big"
 	"strings"
 	"sync"
@@ -239,16 +240,38 @@ func (m *Monitor) UnlockBor(txId string, token common.Address, from common.Addre
 		"amount":    amount.String(),
 	}).Info("will unlock")
 
-	transaction, err := m.lockWrapper.Unlock(token, from, recipient, amount, txId)
-	if err != nil {
-		return fmt.Errorf("unlock error:%v", err)
+	var (
+		transaction *types.Transaction
+		receipt     *types.Receipt
+		err         error
+		hashes      []common.Hash
+	)
+
+	m.lockWrapper.session.TransactOpts.Nonce = nil
+
+	for {
+		price := m.lockWrapper.SuggestGasPrice(context.TODO())
+		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
+		if m.lockWrapper.session.TransactOpts.GasPrice == nil ||
+			gasPrice.BigInt().Cmp(m.lockWrapper.session.TransactOpts.GasPrice) == 1 {
+			m.lockWrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
+
+			transaction = m.lockWrapper.Unlock(token, from, recipient, amount, txId)
+			m.lockWrapper.session.TransactOpts.Nonce = big.NewInt(int64(transaction.Nonce()))
+			hashes = append(hashes, transaction.Hash())
+
+			m.logger.Infof("send UnlockBor tx %s", transaction.Hash().String())
+		}
+		receipt, err = m.lockWrapper.TransactionReceiptsLimitedRetry(context.TODO(), hashes)
+		if err == nil {
+			break
+		}
 	}
 
-	receipt := m.lockWrapper.TransactionReceipt(context.TODO(), transaction.Hash())
 	if receipt.Status == 1 {
-		m.logger.WithField("tx_hash", transaction.Hash().String()).Info("unlock success")
+		m.logger.WithField("tx_hash", receipt.TxHash.String()).Info("unlock success")
 	} else {
-		return fmt.Errorf("unlock fail:%s", transaction.Hash().String())
+		return fmt.Errorf("unlock fail:%s", receipt.TxHash.String())
 	}
 	return nil
 }
