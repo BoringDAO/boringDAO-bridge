@@ -6,13 +6,12 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"github.com/shopspring/decimal"
 	"math/big"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/Rican7/retry"
-	"github.com/Rican7/retry/strategy"
 	"github.com/boringdao/bridge/internal/repo"
 	"github.com/boringdao/bridge/pkg/kit/hexutil"
 	"github.com/boringdao/bridge/pkg/storage"
@@ -22,8 +21,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/pkg/errors"
-	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 )
 
@@ -123,10 +120,7 @@ func (m *Monitor) listenLockEvent() {
 	for {
 		select {
 		case <-ticker.C:
-			num, err := m.fetchBlockNum()
-			if err != nil {
-				continue
-			}
+			num := m.fetchBlockNum()
 			end := num - m.minConfirms
 			if end < start {
 				continue
@@ -136,17 +130,7 @@ func (m *Monitor) listenLockEvent() {
 				end = start + 2000
 			}
 
-			var filter *BridgeCrossBurnIterator
-			err = retry.Retry(func(attempt uint) error {
-				filter, err = m.bridgeWrapper.FilterCrossBurn(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
-				if err != nil {
-					m.logger.Errorf("FilterCrossBurn error:%w", err)
-				}
-				return err
-			}, strategy.Wait(3*time.Second))
-			if err != nil {
-				m.logger.Error(err)
-			}
+			filter := m.bridgeWrapper.FilterCrossBurn(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
 			for filter.Next() {
 				m.handleCross(filter.Event, true)
 			}
@@ -212,11 +196,7 @@ func (m *Monitor) handleCross(lock *BridgeCrossBurn, isHistory bool) {
 
 func (m *Monitor) confirmEvent(event types.Log) bool {
 	for {
-		num, err := m.fetchBlockNum()
-		if err != nil {
-			time.Sleep(15 * time.Second)
-			continue
-		}
+		num := m.fetchBlockNum()
 		isConfirmed := num-event.BlockNumber >= m.minConfirms
 		if !isConfirmed {
 			time.Sleep(15 * time.Second)
@@ -241,46 +221,44 @@ func (m *Monitor) CrossMint(txId string, addrFromEth common.Address, recipient c
 	m.mux.Lock()
 	defer m.mux.Unlock()
 
-	unlocked, err := m.bridgeWrapper.TxMinted(txId)
-	if err != nil {
-		m.logger.Errorf("find TxMinted error:%w", err)
-		return err
-	}
-
+	unlocked := m.bridgeWrapper.TxMinted(txId)
 	if unlocked {
 		m.logger.Infof("find TxMinted eth txId:%s", txId)
 		return nil
 	}
-
-	price, err := m.bridgeWrapper.SuggestGasPrice(context.TODO())
-	if err != nil {
-		return err
-	}
-	gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
-	m.bridgeWrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
 
 	m.logger.WithFields(logrus.Fields{
 		"recipient": recipient.String(),
 		"amount":    amount.String(),
 	}).Info("will crossMint")
 
-	transaction, err := m.bridgeWrapper.CrossMint(addrFromEth, recipient, amount, txId)
-	if err != nil {
-		return fmt.Errorf("crossMint error:%v", err)
-	}
-	var receipt *types.Receipt
-	err = retry.Retry(func(attempt uint) error {
-		receipt, err = m.bridgeWrapper.TransactionReceipt(context.TODO(), transaction.Hash())
-		if err != nil {
-			return err
+	var (
+		transaction *types.Transaction
+		receipt     *types.Receipt
+		err         error
+		hashes      []common.Hash
+	)
+
+	m.bridgeWrapper.session.TransactOpts.Nonce = nil
+
+	for {
+		price := m.bridgeWrapper.SuggestGasPrice(context.TODO())
+		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
+		if m.bridgeWrapper.session.TransactOpts.GasPrice == nil ||
+			gasPrice.BigInt().Cmp(m.bridgeWrapper.session.TransactOpts.GasPrice) == 1 {
+			m.bridgeWrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
+
+			transaction = m.bridgeWrapper.CrossMint(addrFromEth, recipient, amount, txId)
+			m.bridgeWrapper.session.TransactOpts.Nonce = big.NewInt(int64(transaction.Nonce()))
+			hashes = append(hashes, transaction.Hash())
+
+			m.logger.Infof("send CrossMint tx %s", transaction.Hash().String())
 		}
-		if receipt == nil {
-			return errors.Errorf("%s not found receipt", transaction.Hash().String())
+
+		receipt, err = m.bridgeWrapper.TransactionReceiptsLimitedRetry(context.TODO(), hashes)
+		if err == nil {
+			break
 		}
-		return nil
-	}, strategy.Wait(10*time.Second))
-	if err != nil {
-		m.logger.Error(err)
 	}
 
 	if receipt.Status == 1 {
@@ -288,14 +266,12 @@ func (m *Monitor) CrossMint(txId string, addrFromEth common.Address, recipient c
 	} else {
 		return fmt.Errorf("crossMint fail:%s", transaction.Hash().String())
 	}
+
 	return nil
 }
 
 func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
-	receipt, err := m.bridgeWrapper.TransactionReceipt(context.TODO(), common.HexToHash(txId))
-	if err != nil {
-		return nil, err
-	}
+	receipt := m.bridgeWrapper.TransactionReceipt(context.TODO(), common.HexToHash(txId))
 	for _, log := range receipt.Logs {
 		if !strings.EqualFold(log.Address.String(), m.config.Bsc.BridgeContract) {
 			continue
@@ -326,31 +302,18 @@ func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
 	return nil, fmt.Errorf("not found BridgeCrossBurn log in tx:%s", txId)
 }
 
-func (m *Monitor) fetchBlockNum() (uint64, error) {
-	header, err := m.bridgeWrapper.HeaderByNumber(context.TODO(), nil)
-	if err != nil {
-		return 0, err
-	}
-	return header.Number.Uint64(), nil
+func (m *Monitor) fetchBlockNum() uint64 {
+	header := m.bridgeWrapper.HeaderByNumber(context.TODO(), nil)
+	return header.Number.Uint64()
 }
 
 func (m *Monitor) loadHeightFromStorage() {
-	var header *types.Header
-	var err error
-	if err = retry.Retry(func(attempt uint) error {
-		header, err = m.bridgeWrapper.HeaderByNumber(context.TODO(), nil)
-		if err != nil {
-			m.logger.Errorf("HeaderByNumber error:%v", err)
-		}
-		return err
-	}, strategy.Wait(3*time.Second)); err != nil {
-		m.logger.Error(err)
-	}
+	height := m.fetchBlockNum()
 
 	// load block height
 	b := m.storage.Get(bHeightKey())
 	if b == nil {
-		m.bHeight = header.Number.Uint64() - m.minConfirms
+		m.bHeight = height - m.minConfirms
 		if m.config.Bsc.Height != 0 && m.config.Bsc.Height < m.bHeight {
 			m.bHeight = m.config.Bsc.Height
 		}

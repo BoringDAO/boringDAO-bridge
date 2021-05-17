@@ -6,13 +6,12 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"github.com/shopspring/decimal"
 	"math/big"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/Rican7/retry"
-	"github.com/Rican7/retry/strategy"
 	"github.com/boringdao/bridge/internal/repo"
 	"github.com/boringdao/bridge/pkg/kit/hexutil"
 	"github.com/boringdao/bridge/pkg/storage"
@@ -22,8 +21,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/pkg/errors"
-	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 )
 
@@ -123,10 +120,7 @@ func (m *Monitor) listenLockEvent() {
 	for {
 		select {
 		case <-ticker.C:
-			num, err := m.fetchBlockNum()
-			if err != nil {
-				continue
-			}
+			num := m.fetchBlockNum()
 			end := num - m.minConfirms
 			if num < m.minConfirms || end < start {
 				continue
@@ -136,18 +130,9 @@ func (m *Monitor) listenLockEvent() {
 				end = start + 2000
 			}
 
-			var filter *CrossLockLockIterator
 			m.logger.WithFields(logrus.Fields{"start": start, "end": end}).Infof("CrossLockLockIterator start")
-			err = retry.Retry(func(attempt uint) error {
-				filter, err = m.lockWrapper.FilterLock(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
-				if err != nil {
-					m.logger.Errorf("FilterLock error:%w", err)
-				}
-				return err
-			}, strategy.Wait(3*time.Second))
-			if err != nil {
-				m.logger.Error(err)
-			}
+
+			filter := m.lockWrapper.FilterLock(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
 			for filter.Next() {
 				m.handleLock(filter.Event, true)
 			}
@@ -219,11 +204,7 @@ func (m *Monitor) handleLock(lock *CrossLockLock, isHistory bool) {
 
 func (m *Monitor) confirmEvent(event types.Log) bool {
 	for {
-		num, err := m.fetchBlockNum()
-		if err != nil {
-			time.Sleep(15 * time.Second)
-			continue
-		}
+		num := m.fetchBlockNum()
 		isConfirmed := num-event.BlockNumber >= m.minConfirms
 		if !isConfirmed {
 			time.Sleep(15 * time.Second)
@@ -245,12 +226,7 @@ func (m *Monitor) UnlockBor(txId string, token common.Address, from common.Addre
 	m.mux.Lock()
 	defer m.mux.Unlock()
 
-	unlocked, err := m.lockWrapper.TxUnlocked(txId)
-	if err != nil {
-		m.logger.Errorf("find txUnlocked error:%w", err)
-		return err
-	}
-
+	unlocked := m.lockWrapper.TxUnlocked(txId)
 	if unlocked {
 		m.logger.Infof("find txUnlocked bsc txId:%s", txId)
 		return nil
@@ -264,45 +240,44 @@ func (m *Monitor) UnlockBor(txId string, token common.Address, from common.Addre
 		"amount":    amount.String(),
 	}).Info("will unlock")
 
-	price, err := m.lockWrapper.SuggestGasPrice(context.TODO())
-	if err != nil {
-		return err
-	}
-	gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
-	m.lockWrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
+	var (
+		transaction *types.Transaction
+		receipt     *types.Receipt
+		err         error
+		hashes      []common.Hash
+	)
 
-	transaction, err := m.lockWrapper.Unlock(token, from, recipient, amount, txId)
-	if err != nil {
-		return fmt.Errorf("unlock error:%v", err)
-	}
-	var receipt *types.Receipt
-	err = retry.Retry(func(attempt uint) error {
-		receipt, err = m.lockWrapper.TransactionReceipt(context.TODO(), transaction.Hash())
-		if err != nil {
-			return err
+	m.lockWrapper.session.TransactOpts.Nonce = nil
+
+	for {
+		price := m.lockWrapper.SuggestGasPrice(context.TODO())
+		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
+		if m.lockWrapper.session.TransactOpts.GasPrice == nil ||
+			gasPrice.BigInt().Cmp(m.lockWrapper.session.TransactOpts.GasPrice) == 1 {
+			m.lockWrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
+
+			transaction = m.lockWrapper.Unlock(token, from, recipient, amount, txId)
+			m.lockWrapper.session.TransactOpts.Nonce = big.NewInt(int64(transaction.Nonce()))
+			hashes = append(hashes, transaction.Hash())
+
+			m.logger.Infof("send UnlockBor tx %s", transaction.Hash().String())
 		}
-		if receipt == nil {
-			return errors.Errorf("%s not found receipt", transaction.Hash().String())
+		receipt, err = m.lockWrapper.TransactionReceiptsLimitedRetry(context.TODO(), hashes)
+		if err == nil {
+			break
 		}
-		return nil
-	}, strategy.Wait(10*time.Second))
-	if err != nil {
-		m.logger.Error(err)
 	}
 
 	if receipt.Status == 1 {
-		m.logger.WithField("tx_hash", transaction.Hash().String()).Info("unlock success")
+		m.logger.WithField("tx_hash", receipt.TxHash.String()).Info("unlock success")
 	} else {
-		return fmt.Errorf("unlock fail:%s", transaction.Hash().String())
+		return fmt.Errorf("unlock fail:%s", receipt.TxHash.String())
 	}
 	return nil
 }
 
 func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
-	receipt, err := m.lockWrapper.TransactionReceipt(context.TODO(), common.HexToHash(txId))
-	if err != nil {
-		return nil, err
-	}
+	receipt := m.lockWrapper.TransactionReceipt(context.TODO(), common.HexToHash(txId))
 	for _, log := range receipt.Logs {
 		if !strings.EqualFold(log.Address.String(), m.config.Eth.CrossLockContract) {
 			continue
@@ -333,32 +308,17 @@ func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
 	return nil, fmt.Errorf("not found Lock log in tx:%s", txId)
 }
 
-func (m *Monitor) fetchBlockNum() (uint64, error) {
-	header, err := m.lockWrapper.HeaderByNumber(context.TODO(), nil)
-	if err != nil {
-		m.logger.Error(err)
-		return 0, err
-	}
-	return header.Number.Uint64(), nil
+func (m *Monitor) fetchBlockNum() uint64 {
+	header := m.lockWrapper.HeaderByNumber(context.TODO(), nil)
+	return header.Number.Uint64()
 }
 
 func (m *Monitor) loadHeightFromStorage() {
-	var header *types.Header
-	var err error
-	if err = retry.Retry(func(attempt uint) error {
-		header, err = m.lockWrapper.HeaderByNumber(context.TODO(), nil)
-		if err != nil {
-			m.logger.Errorf("HeaderByNumber error:%v", err)
-		}
-		return err
-	}, strategy.Wait(3*time.Second)); err != nil {
-		m.logger.Error(err)
-	}
-
+	height := m.fetchBlockNum()
 	// load block height
 	b := m.storage.Get(lHeightKey())
 	if b == nil {
-		m.lHeight = header.Number.Uint64() - m.minConfirms
+		m.lHeight = height - m.minConfirms
 		if m.config.Eth.Height != 0 && m.config.Eth.Height < m.lHeight {
 			m.lHeight = m.config.Eth.Height
 		}
