@@ -34,6 +34,7 @@ type Coco struct {
 	BlockHeight uint64         `json:"block_height"`
 	EthToken    common.Address `json:"eth_token"`
 	BscToken    common.Address `json:"bsc_token"`
+	ChainID     *big.Int       `json:"chain_id"`
 }
 
 type Monitor struct {
@@ -168,6 +169,7 @@ func (m *Monitor) handleCross(lock *BridgeCrossBurn, isHistory bool) {
 		Amount:      lock.Amount,
 		EthToken:    lock.Token0,
 		BscToken:    lock.Token1,
+		ChainID:     lock.ChainID,
 		TxId:        lock.Raw.TxHash.String(),
 		BlockHeight: lock.Raw.BlockNumber,
 	}
@@ -177,6 +179,7 @@ func (m *Monitor) handleCross(lock *BridgeCrossBurn, isHistory bool) {
 		"Recipient":    coco.Recipient.String(),
 		"EthToken":     coco.EthToken.String(),
 		"BscToken":     coco.BscToken.String(),
+		"ChainID":      coco.ChainID.String(),
 		"amount":       coco.Amount.String(),
 		"txId":         lock.Raw.TxHash.String(),
 		"block_height": lock.Raw.BlockNumber,
@@ -302,6 +305,7 @@ func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
 					Amount:      lock.Amount,
 					EthToken:    lock.Token0,
 					BscToken:    lock.Token1,
+					ChainID:     lock.ChainID,
 					TxId:        log.TxHash.String(),
 					BlockHeight: receipt.BlockNumber.Uint64(),
 				}, nil

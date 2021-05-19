@@ -31,6 +31,7 @@ type Coco struct {
 	Amount      *big.Int       `json:"amount"`
 	EthToken    common.Address `json:"eth_token"`
 	BscToken    common.Address `json:"bsc_token"`
+	ChainID     *big.Int       `json:"chain_id"`
 	TxId        string         `json:"tx_id"`
 	BlockHeight uint64         `json:"block_height"`
 }
@@ -170,6 +171,7 @@ func (m *Monitor) handleLock(lock *CrossLockLock, isHistory bool) {
 		IsHistory:   isHistory,
 		EthToken:    lock.Token0,
 		BscToken:    lock.Token1,
+		ChainID:     lock.ChainID,
 		Sender:      lock.Locker,
 		Recipient:   lock.To,
 		Amount:      lock.Amount,
@@ -225,7 +227,7 @@ func (m *Monitor) confirmEvent(event types.Log) bool {
 	}
 }
 
-func (m *Monitor) UnlockBor(txId string, token common.Address, from common.Address, recipient common.Address, amount *big.Int) error {
+func (m *Monitor) UnlockBor(txId string, token common.Address, chainId *big.Int, from common.Address, recipient common.Address, amount *big.Int) error {
 	m.mux.Lock()
 	defer m.mux.Unlock()
 
@@ -238,6 +240,7 @@ func (m *Monitor) UnlockBor(txId string, token common.Address, from common.Addre
 	m.logger.WithFields(logrus.Fields{
 		"tx_id":     txId,
 		"token":     token.String(),
+		"chainID":   chainId.String(),
 		"sender":    from.String(),
 		"recipient": recipient.String(),
 		"amount":    amount.String(),
@@ -260,7 +263,7 @@ func (m *Monitor) UnlockBor(txId string, token common.Address, from common.Addre
 			gasPrice.BigInt().Cmp(m.lockWrapper.session.TransactOpts.GasPrice) == 1 {
 			m.lockWrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
 
-			transaction = m.lockWrapper.Unlock(token, from, recipient, amount, txId)
+			transaction = m.lockWrapper.Unlock(token, chainId, from, recipient, amount, txId)
 			m.lockWrapper.session.TransactOpts.Nonce = big.NewInt(int64(transaction.Nonce()))
 			hashes = append(hashes, transaction.Hash())
 
@@ -301,6 +304,7 @@ func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
 				return &Coco{
 					EthToken:    lock.Token0,
 					BscToken:    lock.Token1,
+					ChainID:     lock.ChainID,
 					Sender:      lock.Locker,
 					Recipient:   lock.To,
 					Amount:      lock.Amount,

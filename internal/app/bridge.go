@@ -126,7 +126,7 @@ func (b *Bridge) listenBscCocoC() {
 					return
 				}
 
-				err := b.ethMnt.UnlockBor(coco.TxId, coco.EthToken, coco.Sender, coco.Recipient, coco.Amount)
+				err := b.ethMnt.UnlockBor(coco.TxId, coco.EthToken, coco.ChainID, coco.Sender, coco.Recipient, coco.Amount)
 				if err != nil {
 					b.logger.Panic(err)
 				}
