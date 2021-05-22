@@ -1,4 +1,4 @@
-package bsc
+package bsc_okex
 
 import (
 	"bytes"
@@ -6,12 +6,12 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"github.com/shopspring/decimal"
 	"math/big"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/boringdao/bridge/internal/monitor/bridge"
 	"github.com/boringdao/bridge/internal/repo"
 	"github.com/boringdao/bridge/pkg/kit/hexutil"
 	"github.com/boringdao/bridge/pkg/storage"
@@ -21,31 +21,19 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 )
-
-type Coco struct {
-	IsHistory   bool           `json:"isHistory"`
-	Coin        string         `json:"coin"`
-	Sender      common.Address `json:"sender"`
-	Recipient   common.Address `json:"recipient"`
-	Amount      *big.Int       `json:"amount"`
-	TxId        string         `json:"tx_id"`
-	BlockHeight uint64         `json:"block_height"`
-	EthToken    common.Address `json:"eth_token"`
-	BscToken    common.Address `json:"bsc_token"`
-	ChainID     *big.Int       `json:"chain_id"`
-}
 
 type Monitor struct {
 	bHeight       uint64
 	bridgeAbi     abi.ABI
 	topic         common.Hash
-	cocoC         chan *Coco
+	cocoC         chan *bridge.Coco
 	bridgeWrapper *BridgeWrapper
 	logger        logrus.FieldLogger
 	storage       storage.Storage
-	config        *repo.Config
+	config        *repo.BridgeConfig
 	minConfirms   uint64
 	mux           sync.Mutex
 	bridgeAddr    common.Address
@@ -55,14 +43,14 @@ type Monitor struct {
 	cancel context.CancelFunc
 }
 
-func New(config *repo.Config, logger logrus.FieldLogger) (*Monitor, error) {
-	storagePath := repo.GetStoragePath(config.RepoRoot, "bsc")
-	ethStorage, err := leveldb.New(storagePath)
+func New(repoRoot string, config *repo.BridgeConfig, logger logrus.FieldLogger) (*Monitor, error) {
+	storagePath := repo.GetStoragePath(repoRoot, fmt.Sprintf("bridge_%d", config.ChainID))
+	storage, err := leveldb.New(storagePath)
 	if err != nil {
 		return nil, err
 	}
 
-	privKey, err := crypto.ToECDSA(hexutil.Decode(config.Bsc.PrivKey))
+	privKey, err := crypto.ToECDSA(hexutil.Decode(config.PrivKey))
 	if err != nil {
 		return nil, err
 	}
@@ -70,11 +58,11 @@ func New(config *repo.Config, logger logrus.FieldLogger) (*Monitor, error) {
 	address := crypto.PubkeyToAddress(privKey.PublicKey)
 
 	minConfirms := 0
-	if config.Bsc.MinConfirms > 0 {
-		minConfirms = int(config.Bsc.MinConfirms)
+	if config.MinConfirms > 0 {
+		minConfirms = int(config.MinConfirms)
 	}
 
-	bw, err := NewBridgeWrapper(&config.Bsc, logger)
+	bw, err := NewBridgeWrapper(config, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -83,17 +71,18 @@ func New(config *repo.Config, logger logrus.FieldLogger) (*Monitor, error) {
 	if err != nil {
 		return nil, fmt.Errorf("abi unmarshal: %s", err.Error())
 	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &Monitor{
 		config:        config,
-		storage:       ethStorage,
+		storage:       storage,
 		bridgeWrapper: bw,
 		address:       address,
 		bridgeAbi:     borAbi,
-		bridgeAddr:    common.HexToAddress(config.Bsc.BridgeContract),
+		bridgeAddr:    common.HexToAddress(config.BridgeContract),
 		minConfirms:   uint64(minConfirms),
-		cocoC:         make(chan *Coco),
+		cocoC:         make(chan *bridge.Coco),
 		logger:        logger,
 		ctx:           ctx,
 		cancel:        cancel,
@@ -102,7 +91,7 @@ func New(config *repo.Config, logger logrus.FieldLogger) (*Monitor, error) {
 
 func (m *Monitor) Start() error {
 	m.loadHeightFromStorage()
-	go m.listenLockEvent()
+	go m.ListenCrossBurnEvent()
 	return nil
 }
 
@@ -112,7 +101,7 @@ func (m *Monitor) Stop() error {
 	return nil
 }
 
-func (m *Monitor) listenLockEvent() {
+func (m *Monitor) ListenCrossBurnEvent() {
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
@@ -147,22 +136,27 @@ func (m *Monitor) listenLockEvent() {
 }
 
 func (m *Monitor) handleCross(lock *BridgeCrossBurn, isHistory bool) {
-	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Bsc.BridgeContract) {
-		m.logger.Debugf("ignore bsc log with contract address: %s", lock.Raw.Address.String())
+	if !strings.EqualFold(lock.Raw.Address.String(), m.config.BridgeContract) {
+		m.logger.Debugf("ignore log with contract address: %s", lock.Raw.Address.String())
 		return
 	}
 
-	token1, ok := m.config.Token[strings.ToLower(lock.Token0.String())]
+	if m.config.ChainID != lock.ChainID.Uint64() {
+		m.logger.Debugf("ignore log with chain ID: %s", lock.ChainID.String())
+		return
+	}
+
+	token1, ok := m.config.Tokens[strings.ToLower(lock.Token0.String())]
 	if !ok || !strings.EqualFold(token1, lock.Token1.String()) {
-		m.logger.Debugf("ignore bsc log with token address: %s, %s", lock.Token0.String(), lock.Token1.String())
+		m.logger.Debugf("ignore log with token address: %s, %s", lock.Token0.String(), lock.Token1.String())
 		return
 	}
 
-	if m.storage.Has(TxKey(lock.Raw.TxHash.String())) {
+	if m.storage.Has(TxKey(lock.Raw.TxHash.String(), m.config.ChainID)) {
 		return
 	}
 
-	coco := &Coco{
+	coco := &bridge.Coco{
 		IsHistory:   isHistory,
 		Sender:      lock.From,
 		Recipient:   lock.To,
@@ -223,7 +217,7 @@ func (m *Monitor) confirmEvent(event types.Log) bool {
 		return log.BlockHeight == event.BlockNumber
 	}
 }
-func (m *Monitor) HandleCocoC() chan *Coco {
+func (m *Monitor) HandleCocoC() chan *bridge.Coco {
 	return m.cocoC
 }
 
@@ -282,10 +276,10 @@ func (m *Monitor) CrossMint(ethToken common.Address, txId string, addrFromEth co
 	return nil
 }
 
-func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
+func (m *Monitor) GetLockLog(txId string) (*bridge.Coco, error) {
 	receipt := m.bridgeWrapper.TransactionReceipt(context.TODO(), common.HexToHash(txId))
 	for _, log := range receipt.Logs {
-		if !strings.EqualFold(log.Address.String(), m.config.Bsc.BridgeContract) {
+		if !strings.EqualFold(log.Address.String(), m.config.BridgeContract) {
 			continue
 		}
 
@@ -299,7 +293,7 @@ func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
 					m.logger.Error(err)
 					continue
 				}
-				return &Coco{
+				return &bridge.Coco{
 					Sender:      lock.From,
 					Recipient:   lock.To,
 					Amount:      lock.Amount,
@@ -327,19 +321,20 @@ func (m *Monitor) loadHeightFromStorage() {
 	b := m.storage.Get(bHeightKey())
 	if b == nil {
 		m.bHeight = height - m.minConfirms
-		if m.config.Bsc.Height != 0 && m.config.Bsc.Height < m.bHeight {
-			m.bHeight = m.config.Bsc.Height
+		if m.config.Height != 0 && m.config.Height < m.bHeight {
+			m.bHeight = m.config.Height
 		}
 		m.persistBHeight(m.bHeight)
 	} else {
 		m.bHeight = binary.LittleEndian.Uint64(b)
-		if m.config.Bsc.Height != 0 {
-			m.bHeight = m.config.Bsc.Height
+		if m.config.Height != 0 {
+			m.bHeight = m.config.Height
 		}
 	}
 
 	m.logger.WithFields(logrus.Fields{
-		"bsc_height": m.bHeight,
+		"height":  m.bHeight,
+		"chainID": m.config.ChainID,
 	}).Info("Subscribe")
 }
 
@@ -350,7 +345,7 @@ func bHeightKey() []byte {
 func (m *Monitor) persistBBlockHeight(txId string, height uint64) {
 	m.persistBHeight(height)
 	for {
-		if m.storage.Has(TxKey(txId)) {
+		if m.storage.Has(TxKey(txId, m.config.ChainID)) {
 			return
 		}
 		time.Sleep(500 * time.Millisecond)
@@ -358,7 +353,7 @@ func (m *Monitor) persistBBlockHeight(txId string, height uint64) {
 }
 
 func (m *Monitor) HasTx(txId string) bool {
-	return m.storage.Has(TxKey(txId))
+	return m.storage.Has(TxKey(txId, m.config.ChainID))
 }
 
 func (m *Monitor) persistBHeight(height uint64) {
@@ -367,16 +362,16 @@ func (m *Monitor) persistBHeight(height uint64) {
 	m.storage.Put(bHeightKey(), buf)
 	m.logger.WithFields(logrus.Fields{
 		"height": height,
-	}).Info("Persist Bsc Block Height")
+	}).Info("Persist Bridge Block Height")
 }
 
-func TxKey(hash string) []byte {
-	return []byte(fmt.Sprintf("bsc-tx-%s", hash))
+func TxKey(hash string, chainID uint64) []byte {
+	return []byte(fmt.Sprintf("bridge-tx-%d-%s", chainID, hash))
 }
-func (m *Monitor) PutTxID(txId string, coco *Coco) {
+func (m *Monitor) PutTxID(txId string, coco *bridge.Coco) {
 	data, err := json.Marshal(&coco)
 	if err != nil {
 		m.logger.Error(err)
 	}
-	m.storage.Put(TxKey(txId), data)
+	m.storage.Put(TxKey(txId, m.config.ChainID), data)
 }

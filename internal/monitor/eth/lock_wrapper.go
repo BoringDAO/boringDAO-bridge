@@ -3,6 +3,11 @@ package eth
 import (
 	"context"
 	"fmt"
+	"math/big"
+	"regexp"
+	"strings"
+	"time"
+
 	"github.com/Rican7/retry"
 	"github.com/Rican7/retry/strategy"
 	"github.com/boringdao/bridge/internal/repo"
@@ -14,10 +19,6 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
-	"math/big"
-	"regexp"
-	"strings"
-	"time"
 )
 
 type LockWrapper struct {
@@ -36,7 +37,7 @@ func NewLockWrapper(config *repo.Eth, logger logrus.FieldLogger) (*LockWrapper, 
 
 	etherCli, err := ethclient.Dial(config.Addrs[0])
 	if err != nil {
-		return nil, fmt.Errorf("dial bsc node: %w", err)
+		return nil, fmt.Errorf("dial eth node: %w", err)
 	}
 
 	lock, err := NewCrossLock(common.HexToAddress(config.CrossLockContract), etherCli)

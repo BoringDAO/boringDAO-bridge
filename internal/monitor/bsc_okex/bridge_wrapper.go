@@ -1,8 +1,13 @@
-package bsc
+package bsc_okex
 
 import (
 	"context"
 	"fmt"
+	"math/big"
+	"regexp"
+	"strings"
+	"time"
+
 	"github.com/Rican7/retry"
 	"github.com/Rican7/retry/strategy"
 	"github.com/boringdao/bridge/internal/repo"
@@ -14,29 +19,25 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
-	"math/big"
-	"regexp"
-	"strings"
-	"time"
 )
 
 type BridgeWrapper struct {
 	addrIdx   int
-	bsc       *repo.Bsc
+	config    *repo.BridgeConfig
 	ethClient *ethclient.Client
 	bridge    *Bridge
 	session   *BridgeSession
 	logger    logrus.FieldLogger
 }
 
-func NewBridgeWrapper(config *repo.Bsc, logger logrus.FieldLogger) (*BridgeWrapper, error) {
+func NewBridgeWrapper(config *repo.BridgeConfig, logger logrus.FieldLogger) (*BridgeWrapper, error) {
 	if len(config.Addrs) == 0 {
 		return nil, fmt.Errorf("addrs for bsc session wrapper is empty")
 	}
 
 	etherCli, err := ethclient.Dial(config.Addrs[0])
 	if err != nil {
-		return nil, fmt.Errorf("dial bsc node: %w", err)
+		return nil, fmt.Errorf("dial bridge chainID %d node: %w", config.ChainID, err)
 	}
 
 	bridge, err := NewBridge(common.HexToAddress(config.BridgeContract), etherCli)
@@ -66,7 +67,7 @@ func NewBridgeWrapper(config *repo.Bsc, logger logrus.FieldLogger) (*BridgeWrapp
 
 	return &BridgeWrapper{
 		addrIdx:   0,
-		bsc:       config,
+		config:    config,
 		ethClient: etherCli,
 		bridge:    bridge,
 		session:   session,
@@ -235,32 +236,32 @@ func (bw *BridgeWrapper) TransactionReceipt(ctx context.Context, txHash common.H
 func (bw *BridgeWrapper) switchToNextAddr() {
 	var err error
 
-	for i := 0; i < len(bw.bsc.Addrs); i++ {
+	for i := 0; i < len(bw.config.Addrs); i++ {
 		bw.addrIdx++
-		if bw.addrIdx == len(bw.bsc.Addrs) {
+		if bw.addrIdx == len(bw.config.Addrs) {
 			bw.addrIdx = 0
 		}
 
-		bw.logger.Warnf("try to switch to %s", bw.bsc.Addrs[bw.addrIdx])
+		bw.logger.Warnf("try to switch to %s", bw.config.Addrs[bw.addrIdx])
 
-		bw.ethClient, err = ethclient.Dial(bw.bsc.Addrs[bw.addrIdx])
+		bw.ethClient, err = ethclient.Dial(bw.config.Addrs[bw.addrIdx])
 		if err != nil {
 			continue
 		}
 
-		bw.bridge, err = NewBridge(common.HexToAddress(bw.bsc.BridgeContract), bw.ethClient)
+		bw.bridge, err = NewBridge(common.HexToAddress(bw.config.BridgeContract), bw.ethClient)
 		if err != nil {
 			continue
 		}
 
 		bw.session.Contract = bw.bridge
 
-		bw.logger.Infof("switch to %s successfully", bw.bsc.Addrs[bw.addrIdx])
+		bw.logger.Infof("switch to %s successfully", bw.config.Addrs[bw.addrIdx])
 
 		return
 	}
 
-	panic("all bsc addrs are not valid")
+	panic("all bridge addrs are not valid")
 }
 
 func (bw *BridgeWrapper) Close() {

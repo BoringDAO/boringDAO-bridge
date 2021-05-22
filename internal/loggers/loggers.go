@@ -7,9 +7,10 @@ import (
 )
 
 const (
-	APP = "app"
-	BSC = "bsc"
-	ETH = "eth"
+	APP  = "app"
+	BSC  = "bsc"
+	OKEX = "okex"
+	ETH  = "eth"
 )
 
 var w *loggerWrapper
@@ -24,6 +25,8 @@ func Initialize(config *repo.Config) {
 	m[APP].Logger.SetLevel(log.ParseLevel(config.Log.Module.APP))
 	m[BSC] = log.NewWithModule(BSC)
 	m[BSC].Logger.SetLevel(log.ParseLevel(config.Log.Module.BSC))
+	m[OKEX] = log.NewWithModule(OKEX)
+	m[OKEX].Logger.SetLevel(log.ParseLevel(config.Log.Module.OKEX))
 	m[ETH] = log.NewWithModule(ETH)
 	m[ETH].Logger.SetLevel(log.ParseLevel(config.Log.Module.ETH))
 
