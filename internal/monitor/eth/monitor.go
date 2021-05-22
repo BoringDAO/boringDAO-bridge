@@ -31,6 +31,7 @@ type Coco struct {
 	Amount      *big.Int       `json:"amount"`
 	EthToken    common.Address `json:"eth_token"`
 	BscToken    common.Address `json:"bsc_token"`
+	ChainID     *big.Int       `json:"chain_id"`
 	TxId        string         `json:"tx_id"`
 	BlockHeight uint64         `json:"block_height"`
 }
@@ -153,10 +154,13 @@ func (m *Monitor) HandleCocoC() chan *Coco {
 
 func (m *Monitor) handleLock(lock *CrossLockLock, isHistory bool) {
 	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Eth.CrossLockContract) {
+		m.logger.Debugf("ignore eth log with contract address: %s", lock.Raw.Address.String())
 		return
 	}
 
-	if !strings.EqualFold(lock.EthToken.String(), m.config.Eth.Token) {
+	token1, ok := m.config.Token[strings.ToLower(lock.Token0.String())]
+	if !ok || !strings.EqualFold(token1, lock.Token1.String()) {
+		m.logger.Debugf("ignore eth log with token address: %s, %s", lock.Token0.String(), lock.Token1.String())
 		return
 	}
 
@@ -165,8 +169,9 @@ func (m *Monitor) handleLock(lock *CrossLockLock, isHistory bool) {
 	}
 	coco := &Coco{
 		IsHistory:   isHistory,
-		EthToken:    lock.EthToken,
-		BscToken:    lock.BscToken,
+		EthToken:    lock.Token0,
+		BscToken:    lock.Token1,
+		ChainID:     lock.ChainID,
 		Sender:      lock.Locker,
 		Recipient:   lock.To,
 		Amount:      lock.Amount,
@@ -222,7 +227,7 @@ func (m *Monitor) confirmEvent(event types.Log) bool {
 	}
 }
 
-func (m *Monitor) UnlockBor(txId string, token common.Address, from common.Address, recipient common.Address, amount *big.Int) error {
+func (m *Monitor) UnlockBor(txId string, token common.Address, chainId *big.Int, from common.Address, recipient common.Address, amount *big.Int) error {
 	m.mux.Lock()
 	defer m.mux.Unlock()
 
@@ -235,6 +240,7 @@ func (m *Monitor) UnlockBor(txId string, token common.Address, from common.Addre
 	m.logger.WithFields(logrus.Fields{
 		"tx_id":     txId,
 		"token":     token.String(),
+		"chainID":   chainId.String(),
 		"sender":    from.String(),
 		"recipient": recipient.String(),
 		"amount":    amount.String(),
@@ -248,6 +254,7 @@ func (m *Monitor) UnlockBor(txId string, token common.Address, from common.Addre
 	)
 
 	m.lockWrapper.session.TransactOpts.Nonce = nil
+	m.lockWrapper.session.TransactOpts.GasPrice = nil
 
 	for {
 		price := m.lockWrapper.SuggestGasPrice(context.TODO())
@@ -256,11 +263,12 @@ func (m *Monitor) UnlockBor(txId string, token common.Address, from common.Addre
 			gasPrice.BigInt().Cmp(m.lockWrapper.session.TransactOpts.GasPrice) == 1 {
 			m.lockWrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
 
-			transaction = m.lockWrapper.Unlock(token, from, recipient, amount, txId)
+			transaction = m.lockWrapper.Unlock(token, chainId, from, recipient, amount, txId)
 			m.lockWrapper.session.TransactOpts.Nonce = big.NewInt(int64(transaction.Nonce()))
 			hashes = append(hashes, transaction.Hash())
 
-			m.logger.Infof("send UnlockBor tx %s", transaction.Hash().String())
+			m.logger.Infof("send UnlockBor tx %s with gasPrice %s and nonce %d",
+				transaction.Hash().String(), gasPrice.String(), transaction.Nonce())
 		}
 		receipt, err = m.lockWrapper.TransactionReceiptsLimitedRetry(context.TODO(), hashes)
 		if err == nil {
@@ -294,8 +302,9 @@ func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
 					continue
 				}
 				return &Coco{
-					EthToken:    lock.EthToken,
-					BscToken:    lock.BscToken,
+					EthToken:    lock.Token0,
+					BscToken:    lock.Token1,
+					ChainID:     lock.ChainID,
 					Sender:      lock.Locker,
 					Recipient:   lock.To,
 					Amount:      lock.Amount,

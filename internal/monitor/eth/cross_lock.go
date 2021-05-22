@@ -27,7 +27,7 @@ var (
 )
 
 // CrossLockABI is the input ABI used to generate the binding from.
-const CrossLockABI = "[{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_threshold\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"ethToken\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"bscToken\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"locker\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"Lock\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"proposer\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"count\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"threshold\",\"type\":\"uint256\"}],\"name\":\"ProposalVoted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"previousAdminRole\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"newAdminRole\",\"type\":\"bytes32\"}],\"name\":\"RoleAdminChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"RoleGranted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"RoleRevoked\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"oldThreshold\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"newThreshold\",\"type\":\"uint256\"}],\"name\":\"ThresholdChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"ethToken\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"bscToken\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"txid\",\"type\":\"string\"}],\"name\":\"Unlock\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"DEFAULT_ADMIN_ROLE\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"ethTokenAddr\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"bscTokenAddr\",\"type\":\"address\"},{\"internalType\":\"bytes32\",\"name\":\"_roleFlag\",\"type\":\"bytes32\"}],\"name\":\"addSupportToken\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"ethTokenAddrs\",\"type\":\"address[]\"},{\"internalType\":\"address[]\",\"name\":\"bscTokenAddrs\",\"type\":\"address[]\"},{\"internalType\":\"bytes32[]\",\"name\":\"_roleFlags\",\"type\":\"bytes32[]\"}],\"name\":\"addSupportTokens\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"}],\"name\":\"getRoleAdmin\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"}],\"name\":\"getRoleMember\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"}],\"name\":\"getRoleMemberCount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"grantRole\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"hasRole\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"lock\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"proposalOf\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"tokenTo\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"count\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"txid\",\"type\":\"string\"},{\"internalType\":\"bool\",\"name\":\"isFinished\",\"type\":\"bool\"},{\"internalType\":\"bool\",\"name\":\"isExist\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"}],\"name\":\"removeRoleFlag\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"ethTokenAddr\",\"type\":\"address\"}],\"name\":\"removeSupportToken\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"addrs\",\"type\":\"address[]\"}],\"name\":\"removeSupportTokens\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"renounceRole\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"revokeRole\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"roleFlag\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_threshold\",\"type\":\"uint256\"}],\"name\":\"setThreshold\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"supportToken\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"threshold\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"name\":\"txUnlocked\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"txid\",\"type\":\"string\"}],\"name\":\"unlock\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
+const CrossLockABI = "[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"token0\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"token1\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"chainID\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"locker\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"Lock\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"proposer\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"count\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"threshold\",\"type\":\"uint256\"}],\"name\":\"ProposalVoted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"previousAdminRole\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"newAdminRole\",\"type\":\"bytes32\"}],\"name\":\"RoleAdminChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"RoleGranted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"RoleRevoked\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"oldThreshold\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"newThreshold\",\"type\":\"uint256\"}],\"name\":\"ThresholdChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"token0\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"token1\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"chainID\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"txid\",\"type\":\"string\"}],\"name\":\"Unlock\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"DEFAULT_ADMIN_ROLE\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token0\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"token1\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"chainID\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"_roleFlag\",\"type\":\"bytes32\"}],\"name\":\"addSupportToken\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"token0Addrs\",\"type\":\"address[]\"},{\"internalType\":\"address[]\",\"name\":\"token1Addrs\",\"type\":\"address[]\"},{\"internalType\":\"uint256[]\",\"name\":\"chainIDs\",\"type\":\"uint256[]\"},{\"internalType\":\"bytes32[]\",\"name\":\"_roleFlags\",\"type\":\"bytes32[]\"}],\"name\":\"addSupportTokens\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"}],\"name\":\"getRoleAdmin\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"}],\"name\":\"getRoleMember\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"}],\"name\":\"getRoleMemberCount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"grantRole\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"hasRole\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token0\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"chainID\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"lock\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"proposalOf\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"tokenTo\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"count\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"txid\",\"type\":\"string\"},{\"internalType\":\"bool\",\"name\":\"isFinished\",\"type\":\"bool\"},{\"internalType\":\"bool\",\"name\":\"isExist\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token0\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"chainID\",\"type\":\"uint256\"}],\"name\":\"removeRoleFlag\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token0\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"chainID\",\"type\":\"uint256\"}],\"name\":\"removeSupportToken\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"addrs\",\"type\":\"address[]\"},{\"internalType\":\"uint256[]\",\"name\":\"chainIDs\",\"type\":\"uint256[]\"}],\"name\":\"removeSupportTokens\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"renounceRole\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"revokeRole\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"roleFlag\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token0\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_threshold\",\"type\":\"uint256\"}],\"name\":\"setThreshold\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"supportToken\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"threshold\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"name\":\"txUnlocked\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token0\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"chainID\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"txid\",\"type\":\"string\"}],\"name\":\"unlock\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
 
 // CrossLock is an auto generated Go binding around an Ethereum contract.
 type CrossLock struct {
@@ -401,12 +401,12 @@ func (_CrossLock *CrossLockCallerSession) ProposalOf(arg0 [32]byte) (struct {
 	return _CrossLock.Contract.ProposalOf(&_CrossLock.CallOpts, arg0)
 }
 
-// RoleFlag is a free data retrieval call binding the contract method 0x338a5663.
+// RoleFlag is a free data retrieval call binding the contract method 0xe848ec59.
 //
-// Solidity: function roleFlag(address ) view returns(bytes32)
-func (_CrossLock *CrossLockCaller) RoleFlag(opts *bind.CallOpts, arg0 common.Address) ([32]byte, error) {
+// Solidity: function roleFlag(address , uint256 ) view returns(bytes32)
+func (_CrossLock *CrossLockCaller) RoleFlag(opts *bind.CallOpts, arg0 common.Address, arg1 *big.Int) ([32]byte, error) {
 	var out []interface{}
-	err := _CrossLock.contract.Call(opts, &out, "roleFlag", arg0)
+	err := _CrossLock.contract.Call(opts, &out, "roleFlag", arg0, arg1)
 
 	if err != nil {
 		return *new([32]byte), err
@@ -418,26 +418,26 @@ func (_CrossLock *CrossLockCaller) RoleFlag(opts *bind.CallOpts, arg0 common.Add
 
 }
 
-// RoleFlag is a free data retrieval call binding the contract method 0x338a5663.
+// RoleFlag is a free data retrieval call binding the contract method 0xe848ec59.
 //
-// Solidity: function roleFlag(address ) view returns(bytes32)
-func (_CrossLock *CrossLockSession) RoleFlag(arg0 common.Address) ([32]byte, error) {
-	return _CrossLock.Contract.RoleFlag(&_CrossLock.CallOpts, arg0)
+// Solidity: function roleFlag(address , uint256 ) view returns(bytes32)
+func (_CrossLock *CrossLockSession) RoleFlag(arg0 common.Address, arg1 *big.Int) ([32]byte, error) {
+	return _CrossLock.Contract.RoleFlag(&_CrossLock.CallOpts, arg0, arg1)
 }
 
-// RoleFlag is a free data retrieval call binding the contract method 0x338a5663.
+// RoleFlag is a free data retrieval call binding the contract method 0xe848ec59.
 //
-// Solidity: function roleFlag(address ) view returns(bytes32)
-func (_CrossLock *CrossLockCallerSession) RoleFlag(arg0 common.Address) ([32]byte, error) {
-	return _CrossLock.Contract.RoleFlag(&_CrossLock.CallOpts, arg0)
+// Solidity: function roleFlag(address , uint256 ) view returns(bytes32)
+func (_CrossLock *CrossLockCallerSession) RoleFlag(arg0 common.Address, arg1 *big.Int) ([32]byte, error) {
+	return _CrossLock.Contract.RoleFlag(&_CrossLock.CallOpts, arg0, arg1)
 }
 
-// SupportToken is a free data retrieval call binding the contract method 0x2a4f1621.
+// SupportToken is a free data retrieval call binding the contract method 0xd692f4c5.
 //
-// Solidity: function supportToken(address ) view returns(address)
-func (_CrossLock *CrossLockCaller) SupportToken(opts *bind.CallOpts, arg0 common.Address) (common.Address, error) {
+// Solidity: function supportToken(address , uint256 ) view returns(address)
+func (_CrossLock *CrossLockCaller) SupportToken(opts *bind.CallOpts, arg0 common.Address, arg1 *big.Int) (common.Address, error) {
 	var out []interface{}
-	err := _CrossLock.contract.Call(opts, &out, "supportToken", arg0)
+	err := _CrossLock.contract.Call(opts, &out, "supportToken", arg0, arg1)
 
 	if err != nil {
 		return *new(common.Address), err
@@ -449,26 +449,26 @@ func (_CrossLock *CrossLockCaller) SupportToken(opts *bind.CallOpts, arg0 common
 
 }
 
-// SupportToken is a free data retrieval call binding the contract method 0x2a4f1621.
+// SupportToken is a free data retrieval call binding the contract method 0xd692f4c5.
 //
-// Solidity: function supportToken(address ) view returns(address)
-func (_CrossLock *CrossLockSession) SupportToken(arg0 common.Address) (common.Address, error) {
-	return _CrossLock.Contract.SupportToken(&_CrossLock.CallOpts, arg0)
+// Solidity: function supportToken(address , uint256 ) view returns(address)
+func (_CrossLock *CrossLockSession) SupportToken(arg0 common.Address, arg1 *big.Int) (common.Address, error) {
+	return _CrossLock.Contract.SupportToken(&_CrossLock.CallOpts, arg0, arg1)
 }
 
-// SupportToken is a free data retrieval call binding the contract method 0x2a4f1621.
+// SupportToken is a free data retrieval call binding the contract method 0xd692f4c5.
 //
-// Solidity: function supportToken(address ) view returns(address)
-func (_CrossLock *CrossLockCallerSession) SupportToken(arg0 common.Address) (common.Address, error) {
-	return _CrossLock.Contract.SupportToken(&_CrossLock.CallOpts, arg0)
+// Solidity: function supportToken(address , uint256 ) view returns(address)
+func (_CrossLock *CrossLockCallerSession) SupportToken(arg0 common.Address, arg1 *big.Int) (common.Address, error) {
+	return _CrossLock.Contract.SupportToken(&_CrossLock.CallOpts, arg0, arg1)
 }
 
-// Threshold is a free data retrieval call binding the contract method 0x42cde4e8.
+// Threshold is a free data retrieval call binding the contract method 0xc86ec2bf.
 //
-// Solidity: function threshold() view returns(uint256)
-func (_CrossLock *CrossLockCaller) Threshold(opts *bind.CallOpts) (*big.Int, error) {
+// Solidity: function threshold(address ) view returns(uint256)
+func (_CrossLock *CrossLockCaller) Threshold(opts *bind.CallOpts, arg0 common.Address) (*big.Int, error) {
 	var out []interface{}
-	err := _CrossLock.contract.Call(opts, &out, "threshold")
+	err := _CrossLock.contract.Call(opts, &out, "threshold", arg0)
 
 	if err != nil {
 		return *new(*big.Int), err
@@ -480,18 +480,18 @@ func (_CrossLock *CrossLockCaller) Threshold(opts *bind.CallOpts) (*big.Int, err
 
 }
 
-// Threshold is a free data retrieval call binding the contract method 0x42cde4e8.
+// Threshold is a free data retrieval call binding the contract method 0xc86ec2bf.
 //
-// Solidity: function threshold() view returns(uint256)
-func (_CrossLock *CrossLockSession) Threshold() (*big.Int, error) {
-	return _CrossLock.Contract.Threshold(&_CrossLock.CallOpts)
+// Solidity: function threshold(address ) view returns(uint256)
+func (_CrossLock *CrossLockSession) Threshold(arg0 common.Address) (*big.Int, error) {
+	return _CrossLock.Contract.Threshold(&_CrossLock.CallOpts, arg0)
 }
 
-// Threshold is a free data retrieval call binding the contract method 0x42cde4e8.
+// Threshold is a free data retrieval call binding the contract method 0xc86ec2bf.
 //
-// Solidity: function threshold() view returns(uint256)
-func (_CrossLock *CrossLockCallerSession) Threshold() (*big.Int, error) {
-	return _CrossLock.Contract.Threshold(&_CrossLock.CallOpts)
+// Solidity: function threshold(address ) view returns(uint256)
+func (_CrossLock *CrossLockCallerSession) Threshold(arg0 common.Address) (*big.Int, error) {
+	return _CrossLock.Contract.Threshold(&_CrossLock.CallOpts, arg0)
 }
 
 // TxUnlocked is a free data retrieval call binding the contract method 0x967145af.
@@ -525,46 +525,46 @@ func (_CrossLock *CrossLockCallerSession) TxUnlocked(arg0 string) (bool, error) 
 	return _CrossLock.Contract.TxUnlocked(&_CrossLock.CallOpts, arg0)
 }
 
-// AddSupportToken is a paid mutator transaction binding the contract method 0x013e91e6.
+// AddSupportToken is a paid mutator transaction binding the contract method 0x9fddf460.
 //
-// Solidity: function addSupportToken(address ethTokenAddr, address bscTokenAddr, bytes32 _roleFlag) returns()
-func (_CrossLock *CrossLockTransactor) AddSupportToken(opts *bind.TransactOpts, ethTokenAddr common.Address, bscTokenAddr common.Address, _roleFlag [32]byte) (*types.Transaction, error) {
-	return _CrossLock.contract.Transact(opts, "addSupportToken", ethTokenAddr, bscTokenAddr, _roleFlag)
+// Solidity: function addSupportToken(address token0, address token1, uint256 chainID, bytes32 _roleFlag) returns()
+func (_CrossLock *CrossLockTransactor) AddSupportToken(opts *bind.TransactOpts, token0 common.Address, token1 common.Address, chainID *big.Int, _roleFlag [32]byte) (*types.Transaction, error) {
+	return _CrossLock.contract.Transact(opts, "addSupportToken", token0, token1, chainID, _roleFlag)
 }
 
-// AddSupportToken is a paid mutator transaction binding the contract method 0x013e91e6.
+// AddSupportToken is a paid mutator transaction binding the contract method 0x9fddf460.
 //
-// Solidity: function addSupportToken(address ethTokenAddr, address bscTokenAddr, bytes32 _roleFlag) returns()
-func (_CrossLock *CrossLockSession) AddSupportToken(ethTokenAddr common.Address, bscTokenAddr common.Address, _roleFlag [32]byte) (*types.Transaction, error) {
-	return _CrossLock.Contract.AddSupportToken(&_CrossLock.TransactOpts, ethTokenAddr, bscTokenAddr, _roleFlag)
+// Solidity: function addSupportToken(address token0, address token1, uint256 chainID, bytes32 _roleFlag) returns()
+func (_CrossLock *CrossLockSession) AddSupportToken(token0 common.Address, token1 common.Address, chainID *big.Int, _roleFlag [32]byte) (*types.Transaction, error) {
+	return _CrossLock.Contract.AddSupportToken(&_CrossLock.TransactOpts, token0, token1, chainID, _roleFlag)
 }
 
-// AddSupportToken is a paid mutator transaction binding the contract method 0x013e91e6.
+// AddSupportToken is a paid mutator transaction binding the contract method 0x9fddf460.
 //
-// Solidity: function addSupportToken(address ethTokenAddr, address bscTokenAddr, bytes32 _roleFlag) returns()
-func (_CrossLock *CrossLockTransactorSession) AddSupportToken(ethTokenAddr common.Address, bscTokenAddr common.Address, _roleFlag [32]byte) (*types.Transaction, error) {
-	return _CrossLock.Contract.AddSupportToken(&_CrossLock.TransactOpts, ethTokenAddr, bscTokenAddr, _roleFlag)
+// Solidity: function addSupportToken(address token0, address token1, uint256 chainID, bytes32 _roleFlag) returns()
+func (_CrossLock *CrossLockTransactorSession) AddSupportToken(token0 common.Address, token1 common.Address, chainID *big.Int, _roleFlag [32]byte) (*types.Transaction, error) {
+	return _CrossLock.Contract.AddSupportToken(&_CrossLock.TransactOpts, token0, token1, chainID, _roleFlag)
 }
 
-// AddSupportTokens is a paid mutator transaction binding the contract method 0x00964fff.
+// AddSupportTokens is a paid mutator transaction binding the contract method 0x268f3698.
 //
-// Solidity: function addSupportTokens(address[] ethTokenAddrs, address[] bscTokenAddrs, bytes32[] _roleFlags) returns()
-func (_CrossLock *CrossLockTransactor) AddSupportTokens(opts *bind.TransactOpts, ethTokenAddrs []common.Address, bscTokenAddrs []common.Address, _roleFlags [][32]byte) (*types.Transaction, error) {
-	return _CrossLock.contract.Transact(opts, "addSupportTokens", ethTokenAddrs, bscTokenAddrs, _roleFlags)
+// Solidity: function addSupportTokens(address[] token0Addrs, address[] token1Addrs, uint256[] chainIDs, bytes32[] _roleFlags) returns()
+func (_CrossLock *CrossLockTransactor) AddSupportTokens(opts *bind.TransactOpts, token0Addrs []common.Address, token1Addrs []common.Address, chainIDs []*big.Int, _roleFlags [][32]byte) (*types.Transaction, error) {
+	return _CrossLock.contract.Transact(opts, "addSupportTokens", token0Addrs, token1Addrs, chainIDs, _roleFlags)
 }
 
-// AddSupportTokens is a paid mutator transaction binding the contract method 0x00964fff.
+// AddSupportTokens is a paid mutator transaction binding the contract method 0x268f3698.
 //
-// Solidity: function addSupportTokens(address[] ethTokenAddrs, address[] bscTokenAddrs, bytes32[] _roleFlags) returns()
-func (_CrossLock *CrossLockSession) AddSupportTokens(ethTokenAddrs []common.Address, bscTokenAddrs []common.Address, _roleFlags [][32]byte) (*types.Transaction, error) {
-	return _CrossLock.Contract.AddSupportTokens(&_CrossLock.TransactOpts, ethTokenAddrs, bscTokenAddrs, _roleFlags)
+// Solidity: function addSupportTokens(address[] token0Addrs, address[] token1Addrs, uint256[] chainIDs, bytes32[] _roleFlags) returns()
+func (_CrossLock *CrossLockSession) AddSupportTokens(token0Addrs []common.Address, token1Addrs []common.Address, chainIDs []*big.Int, _roleFlags [][32]byte) (*types.Transaction, error) {
+	return _CrossLock.Contract.AddSupportTokens(&_CrossLock.TransactOpts, token0Addrs, token1Addrs, chainIDs, _roleFlags)
 }
 
-// AddSupportTokens is a paid mutator transaction binding the contract method 0x00964fff.
+// AddSupportTokens is a paid mutator transaction binding the contract method 0x268f3698.
 //
-// Solidity: function addSupportTokens(address[] ethTokenAddrs, address[] bscTokenAddrs, bytes32[] _roleFlags) returns()
-func (_CrossLock *CrossLockTransactorSession) AddSupportTokens(ethTokenAddrs []common.Address, bscTokenAddrs []common.Address, _roleFlags [][32]byte) (*types.Transaction, error) {
-	return _CrossLock.Contract.AddSupportTokens(&_CrossLock.TransactOpts, ethTokenAddrs, bscTokenAddrs, _roleFlags)
+// Solidity: function addSupportTokens(address[] token0Addrs, address[] token1Addrs, uint256[] chainIDs, bytes32[] _roleFlags) returns()
+func (_CrossLock *CrossLockTransactorSession) AddSupportTokens(token0Addrs []common.Address, token1Addrs []common.Address, chainIDs []*big.Int, _roleFlags [][32]byte) (*types.Transaction, error) {
+	return _CrossLock.Contract.AddSupportTokens(&_CrossLock.TransactOpts, token0Addrs, token1Addrs, chainIDs, _roleFlags)
 }
 
 // GrantRole is a paid mutator transaction binding the contract method 0x2f2ff15d.
@@ -588,88 +588,88 @@ func (_CrossLock *CrossLockTransactorSession) GrantRole(role [32]byte, account c
 	return _CrossLock.Contract.GrantRole(&_CrossLock.TransactOpts, role, account)
 }
 
-// Lock is a paid mutator transaction binding the contract method 0x7750c9f0.
+// Lock is a paid mutator transaction binding the contract method 0xeaac2925.
 //
-// Solidity: function lock(address token, address to, uint256 amount) returns()
-func (_CrossLock *CrossLockTransactor) Lock(opts *bind.TransactOpts, token common.Address, to common.Address, amount *big.Int) (*types.Transaction, error) {
-	return _CrossLock.contract.Transact(opts, "lock", token, to, amount)
+// Solidity: function lock(address token0, uint256 chainID, address to, uint256 amount) returns()
+func (_CrossLock *CrossLockTransactor) Lock(opts *bind.TransactOpts, token0 common.Address, chainID *big.Int, to common.Address, amount *big.Int) (*types.Transaction, error) {
+	return _CrossLock.contract.Transact(opts, "lock", token0, chainID, to, amount)
 }
 
-// Lock is a paid mutator transaction binding the contract method 0x7750c9f0.
+// Lock is a paid mutator transaction binding the contract method 0xeaac2925.
 //
-// Solidity: function lock(address token, address to, uint256 amount) returns()
-func (_CrossLock *CrossLockSession) Lock(token common.Address, to common.Address, amount *big.Int) (*types.Transaction, error) {
-	return _CrossLock.Contract.Lock(&_CrossLock.TransactOpts, token, to, amount)
+// Solidity: function lock(address token0, uint256 chainID, address to, uint256 amount) returns()
+func (_CrossLock *CrossLockSession) Lock(token0 common.Address, chainID *big.Int, to common.Address, amount *big.Int) (*types.Transaction, error) {
+	return _CrossLock.Contract.Lock(&_CrossLock.TransactOpts, token0, chainID, to, amount)
 }
 
-// Lock is a paid mutator transaction binding the contract method 0x7750c9f0.
+// Lock is a paid mutator transaction binding the contract method 0xeaac2925.
 //
-// Solidity: function lock(address token, address to, uint256 amount) returns()
-func (_CrossLock *CrossLockTransactorSession) Lock(token common.Address, to common.Address, amount *big.Int) (*types.Transaction, error) {
-	return _CrossLock.Contract.Lock(&_CrossLock.TransactOpts, token, to, amount)
+// Solidity: function lock(address token0, uint256 chainID, address to, uint256 amount) returns()
+func (_CrossLock *CrossLockTransactorSession) Lock(token0 common.Address, chainID *big.Int, to common.Address, amount *big.Int) (*types.Transaction, error) {
+	return _CrossLock.Contract.Lock(&_CrossLock.TransactOpts, token0, chainID, to, amount)
 }
 
-// RemoveRoleFlag is a paid mutator transaction binding the contract method 0x73338918.
+// RemoveRoleFlag is a paid mutator transaction binding the contract method 0xf38d9932.
 //
-// Solidity: function removeRoleFlag(address token) returns()
-func (_CrossLock *CrossLockTransactor) RemoveRoleFlag(opts *bind.TransactOpts, token common.Address) (*types.Transaction, error) {
-	return _CrossLock.contract.Transact(opts, "removeRoleFlag", token)
+// Solidity: function removeRoleFlag(address token0, uint256 chainID) returns()
+func (_CrossLock *CrossLockTransactor) RemoveRoleFlag(opts *bind.TransactOpts, token0 common.Address, chainID *big.Int) (*types.Transaction, error) {
+	return _CrossLock.contract.Transact(opts, "removeRoleFlag", token0, chainID)
 }
 
-// RemoveRoleFlag is a paid mutator transaction binding the contract method 0x73338918.
+// RemoveRoleFlag is a paid mutator transaction binding the contract method 0xf38d9932.
 //
-// Solidity: function removeRoleFlag(address token) returns()
-func (_CrossLock *CrossLockSession) RemoveRoleFlag(token common.Address) (*types.Transaction, error) {
-	return _CrossLock.Contract.RemoveRoleFlag(&_CrossLock.TransactOpts, token)
+// Solidity: function removeRoleFlag(address token0, uint256 chainID) returns()
+func (_CrossLock *CrossLockSession) RemoveRoleFlag(token0 common.Address, chainID *big.Int) (*types.Transaction, error) {
+	return _CrossLock.Contract.RemoveRoleFlag(&_CrossLock.TransactOpts, token0, chainID)
 }
 
-// RemoveRoleFlag is a paid mutator transaction binding the contract method 0x73338918.
+// RemoveRoleFlag is a paid mutator transaction binding the contract method 0xf38d9932.
 //
-// Solidity: function removeRoleFlag(address token) returns()
-func (_CrossLock *CrossLockTransactorSession) RemoveRoleFlag(token common.Address) (*types.Transaction, error) {
-	return _CrossLock.Contract.RemoveRoleFlag(&_CrossLock.TransactOpts, token)
+// Solidity: function removeRoleFlag(address token0, uint256 chainID) returns()
+func (_CrossLock *CrossLockTransactorSession) RemoveRoleFlag(token0 common.Address, chainID *big.Int) (*types.Transaction, error) {
+	return _CrossLock.Contract.RemoveRoleFlag(&_CrossLock.TransactOpts, token0, chainID)
 }
 
-// RemoveSupportToken is a paid mutator transaction binding the contract method 0xe2769cfa.
+// RemoveSupportToken is a paid mutator transaction binding the contract method 0xf8f8d5c0.
 //
-// Solidity: function removeSupportToken(address ethTokenAddr) returns()
-func (_CrossLock *CrossLockTransactor) RemoveSupportToken(opts *bind.TransactOpts, ethTokenAddr common.Address) (*types.Transaction, error) {
-	return _CrossLock.contract.Transact(opts, "removeSupportToken", ethTokenAddr)
+// Solidity: function removeSupportToken(address token0, uint256 chainID) returns()
+func (_CrossLock *CrossLockTransactor) RemoveSupportToken(opts *bind.TransactOpts, token0 common.Address, chainID *big.Int) (*types.Transaction, error) {
+	return _CrossLock.contract.Transact(opts, "removeSupportToken", token0, chainID)
 }
 
-// RemoveSupportToken is a paid mutator transaction binding the contract method 0xe2769cfa.
+// RemoveSupportToken is a paid mutator transaction binding the contract method 0xf8f8d5c0.
 //
-// Solidity: function removeSupportToken(address ethTokenAddr) returns()
-func (_CrossLock *CrossLockSession) RemoveSupportToken(ethTokenAddr common.Address) (*types.Transaction, error) {
-	return _CrossLock.Contract.RemoveSupportToken(&_CrossLock.TransactOpts, ethTokenAddr)
+// Solidity: function removeSupportToken(address token0, uint256 chainID) returns()
+func (_CrossLock *CrossLockSession) RemoveSupportToken(token0 common.Address, chainID *big.Int) (*types.Transaction, error) {
+	return _CrossLock.Contract.RemoveSupportToken(&_CrossLock.TransactOpts, token0, chainID)
 }
 
-// RemoveSupportToken is a paid mutator transaction binding the contract method 0xe2769cfa.
+// RemoveSupportToken is a paid mutator transaction binding the contract method 0xf8f8d5c0.
 //
-// Solidity: function removeSupportToken(address ethTokenAddr) returns()
-func (_CrossLock *CrossLockTransactorSession) RemoveSupportToken(ethTokenAddr common.Address) (*types.Transaction, error) {
-	return _CrossLock.Contract.RemoveSupportToken(&_CrossLock.TransactOpts, ethTokenAddr)
+// Solidity: function removeSupportToken(address token0, uint256 chainID) returns()
+func (_CrossLock *CrossLockTransactorSession) RemoveSupportToken(token0 common.Address, chainID *big.Int) (*types.Transaction, error) {
+	return _CrossLock.Contract.RemoveSupportToken(&_CrossLock.TransactOpts, token0, chainID)
 }
 
-// RemoveSupportTokens is a paid mutator transaction binding the contract method 0x0daff621.
+// RemoveSupportTokens is a paid mutator transaction binding the contract method 0x03507ba5.
 //
-// Solidity: function removeSupportTokens(address[] addrs) returns()
-func (_CrossLock *CrossLockTransactor) RemoveSupportTokens(opts *bind.TransactOpts, addrs []common.Address) (*types.Transaction, error) {
-	return _CrossLock.contract.Transact(opts, "removeSupportTokens", addrs)
+// Solidity: function removeSupportTokens(address[] addrs, uint256[] chainIDs) returns()
+func (_CrossLock *CrossLockTransactor) RemoveSupportTokens(opts *bind.TransactOpts, addrs []common.Address, chainIDs []*big.Int) (*types.Transaction, error) {
+	return _CrossLock.contract.Transact(opts, "removeSupportTokens", addrs, chainIDs)
 }
 
-// RemoveSupportTokens is a paid mutator transaction binding the contract method 0x0daff621.
+// RemoveSupportTokens is a paid mutator transaction binding the contract method 0x03507ba5.
 //
-// Solidity: function removeSupportTokens(address[] addrs) returns()
-func (_CrossLock *CrossLockSession) RemoveSupportTokens(addrs []common.Address) (*types.Transaction, error) {
-	return _CrossLock.Contract.RemoveSupportTokens(&_CrossLock.TransactOpts, addrs)
+// Solidity: function removeSupportTokens(address[] addrs, uint256[] chainIDs) returns()
+func (_CrossLock *CrossLockSession) RemoveSupportTokens(addrs []common.Address, chainIDs []*big.Int) (*types.Transaction, error) {
+	return _CrossLock.Contract.RemoveSupportTokens(&_CrossLock.TransactOpts, addrs, chainIDs)
 }
 
-// RemoveSupportTokens is a paid mutator transaction binding the contract method 0x0daff621.
+// RemoveSupportTokens is a paid mutator transaction binding the contract method 0x03507ba5.
 //
-// Solidity: function removeSupportTokens(address[] addrs) returns()
-func (_CrossLock *CrossLockTransactorSession) RemoveSupportTokens(addrs []common.Address) (*types.Transaction, error) {
-	return _CrossLock.Contract.RemoveSupportTokens(&_CrossLock.TransactOpts, addrs)
+// Solidity: function removeSupportTokens(address[] addrs, uint256[] chainIDs) returns()
+func (_CrossLock *CrossLockTransactorSession) RemoveSupportTokens(addrs []common.Address, chainIDs []*big.Int) (*types.Transaction, error) {
+	return _CrossLock.Contract.RemoveSupportTokens(&_CrossLock.TransactOpts, addrs, chainIDs)
 }
 
 // RenounceRole is a paid mutator transaction binding the contract method 0x36568abe.
@@ -714,46 +714,46 @@ func (_CrossLock *CrossLockTransactorSession) RevokeRole(role [32]byte, account 
 	return _CrossLock.Contract.RevokeRole(&_CrossLock.TransactOpts, role, account)
 }
 
-// SetThreshold is a paid mutator transaction binding the contract method 0x960bfe04.
+// SetThreshold is a paid mutator transaction binding the contract method 0x9d879990.
 //
-// Solidity: function setThreshold(uint256 _threshold) returns()
-func (_CrossLock *CrossLockTransactor) SetThreshold(opts *bind.TransactOpts, _threshold *big.Int) (*types.Transaction, error) {
-	return _CrossLock.contract.Transact(opts, "setThreshold", _threshold)
+// Solidity: function setThreshold(address token0, uint256 _threshold) returns()
+func (_CrossLock *CrossLockTransactor) SetThreshold(opts *bind.TransactOpts, token0 common.Address, _threshold *big.Int) (*types.Transaction, error) {
+	return _CrossLock.contract.Transact(opts, "setThreshold", token0, _threshold)
 }
 
-// SetThreshold is a paid mutator transaction binding the contract method 0x960bfe04.
+// SetThreshold is a paid mutator transaction binding the contract method 0x9d879990.
 //
-// Solidity: function setThreshold(uint256 _threshold) returns()
-func (_CrossLock *CrossLockSession) SetThreshold(_threshold *big.Int) (*types.Transaction, error) {
-	return _CrossLock.Contract.SetThreshold(&_CrossLock.TransactOpts, _threshold)
+// Solidity: function setThreshold(address token0, uint256 _threshold) returns()
+func (_CrossLock *CrossLockSession) SetThreshold(token0 common.Address, _threshold *big.Int) (*types.Transaction, error) {
+	return _CrossLock.Contract.SetThreshold(&_CrossLock.TransactOpts, token0, _threshold)
 }
 
-// SetThreshold is a paid mutator transaction binding the contract method 0x960bfe04.
+// SetThreshold is a paid mutator transaction binding the contract method 0x9d879990.
 //
-// Solidity: function setThreshold(uint256 _threshold) returns()
-func (_CrossLock *CrossLockTransactorSession) SetThreshold(_threshold *big.Int) (*types.Transaction, error) {
-	return _CrossLock.Contract.SetThreshold(&_CrossLock.TransactOpts, _threshold)
+// Solidity: function setThreshold(address token0, uint256 _threshold) returns()
+func (_CrossLock *CrossLockTransactorSession) SetThreshold(token0 common.Address, _threshold *big.Int) (*types.Transaction, error) {
+	return _CrossLock.Contract.SetThreshold(&_CrossLock.TransactOpts, token0, _threshold)
 }
 
-// Unlock is a paid mutator transaction binding the contract method 0x8ccc356c.
+// Unlock is a paid mutator transaction binding the contract method 0x715ec45c.
 //
-// Solidity: function unlock(address token, address from, address to, uint256 amount, string txid) returns()
-func (_CrossLock *CrossLockTransactor) Unlock(opts *bind.TransactOpts, token common.Address, from common.Address, to common.Address, amount *big.Int, txid string) (*types.Transaction, error) {
-	return _CrossLock.contract.Transact(opts, "unlock", token, from, to, amount, txid)
+// Solidity: function unlock(address token0, uint256 chainID, address from, address to, uint256 amount, string txid) returns()
+func (_CrossLock *CrossLockTransactor) Unlock(opts *bind.TransactOpts, token0 common.Address, chainID *big.Int, from common.Address, to common.Address, amount *big.Int, txid string) (*types.Transaction, error) {
+	return _CrossLock.contract.Transact(opts, "unlock", token0, chainID, from, to, amount, txid)
 }
 
-// Unlock is a paid mutator transaction binding the contract method 0x8ccc356c.
+// Unlock is a paid mutator transaction binding the contract method 0x715ec45c.
 //
-// Solidity: function unlock(address token, address from, address to, uint256 amount, string txid) returns()
-func (_CrossLock *CrossLockSession) Unlock(token common.Address, from common.Address, to common.Address, amount *big.Int, txid string) (*types.Transaction, error) {
-	return _CrossLock.Contract.Unlock(&_CrossLock.TransactOpts, token, from, to, amount, txid)
+// Solidity: function unlock(address token0, uint256 chainID, address from, address to, uint256 amount, string txid) returns()
+func (_CrossLock *CrossLockSession) Unlock(token0 common.Address, chainID *big.Int, from common.Address, to common.Address, amount *big.Int, txid string) (*types.Transaction, error) {
+	return _CrossLock.Contract.Unlock(&_CrossLock.TransactOpts, token0, chainID, from, to, amount, txid)
 }
 
-// Unlock is a paid mutator transaction binding the contract method 0x8ccc356c.
+// Unlock is a paid mutator transaction binding the contract method 0x715ec45c.
 //
-// Solidity: function unlock(address token, address from, address to, uint256 amount, string txid) returns()
-func (_CrossLock *CrossLockTransactorSession) Unlock(token common.Address, from common.Address, to common.Address, amount *big.Int, txid string) (*types.Transaction, error) {
-	return _CrossLock.Contract.Unlock(&_CrossLock.TransactOpts, token, from, to, amount, txid)
+// Solidity: function unlock(address token0, uint256 chainID, address from, address to, uint256 amount, string txid) returns()
+func (_CrossLock *CrossLockTransactorSession) Unlock(token0 common.Address, chainID *big.Int, from common.Address, to common.Address, amount *big.Int, txid string) (*types.Transaction, error) {
+	return _CrossLock.Contract.Unlock(&_CrossLock.TransactOpts, token0, chainID, from, to, amount, txid)
 }
 
 // CrossLockLockIterator is returned from FilterLock and is used to iterate over the raw logs and unpacked data for Lock events raised by the CrossLock contract.
@@ -825,17 +825,18 @@ func (it *CrossLockLockIterator) Close() error {
 
 // CrossLockLock represents a Lock event raised by the CrossLock contract.
 type CrossLockLock struct {
-	EthToken common.Address
-	BscToken common.Address
-	Locker   common.Address
-	To       common.Address
-	Amount   *big.Int
-	Raw      types.Log // Blockchain specific contextual infos
+	Token0  common.Address
+	Token1  common.Address
+	ChainID *big.Int
+	Locker  common.Address
+	To      common.Address
+	Amount  *big.Int
+	Raw     types.Log // Blockchain specific contextual infos
 }
 
-// FilterLock is a free log retrieval operation binding the contract event 0x4e9dc37847123badcca2493e1da785f59908e20645214cf795e6914bfdbaada2.
+// FilterLock is a free log retrieval operation binding the contract event 0x4620c97568351e0eab160aa39863643b388e20b445120a289cb346344a237122.
 //
-// Solidity: event Lock(address ethToken, address bscToken, address locker, address to, uint256 amount)
+// Solidity: event Lock(address token0, address token1, uint256 chainID, address locker, address to, uint256 amount)
 func (_CrossLock *CrossLockFilterer) FilterLock(opts *bind.FilterOpts) (*CrossLockLockIterator, error) {
 
 	logs, sub, err := _CrossLock.contract.FilterLogs(opts, "Lock")
@@ -845,9 +846,9 @@ func (_CrossLock *CrossLockFilterer) FilterLock(opts *bind.FilterOpts) (*CrossLo
 	return &CrossLockLockIterator{contract: _CrossLock.contract, event: "Lock", logs: logs, sub: sub}, nil
 }
 
-// WatchLock is a free log subscription operation binding the contract event 0x4e9dc37847123badcca2493e1da785f59908e20645214cf795e6914bfdbaada2.
+// WatchLock is a free log subscription operation binding the contract event 0x4620c97568351e0eab160aa39863643b388e20b445120a289cb346344a237122.
 //
-// Solidity: event Lock(address ethToken, address bscToken, address locker, address to, uint256 amount)
+// Solidity: event Lock(address token0, address token1, uint256 chainID, address locker, address to, uint256 amount)
 func (_CrossLock *CrossLockFilterer) WatchLock(opts *bind.WatchOpts, sink chan<- *CrossLockLock) (event.Subscription, error) {
 
 	logs, sub, err := _CrossLock.contract.WatchLogs(opts, "Lock")
@@ -882,9 +883,9 @@ func (_CrossLock *CrossLockFilterer) WatchLock(opts *bind.WatchOpts, sink chan<-
 	}), nil
 }
 
-// ParseLock is a log parse operation binding the contract event 0x4e9dc37847123badcca2493e1da785f59908e20645214cf795e6914bfdbaada2.
+// ParseLock is a log parse operation binding the contract event 0x4620c97568351e0eab160aa39863643b388e20b445120a289cb346344a237122.
 //
-// Solidity: event Lock(address ethToken, address bscToken, address locker, address to, uint256 amount)
+// Solidity: event Lock(address token0, address token1, uint256 chainID, address locker, address to, uint256 amount)
 func (_CrossLock *CrossLockFilterer) ParseLock(log types.Log) (*CrossLockLock, error) {
 	event := new(CrossLockLock)
 	if err := _CrossLock.contract.UnpackLog(event, "Lock", log); err != nil {
@@ -963,6 +964,7 @@ func (it *CrossLockProposalVotedIterator) Close() error {
 
 // CrossLockProposalVoted represents a ProposalVoted event raised by the CrossLock contract.
 type CrossLockProposalVoted struct {
+	Token     common.Address
 	From      common.Address
 	To        common.Address
 	Amount    *big.Int
@@ -972,9 +974,9 @@ type CrossLockProposalVoted struct {
 	Raw       types.Log // Blockchain specific contextual infos
 }
 
-// FilterProposalVoted is a free log retrieval operation binding the contract event 0xe3d441f57487d225494bc1ae96df3d59dde1d2d7caed4444f870a0bab81abf14.
+// FilterProposalVoted is a free log retrieval operation binding the contract event 0xe458477b94285c9f254a407e2614c39f55230b527ff7f51d76fdf33e251ae936.
 //
-// Solidity: event ProposalVoted(address from, address to, uint256 amount, address proposer, uint256 count, uint256 threshold)
+// Solidity: event ProposalVoted(address token, address from, address to, uint256 amount, address proposer, uint256 count, uint256 threshold)
 func (_CrossLock *CrossLockFilterer) FilterProposalVoted(opts *bind.FilterOpts) (*CrossLockProposalVotedIterator, error) {
 
 	logs, sub, err := _CrossLock.contract.FilterLogs(opts, "ProposalVoted")
@@ -984,9 +986,9 @@ func (_CrossLock *CrossLockFilterer) FilterProposalVoted(opts *bind.FilterOpts) 
 	return &CrossLockProposalVotedIterator{contract: _CrossLock.contract, event: "ProposalVoted", logs: logs, sub: sub}, nil
 }
 
-// WatchProposalVoted is a free log subscription operation binding the contract event 0xe3d441f57487d225494bc1ae96df3d59dde1d2d7caed4444f870a0bab81abf14.
+// WatchProposalVoted is a free log subscription operation binding the contract event 0xe458477b94285c9f254a407e2614c39f55230b527ff7f51d76fdf33e251ae936.
 //
-// Solidity: event ProposalVoted(address from, address to, uint256 amount, address proposer, uint256 count, uint256 threshold)
+// Solidity: event ProposalVoted(address token, address from, address to, uint256 amount, address proposer, uint256 count, uint256 threshold)
 func (_CrossLock *CrossLockFilterer) WatchProposalVoted(opts *bind.WatchOpts, sink chan<- *CrossLockProposalVoted) (event.Subscription, error) {
 
 	logs, sub, err := _CrossLock.contract.WatchLogs(opts, "ProposalVoted")
@@ -1021,9 +1023,9 @@ func (_CrossLock *CrossLockFilterer) WatchProposalVoted(opts *bind.WatchOpts, si
 	}), nil
 }
 
-// ParseProposalVoted is a log parse operation binding the contract event 0xe3d441f57487d225494bc1ae96df3d59dde1d2d7caed4444f870a0bab81abf14.
+// ParseProposalVoted is a log parse operation binding the contract event 0xe458477b94285c9f254a407e2614c39f55230b527ff7f51d76fdf33e251ae936.
 //
-// Solidity: event ProposalVoted(address from, address to, uint256 amount, address proposer, uint256 count, uint256 threshold)
+// Solidity: event ProposalVoted(address token, address from, address to, uint256 amount, address proposer, uint256 count, uint256 threshold)
 func (_CrossLock *CrossLockFilterer) ParseProposalVoted(log types.Log) (*CrossLockProposalVoted, error) {
 	event := new(CrossLockProposalVoted)
 	if err := _CrossLock.contract.UnpackLog(event, "ProposalVoted", log); err != nil {
@@ -1588,14 +1590,15 @@ func (it *CrossLockThresholdChangedIterator) Close() error {
 
 // CrossLockThresholdChanged represents a ThresholdChanged event raised by the CrossLock contract.
 type CrossLockThresholdChanged struct {
+	Token        common.Address
 	OldThreshold *big.Int
 	NewThreshold *big.Int
 	Raw          types.Log // Blockchain specific contextual infos
 }
 
-// FilterThresholdChanged is a free log retrieval operation binding the contract event 0x3164947cf0f49f08dd0cd80e671535b1e11590d347c55dcaa97ba3c24a96b33a.
+// FilterThresholdChanged is a free log retrieval operation binding the contract event 0xb18e91516e037486aa6fa38f56a8aac933fd127180efe9c9745ecbf660a78e44.
 //
-// Solidity: event ThresholdChanged(uint256 oldThreshold, uint256 newThreshold)
+// Solidity: event ThresholdChanged(address token, uint256 oldThreshold, uint256 newThreshold)
 func (_CrossLock *CrossLockFilterer) FilterThresholdChanged(opts *bind.FilterOpts) (*CrossLockThresholdChangedIterator, error) {
 
 	logs, sub, err := _CrossLock.contract.FilterLogs(opts, "ThresholdChanged")
@@ -1605,9 +1608,9 @@ func (_CrossLock *CrossLockFilterer) FilterThresholdChanged(opts *bind.FilterOpt
 	return &CrossLockThresholdChangedIterator{contract: _CrossLock.contract, event: "ThresholdChanged", logs: logs, sub: sub}, nil
 }
 
-// WatchThresholdChanged is a free log subscription operation binding the contract event 0x3164947cf0f49f08dd0cd80e671535b1e11590d347c55dcaa97ba3c24a96b33a.
+// WatchThresholdChanged is a free log subscription operation binding the contract event 0xb18e91516e037486aa6fa38f56a8aac933fd127180efe9c9745ecbf660a78e44.
 //
-// Solidity: event ThresholdChanged(uint256 oldThreshold, uint256 newThreshold)
+// Solidity: event ThresholdChanged(address token, uint256 oldThreshold, uint256 newThreshold)
 func (_CrossLock *CrossLockFilterer) WatchThresholdChanged(opts *bind.WatchOpts, sink chan<- *CrossLockThresholdChanged) (event.Subscription, error) {
 
 	logs, sub, err := _CrossLock.contract.WatchLogs(opts, "ThresholdChanged")
@@ -1642,9 +1645,9 @@ func (_CrossLock *CrossLockFilterer) WatchThresholdChanged(opts *bind.WatchOpts,
 	}), nil
 }
 
-// ParseThresholdChanged is a log parse operation binding the contract event 0x3164947cf0f49f08dd0cd80e671535b1e11590d347c55dcaa97ba3c24a96b33a.
+// ParseThresholdChanged is a log parse operation binding the contract event 0xb18e91516e037486aa6fa38f56a8aac933fd127180efe9c9745ecbf660a78e44.
 //
-// Solidity: event ThresholdChanged(uint256 oldThreshold, uint256 newThreshold)
+// Solidity: event ThresholdChanged(address token, uint256 oldThreshold, uint256 newThreshold)
 func (_CrossLock *CrossLockFilterer) ParseThresholdChanged(log types.Log) (*CrossLockThresholdChanged, error) {
 	event := new(CrossLockThresholdChanged)
 	if err := _CrossLock.contract.UnpackLog(event, "ThresholdChanged", log); err != nil {
@@ -1723,18 +1726,19 @@ func (it *CrossLockUnlockIterator) Close() error {
 
 // CrossLockUnlock represents a Unlock event raised by the CrossLock contract.
 type CrossLockUnlock struct {
-	EthToken common.Address
-	BscToken common.Address
-	From     common.Address
-	To       common.Address
-	Amount   *big.Int
-	Txid     string
-	Raw      types.Log // Blockchain specific contextual infos
+	Token0  common.Address
+	Token1  common.Address
+	ChainID *big.Int
+	From    common.Address
+	To      common.Address
+	Amount  *big.Int
+	Txid    string
+	Raw     types.Log // Blockchain specific contextual infos
 }
 
-// FilterUnlock is a free log retrieval operation binding the contract event 0x5800596ed55e41c52e6e763640e29ff0d4c09c47408a512c4fb0974a452c1f0c.
+// FilterUnlock is a free log retrieval operation binding the contract event 0x0c6a7c66882059d74054ca1f9deb21718c82c28d890c3eeeb7c35a50839abf00.
 //
-// Solidity: event Unlock(address ethToken, address bscToken, address from, address to, uint256 amount, string txid)
+// Solidity: event Unlock(address token0, address token1, uint256 chainID, address from, address to, uint256 amount, string txid)
 func (_CrossLock *CrossLockFilterer) FilterUnlock(opts *bind.FilterOpts) (*CrossLockUnlockIterator, error) {
 
 	logs, sub, err := _CrossLock.contract.FilterLogs(opts, "Unlock")
@@ -1744,9 +1748,9 @@ func (_CrossLock *CrossLockFilterer) FilterUnlock(opts *bind.FilterOpts) (*Cross
 	return &CrossLockUnlockIterator{contract: _CrossLock.contract, event: "Unlock", logs: logs, sub: sub}, nil
 }
 
-// WatchUnlock is a free log subscription operation binding the contract event 0x5800596ed55e41c52e6e763640e29ff0d4c09c47408a512c4fb0974a452c1f0c.
+// WatchUnlock is a free log subscription operation binding the contract event 0x0c6a7c66882059d74054ca1f9deb21718c82c28d890c3eeeb7c35a50839abf00.
 //
-// Solidity: event Unlock(address ethToken, address bscToken, address from, address to, uint256 amount, string txid)
+// Solidity: event Unlock(address token0, address token1, uint256 chainID, address from, address to, uint256 amount, string txid)
 func (_CrossLock *CrossLockFilterer) WatchUnlock(opts *bind.WatchOpts, sink chan<- *CrossLockUnlock) (event.Subscription, error) {
 
 	logs, sub, err := _CrossLock.contract.WatchLogs(opts, "Unlock")
@@ -1781,9 +1785,9 @@ func (_CrossLock *CrossLockFilterer) WatchUnlock(opts *bind.WatchOpts, sink chan
 	}), nil
 }
 
-// ParseUnlock is a log parse operation binding the contract event 0x5800596ed55e41c52e6e763640e29ff0d4c09c47408a512c4fb0974a452c1f0c.
+// ParseUnlock is a log parse operation binding the contract event 0x0c6a7c66882059d74054ca1f9deb21718c82c28d890c3eeeb7c35a50839abf00.
 //
-// Solidity: event Unlock(address ethToken, address bscToken, address from, address to, uint256 amount, string txid)
+// Solidity: event Unlock(address token0, address token1, uint256 chainID, address from, address to, uint256 amount, string txid)
 func (_CrossLock *CrossLockFilterer) ParseUnlock(log types.Log) (*CrossLockUnlock, error) {
 	event := new(CrossLockUnlock)
 	if err := _CrossLock.contract.UnpackLog(event, "Unlock", log); err != nil {

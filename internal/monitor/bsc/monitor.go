@@ -34,6 +34,7 @@ type Coco struct {
 	BlockHeight uint64         `json:"block_height"`
 	EthToken    common.Address `json:"eth_token"`
 	BscToken    common.Address `json:"bsc_token"`
+	ChainID     *big.Int       `json:"chain_id"`
 }
 
 type Monitor struct {
@@ -147,6 +148,13 @@ func (m *Monitor) listenLockEvent() {
 
 func (m *Monitor) handleCross(lock *BridgeCrossBurn, isHistory bool) {
 	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Bsc.BridgeContract) {
+		m.logger.Debugf("ignore bsc log with contract address: %s", lock.Raw.Address.String())
+		return
+	}
+
+	token1, ok := m.config.Token[strings.ToLower(lock.Token0.String())]
+	if !ok || !strings.EqualFold(token1, lock.Token1.String()) {
+		m.logger.Debugf("ignore bsc log with token address: %s, %s", lock.Token0.String(), lock.Token1.String())
 		return
 	}
 
@@ -161,6 +169,7 @@ func (m *Monitor) handleCross(lock *BridgeCrossBurn, isHistory bool) {
 		Amount:      lock.Amount,
 		EthToken:    lock.Token0,
 		BscToken:    lock.Token1,
+		ChainID:     lock.ChainID,
 		TxId:        lock.Raw.TxHash.String(),
 		BlockHeight: lock.Raw.BlockNumber,
 	}
@@ -170,6 +179,7 @@ func (m *Monitor) handleCross(lock *BridgeCrossBurn, isHistory bool) {
 		"Recipient":    coco.Recipient.String(),
 		"EthToken":     coco.EthToken.String(),
 		"BscToken":     coco.BscToken.String(),
+		"ChainID":      coco.ChainID.String(),
 		"amount":       coco.Amount.String(),
 		"txId":         lock.Raw.TxHash.String(),
 		"block_height": lock.Raw.BlockNumber,
@@ -217,7 +227,7 @@ func (m *Monitor) HandleCocoC() chan *Coco {
 	return m.cocoC
 }
 
-func (m *Monitor) CrossMint(txId string, addrFromEth common.Address, recipient common.Address, amount *big.Int) error {
+func (m *Monitor) CrossMint(ethToken common.Address, txId string, addrFromEth common.Address, recipient common.Address, amount *big.Int) error {
 	m.mux.Lock()
 	defer m.mux.Unlock()
 
@@ -240,6 +250,7 @@ func (m *Monitor) CrossMint(txId string, addrFromEth common.Address, recipient c
 	)
 
 	m.bridgeWrapper.session.TransactOpts.Nonce = nil
+	m.bridgeWrapper.session.TransactOpts.GasPrice = nil
 
 	for {
 		price := m.bridgeWrapper.SuggestGasPrice(context.TODO())
@@ -248,11 +259,12 @@ func (m *Monitor) CrossMint(txId string, addrFromEth common.Address, recipient c
 			gasPrice.BigInt().Cmp(m.bridgeWrapper.session.TransactOpts.GasPrice) == 1 {
 			m.bridgeWrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
 
-			transaction = m.bridgeWrapper.CrossMint(addrFromEth, recipient, amount, txId)
+			transaction = m.bridgeWrapper.CrossMint(ethToken, addrFromEth, recipient, amount, txId)
 			m.bridgeWrapper.session.TransactOpts.Nonce = big.NewInt(int64(transaction.Nonce()))
 			hashes = append(hashes, transaction.Hash())
 
-			m.logger.Infof("send CrossMint tx %s", transaction.Hash().String())
+			m.logger.Infof("send CrossMint tx %s with gasPrice %s and nonce %d",
+				transaction.Hash().String(), gasPrice.String(), transaction.Nonce())
 		}
 
 		receipt, err = m.bridgeWrapper.TransactionReceiptsLimitedRetry(context.TODO(), hashes)
@@ -293,6 +305,7 @@ func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
 					Amount:      lock.Amount,
 					EthToken:    lock.Token0,
 					BscToken:    lock.Token1,
+					ChainID:     lock.ChainID,
 					TxId:        log.TxHash.String(),
 					BlockHeight: receipt.BlockNumber.Uint64(),
 				}, nil

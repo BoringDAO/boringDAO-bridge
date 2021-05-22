@@ -158,7 +158,7 @@ func (lw *LockWrapper) SuggestGasPrice(ctx context.Context) *big.Int {
 	return result
 }
 
-func (lw *LockWrapper) Unlock(token common.Address, from common.Address, to common.Address, amount *big.Int, txid string) *types.Transaction {
+func (lw *LockWrapper) Unlock(token common.Address, chainID *big.Int, from common.Address, to common.Address, amount *big.Int, txid string) *types.Transaction {
 	var result *types.Transaction
 	var err error
 
@@ -167,7 +167,7 @@ func (lw *LockWrapper) Unlock(token common.Address, from common.Address, to comm
 		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
 		lw.session.TransactOpts.GasPrice = gasPrice.BigInt()
 
-		result, err = lw.session.Unlock(token, from, to, amount, txid)
+		result, err = lw.session.Unlock(token, chainID, from, to, amount, txid)
 		if err != nil {
 			lw.logger.Warnf("Unlock: %s", err.Error())
 
@@ -204,7 +204,7 @@ func (lw *LockWrapper) TransactionReceiptsLimitedRetry(ctx context.Context, txHa
 		}
 		return err
 	}, strategy.Wait(10*time.Second), strategy.Limit(30)); err != nil {
-		lw.logger.Panic(err)
+		lw.logger.Warnf("retry TransactionReceipt: %s", err.Error())
 	}
 
 	return result, err
@@ -271,8 +271,7 @@ func (lw *LockWrapper) isNetworkError(err error) bool {
 		return false
 	}
 
-	lw.logger.Infof("check network error for %s", err.Error())
-
 	return regexp.MustCompile("Post .* EOF").MatchString(err.Error()) ||
-		strings.Contains(err.Error(), "connection reset by peer")
+		strings.Contains(err.Error(), "connection reset by peer") ||
+		strings.Contains(err.Error(), "TLS handshake timeout")
 }
