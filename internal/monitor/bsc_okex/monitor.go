@@ -240,6 +240,7 @@ func (m *Monitor) CrossMint(ethToken common.Address, txId string, addrFromEth co
 		transaction *types.Transaction
 		receipt     *types.Receipt
 		err         error
+		hash        common.Hash
 		hashes      []common.Hash
 	)
 
@@ -253,12 +254,12 @@ func (m *Monitor) CrossMint(ethToken common.Address, txId string, addrFromEth co
 			gasPrice.BigInt().Cmp(m.bridgeWrapper.session.TransactOpts.GasPrice) == 1 {
 			m.bridgeWrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
 
-			transaction = m.bridgeWrapper.CrossMint(ethToken, addrFromEth, recipient, amount, txId)
+			transaction, hash = m.bridgeWrapper.CrossMint(ethToken, addrFromEth, recipient, amount, txId)
 			m.bridgeWrapper.session.TransactOpts.Nonce = big.NewInt(int64(transaction.Nonce()))
-			hashes = append(hashes, transaction.Hash())
+			hashes = append(hashes, hash)
 
 			m.logger.Infof("send CrossMint tx %s with gasPrice %s and nonce %d",
-				transaction.Hash().String(), gasPrice.String(), transaction.Nonce())
+				hash.String(), gasPrice.String(), transaction.Nonce())
 		}
 
 		receipt, err = m.bridgeWrapper.TransactionReceiptsLimitedRetry(context.TODO(), hashes)
@@ -268,9 +269,9 @@ func (m *Monitor) CrossMint(ethToken common.Address, txId string, addrFromEth co
 	}
 
 	if receipt.Status == 1 {
-		m.logger.WithField("tx_hash", transaction.Hash().String()).Info("crossMint success")
+		m.logger.WithField("tx_hash", hash.String()).Info("crossMint success")
 	} else {
-		return fmt.Errorf("crossMint fail:%s", transaction.Hash().String())
+		return fmt.Errorf("crossMint fail:%s", hash.String())
 	}
 
 	return nil
