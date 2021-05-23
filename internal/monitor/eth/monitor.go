@@ -6,7 +6,6 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"github.com/shopspring/decimal"
 	"math/big"
 	"strings"
 	"sync"
@@ -21,6 +20,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 )
 
@@ -173,7 +173,7 @@ func (m *Monitor) handleLock(lock *CrossLockLock, isHistory bool) {
 	}
 
 	if m.chainID != lock.ChainID.Uint64() {
-		m.logger.Debugf("ignore eth log with token address: %s, %s, chainID: exp: %s, cur: %s",
+		m.logger.Debugf("ignore eth log with token address: %s, %s, chainID: exp: %d, cur: %s",
 			lock.Token0.String(), lock.Token1.String(), m.chainID, lock.ChainID.String())
 		return
 	}
