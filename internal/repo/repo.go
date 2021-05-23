@@ -25,10 +25,6 @@ func Load(repoRoot string) (*Repo, error) {
 }
 
 func checkConfig(config *Config) error {
-	if len(config.Token) == 0 {
-		return fmt.Errorf("token is not configured")
-	}
-
 	if config.Eth.CrossLockContract == "" {
 		return fmt.Errorf("eth cross lock contract is not configured")
 	}
@@ -41,17 +37,40 @@ func checkConfig(config *Config) error {
 		fmt.Println("Warning: eth minconfirms should be at least 15, please change it if it's in prod environment")
 	}
 
-	if config.Bsc.BridgeContract == "" {
-		return fmt.Errorf("bsc bridge contract is not configured")
+	if len(config.Bsc.Tokens) != 0 {
+		if config.Bsc.BridgeContract == "" {
+			return fmt.Errorf("bsc bridge contract is not configured")
+		}
+
+		if len(config.Bsc.Addrs) == 0 {
+			return fmt.Errorf("bsc addrs are not configured")
+		}
+
+		if config.Bsc.MinConfirms < 15 {
+			fmt.Println("Warning: bsc minconfirms should be at least 15, please change it if it's in prod environment")
+		}
 	}
 
-	if len(config.Bsc.Addrs) == 0 {
-		return fmt.Errorf("bsc addrs are not configured")
+	if len(config.Okex.Tokens) != 0 {
+		if config.Okex.BridgeContract == "" {
+			return fmt.Errorf("okex chain bridge contract is not configured")
+		}
+
+		if len(config.Okex.Addrs) == 0 {
+			return fmt.Errorf("okex chain addrs are not configured")
+		}
+
+		if config.Okex.MinConfirms != 0 {
+			config.Okex.MinConfirms = 0
+			fmt.Println("Warning: okex chain minconfirms will be set to 0")
+		}
 	}
 
-	if config.Bsc.MinConfirms < 15 {
-		fmt.Println("Warning: bsc minconfirms should be at least 15, please change it if it's in prod environment")
-	}
+	fmt.Println(config.Eth)
+
+	fmt.Println(config.Bsc)
+
+	fmt.Println(config.Okex)
 
 	return nil
 }

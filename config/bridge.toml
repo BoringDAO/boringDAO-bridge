@@ -3,24 +3,45 @@ title = "Bridge configuration file"
 
 [eth]
   addrs = [
-    "https://ropsten.infura.io/v3/3e8a2d2286964b62bc6b1d67c379badd",
-    "https://eth-ropsten.alchemyapi.io/v2/K36BtEv6HiX4gn-b_XEB-l1mjqtm7FEI"
+    "https://kovan.infura.io/v3/788169d3033b492d81f858f69577bf63",
+    "https://eth-kovan.alchemyapi.io/v2/WNEqzHmY4jcmm_PNLDJLvZbrfkCFlFKj",
+#    "https://ropsten.infura.io/v3/3e8a2d2286964b62bc6b1d67c379badd",
+#    "https://eth-ropsten.alchemyapi.io/v2/K36BtEv6HiX4gn-b_XEB-l1mjqtm7FEI"
   ]
   minConfirms = 15 # min confirms
   gasLimit = 1500000 # gas Limit
-  crossLockContract = "0xf03372F82422FCdbbD220691Ada0168c01c7a55A" # crosslock contract address
+  crossLockContract = "0x00B1EfAEa47492C933630D63b1d1fe17982Ec2F1" # crosslock contract address
+  tokens = [
+    "0xe5dB9ed82982943eFecAA439c82CCBb1b2AFC2A0", #nsure
+    "0xa9C744B12AB13Cd4cAC6f3cbbE33113d5DBB09Ee", #boring
+  ]
+#  [eth.height]
+#    97 = 290000
+#    65 = 300000
 
 [bsc]
   addrs = [
     "https://data-seed-prebsc-1-s1.binance.org:8545",
     "https://data-seed-prebsc-1-s1.binance.org:8545"
   ]
+  chainID = 97 # bsc test
+  gasLimit = 1500000 # gas Limit
+  bridgeContract = "0x233d05Ed7B712167D040d52961D9f18ae282A87C" # bridge contract address
+  [bsc.tokens]
+    "0xe5dB9ed82982943eFecAA439c82CCBb1b2AFC2A0" = "0xb78d5C8817bf0985932115B7700194ffCD79AfB3" #nsure
+    "0xa9C744B12AB13Cd4cAC6f3cbbE33113d5DBB09Ee" = "0x9a40dB98775015EB2452754e905e22E087ad3842" #boring
+
+[okex]
+  addrs = [
+     "https://exchaintestrpc.okex.org"
+  ]
+  chainID = 65 # okex chain test
   minConfirms = 15 # min confirms
   gasLimit = 1500000 # gas Limit
-  bridgeContract = "0xA59BaD89447403790cE5cB8f1E2849715879ea79" # bridge contract address
+  bridgeContract = "0x26Ec036Be42907eA15a273833816539B26d2BE53" # bridge contract address
+  [okex.tokens]
+    "0xa9C744B12AB13Cd4cAC6f3cbbE33113d5DBB09Ee" = "0x19783469f2485b702b89f98A64F2179877D0391E" #boring
 
-[token]
-    "0x464E7613f03e800C430457Fd0da65b786333486c" = "0x435d3956C2dE21F1c6B8254651d2579B10466f97"
 
 [log]
   level = "info"
@@ -28,6 +49,7 @@ title = "Bridge configuration file"
   filename = "bridge.log"
 [log.module]
   bsc = "info"
+  okex = "info"
   eth = "info"
   app = "info"
 

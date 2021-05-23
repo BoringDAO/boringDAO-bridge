@@ -50,13 +50,15 @@ type Monitor struct {
 	lockAddr    common.Address
 	address     common.Address
 	BorAddr     common.Address
+	tokens      map[string]struct{}
+	chainID     uint64
 
 	ctx    context.Context
 	cancel context.CancelFunc
 }
 
-func New(config *repo.Config, logger logrus.FieldLogger) (*Monitor, error) {
-	storagePath := repo.GetStoragePath(config.RepoRoot, "eth")
+func New(config *repo.Config, chainID uint64, logger logrus.FieldLogger) (*Monitor, error) {
+	storagePath := repo.GetStoragePath(config.RepoRoot, fmt.Sprintf("eth_%d", chainID))
 	ethStorage, err := leveldb.New(storagePath)
 	if err != nil {
 		return nil, err
@@ -85,6 +87,11 @@ func New(config *repo.Config, logger logrus.FieldLogger) (*Monitor, error) {
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 
+	tokens := make(map[string]struct{})
+	for _, token := range config.Eth.Tokens {
+		tokens[strings.ToLower(token)] = struct{}{}
+	}
+
 	return &Monitor{
 		config:      config,
 		storage:     ethStorage,
@@ -94,6 +101,8 @@ func New(config *repo.Config, logger logrus.FieldLogger) (*Monitor, error) {
 		lockAddr:    common.HexToAddress(config.Eth.CrossLockContract),
 		minConfirms: uint64(minConfirms),
 		cocoC:       make(chan *Coco),
+		tokens:      tokens,
+		chainID:     chainID,
 		logger:      logger,
 		ctx:         ctx,
 		cancel:      cancel,
@@ -158,9 +167,14 @@ func (m *Monitor) handleLock(lock *CrossLockLock, isHistory bool) {
 		return
 	}
 
-	token1, ok := m.config.Token[strings.ToLower(lock.Token0.String())]
-	if !ok || !strings.EqualFold(token1, lock.Token1.String()) {
+	if _, ok := m.tokens[strings.ToLower(lock.Token0.String())]; !ok {
 		m.logger.Debugf("ignore eth log with token address: %s, %s", lock.Token0.String(), lock.Token1.String())
+		return
+	}
+
+	if m.chainID != lock.ChainID.Uint64() {
+		m.logger.Debugf("ignore eth log with token address: %s, %s, chainID: exp: %s, cur: %s",
+			lock.Token0.String(), lock.Token1.String(), m.chainID, lock.ChainID.String())
 		return
 	}
 
@@ -182,6 +196,7 @@ func (m *Monitor) handleLock(lock *CrossLockLock, isHistory bool) {
 	m.logger.WithFields(logrus.Fields{
 		"eth_token":    coco.EthToken.String(),
 		"bsc_token":    coco.BscToken.String(),
+		"chainID":      coco.ChainID.String(),
 		"sender":       coco.Sender.String(),
 		"recipient":    coco.Recipient.String(),
 		"amount":       coco.Amount.String(),
@@ -233,7 +248,7 @@ func (m *Monitor) UnlockBor(txId string, token common.Address, chainId *big.Int,
 
 	unlocked := m.lockWrapper.TxUnlocked(txId)
 	if unlocked {
-		m.logger.Infof("find txUnlocked bsc txId:%s", txId)
+		m.logger.Infof("find txUnlocked Chain %d txId:%s", chainId.Uint64(), txId)
 		return nil
 	}
 
@@ -325,28 +340,29 @@ func (m *Monitor) fetchBlockNum() uint64 {
 func (m *Monitor) loadHeightFromStorage() {
 	height := m.fetchBlockNum()
 	// load block height
-	b := m.storage.Get(lHeightKey())
+	b := m.storage.Get(lHeightKey(m.chainID))
 	if b == nil {
 		m.lHeight = height - m.minConfirms
-		if m.config.Eth.Height != 0 && m.config.Eth.Height < m.lHeight {
-			m.lHeight = m.config.Eth.Height
+		if m.config.Eth.Height[m.chainID] != 0 && m.config.Eth.Height[m.chainID] < m.lHeight {
+			m.lHeight = m.config.Eth.Height[m.chainID]
 		}
 
 		m.persistLHeight(m.lHeight)
 	} else {
 		m.lHeight = binary.LittleEndian.Uint64(b)
-		if m.config.Eth.Height != 0 {
-			m.lHeight = m.config.Eth.Height
+		if m.config.Eth.Height[m.chainID] != 0 {
+			m.lHeight = m.config.Eth.Height[m.chainID]
 		}
 	}
 
 	m.logger.WithFields(logrus.Fields{
 		"Lock_height": m.lHeight,
+		"ChainID":     m.chainID,
 	}).Info("Subscribe")
 }
 
-func lHeightKey() []byte {
-	return []byte(fmt.Sprintf("lHeight"))
+func lHeightKey(chainID uint64) []byte {
+	return []byte(fmt.Sprintf("lHeight_%d", chainID))
 }
 
 func (m *Monitor) persistLBlockHeight(txId string, height uint64) {
@@ -366,7 +382,7 @@ func (m *Monitor) HasTx(txId string) bool {
 func (m *Monitor) persistLHeight(height uint64) {
 	buf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(buf, height)
-	m.storage.Put(lHeightKey(), buf)
+	m.storage.Put(lHeightKey(m.chainID), buf)
 	m.logger.WithFields(logrus.Fields{
 		"height": height,
 	}).Info("Persist Lock Block Height")
@@ -382,4 +398,8 @@ func (m *Monitor) PutTxID(txId string, coco *Coco) {
 		m.logger.Error(err)
 	}
 	m.storage.Put(TxKey(txId), data)
+}
+
+func (m *Monitor) GetChainID() uint64 {
+	return m.chainID
 }

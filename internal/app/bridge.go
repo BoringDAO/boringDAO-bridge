@@ -6,25 +6,28 @@ import (
 	"sync"
 	"time"
 
-	"github.com/boringdao/bridge/internal/monitor/bsc"
-	"github.com/boringdao/bridge/internal/monitor/eth"
-
 	"github.com/boringdao/bridge/internal/loggers"
+	"github.com/boringdao/bridge/internal/monitor/bridge"
+	"github.com/boringdao/bridge/internal/monitor/bsc_okex"
+	"github.com/boringdao/bridge/internal/monitor/eth"
 	"github.com/boringdao/bridge/internal/repo"
 	"github.com/boringdao/bridge/pkg/storage"
 	"github.com/boringdao/bridge/pkg/storage/leveldb"
-
 	"github.com/common-nighthawk/go-figure"
 	"github.com/sirupsen/logrus"
 )
 
+type MntPair struct {
+	ethMnt    *eth.Monitor
+	bridgeMnt bridge.Monitor
+}
+
 type Bridge struct {
-	repo    *repo.Repo
-	ethMnt  *eth.Monitor
-	bscMnt  *bsc.Monitor
-	storage storage.Storage
-	logger  logrus.FieldLogger
-	mux     sync.Mutex
+	repo     *repo.Repo
+	mntPairs map[uint64]*MntPair
+	storage  storage.Storage
+	logger   logrus.FieldLogger
+	mux      sync.Mutex
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -37,42 +40,63 @@ func New(repoRoot *repo.Repo) (*Bridge, error) {
 		return nil, err
 	}
 
-	ethMnt, err := eth.New(repoRoot.Config, loggers.Logger(loggers.ETH))
-	if err != nil {
-		return nil, err
+	mntPairs := make(map[uint64]*MntPair)
+	if len(repoRoot.Config.Bsc.Tokens) != 0 {
+		ethMnt, err := eth.New(repoRoot.Config, repoRoot.Config.Bsc.ChainID, loggers.Logger(loggers.ETH))
+		if err != nil {
+			return nil, err
+		}
+		bscMnt, err := bsc_okex.New(repoRoot.Config.RepoRoot, &repoRoot.Config.Bsc, loggers.Logger(loggers.BSC))
+		if err != nil {
+			return nil, err
+		}
+		mntPairs[repoRoot.Config.Bsc.ChainID] = &MntPair{
+			ethMnt:    ethMnt,
+			bridgeMnt: bscMnt,
+		}
 	}
-
-	bscMnt, err := bsc.New(repoRoot.Config, loggers.Logger(loggers.BSC))
-	if err != nil {
-		return nil, err
+	if len(repoRoot.Config.Okex.Tokens) != 0 {
+		ethMnt, err := eth.New(repoRoot.Config, repoRoot.Config.Okex.ChainID, loggers.Logger(loggers.ETH))
+		if err != nil {
+			return nil, err
+		}
+		okexMnt, err := bsc_okex.New(repoRoot.Config.RepoRoot, &repoRoot.Config.Okex, loggers.Logger(loggers.OKEX))
+		if err != nil {
+			return nil, err
+		}
+		mntPairs[repoRoot.Config.Okex.ChainID] = &MntPair{
+			ethMnt:    ethMnt,
+			bridgeMnt: okexMnt,
+		}
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
+
 	return &Bridge{
-		repo:    repoRoot,
-		ethMnt:  ethMnt,
-		bscMnt:  bscMnt,
-		storage: boringStorage,
-		logger:  loggers.Logger(loggers.APP),
-		ctx:     ctx,
-		cancel:  cancel,
+		repo:     repoRoot,
+		mntPairs: mntPairs,
+		storage:  boringStorage,
+		logger:   loggers.Logger(loggers.APP),
+		ctx:      ctx,
+		cancel:   cancel,
 	}, nil
 }
 
 func (b *Bridge) Start() error {
-	err := b.ethMnt.Start()
-	if err != nil {
-		return err
+	for chainID, mntPair := range b.mntPairs {
+		if err := mntPair.ethMnt.Start(); err != nil {
+			return err
+		}
+
+		if err := mntPair.bridgeMnt.Start(); err != nil {
+			return err
+		}
+
+		go b.listenEthCocoC(mntPair)
+		go b.listenBridgeCocoC(mntPair)
+
+		b.logger.Infof("mnt pair for chain ID %d has started", chainID)
 	}
-
-	err = b.bscMnt.Start()
-	if err != nil {
-		return err
-	}
-
-	go b.listenEthCocoC()
-
-	go b.listenBscCocoC()
 
 	return nil
 }
@@ -82,26 +106,23 @@ func (b *Bridge) Stop() error {
 	return nil
 }
 
-func (b *Bridge) listenEthCocoC() {
-	cocoC := b.ethMnt.HandleCocoC()
+func (b *Bridge) listenEthCocoC(mntPair *MntPair) {
+	cocoC := mntPair.ethMnt.HandleCocoC()
 	for {
 		select {
 		case coco := <-cocoC:
 			handle := func() {
-				b.mux.Lock()
-				defer b.mux.Unlock()
-				b.logger.Infof("========> start handle bsc transaction...")
-				defer b.logger.Infof("========> end handle bsc transaction...")
-				if b.ethMnt.HasTx(coco.TxId) {
+				b.logger.Infof("========> start handle Chain %d transaction...", mntPair.ethMnt.GetChainID())
+				defer b.logger.Infof("========> end handle Chain %d transaction...", mntPair.ethMnt.GetChainID())
+				if mntPair.ethMnt.HasTx(coco.TxId) {
 					b.logger.WithField("tx", coco.TxId).Error("has handled the interchain event")
 					return
 				}
-				err := b.bscMnt.CrossMint(coco.EthToken, coco.TxId, coco.Sender, coco.Recipient, coco.Amount)
+				err := mntPair.bridgeMnt.CrossMint(coco.EthToken, coco.TxId, coco.Sender, coco.Recipient, coco.Amount)
 				if err != nil {
 					b.logger.Panic(err)
 				}
-				b.ethMnt.PutTxID(coco.TxId, coco)
-
+				mntPair.ethMnt.PutTxID(coco.TxId, coco)
 			}
 			handle()
 		case <-b.ctx.Done():
@@ -111,8 +132,8 @@ func (b *Bridge) listenEthCocoC() {
 	}
 }
 
-func (b *Bridge) listenBscCocoC() {
-	cocoC := b.bscMnt.HandleCocoC()
+func (b *Bridge) listenBridgeCocoC(mntPair *MntPair) {
+	cocoC := mntPair.bridgeMnt.HandleCocoC()
 	for {
 		select {
 		case coco := <-cocoC:
@@ -121,18 +142,17 @@ func (b *Bridge) listenBscCocoC() {
 				defer b.mux.Unlock()
 				b.logger.Infof("========> start handle eth transaction...")
 				defer b.logger.Infof("========> end handle eth transaction...")
-				if b.bscMnt.HasTx(coco.TxId) {
+				if mntPair.bridgeMnt.HasTx(coco.TxId) {
 					b.logger.WithField("tx", coco.TxId).Error("has handled the interchain event")
 					return
 				}
 
-				err := b.ethMnt.UnlockBor(coco.TxId, coco.EthToken, coco.ChainID, coco.Sender, coco.Recipient, coco.Amount)
+				err := mntPair.ethMnt.UnlockBor(coco.TxId, coco.EthToken, coco.ChainID, coco.Sender, coco.Recipient, coco.Amount)
 				if err != nil {
 					b.logger.Panic(err)
 				}
 
-				b.bscMnt.PutTxID(coco.TxId, coco)
-
+				mntPair.bridgeMnt.PutTxID(coco.TxId, coco)
 			}
 			handle()
 		case <-b.ctx.Done():
