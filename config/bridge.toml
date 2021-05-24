@@ -15,9 +15,6 @@ title = "Bridge configuration file"
     "0xe5dB9ed82982943eFecAA439c82CCBb1b2AFC2A0", #nsure
     "0xa9C744B12AB13Cd4cAC6f3cbbE33113d5DBB09Ee", #boring
   ]
-#  [eth.height]
-#    97 = 290000
-#    65 = 300000
 
 [bsc]
   addrs = [

@@ -21,12 +21,18 @@ Open the bridge.yaml file in .bridge directory, and edit below items:
 1. **addrs**: specify the eth rpc address this bridge will connect, you can configure more than one
 1. **minConfirms**: minimal blocks to confirm a transaction, a number not less than **15** is recommended 
 1. **crossLockContract**: specify the cross lock contract address deployed in eth network
-1. **token**: specify the eth token contract address which will be cross over to bsc network
+1. **tokens**: specify the ERC20 token contract addresses which will be cross over to other blockchain network
 #### [bsc]
-1. **addrs**: specify the bsc rpc address this bridge will connect, you can configure more than one
+1. **addrs**: specify the bsc rpc address this bridge will connect, you can configure more than one 
+1. **chainID**: specify the chain ID of bsc network
 1. **minConfirms**: minimal blocks to confirm a transaction, a number not less than **15** is recommended
 1. **bridgeContract**: specify the bridge contract address deployed in bsc network
-
+1. **[bsc.tokens]**: specify the pairs of ERC20 token contract address and the corresponding token address on bsc network. Leave it empty if you don't care about the tokens on bsc network
+#### [okex]
+1. **addrs**: specify the okex chain rpc address this bridge will connect, you can configure more than one
+1. **chainID**: specify the chain ID of okex chain network
+1. **bridgeContract**: specify the bridge contract address deployed in okex chain network
+1. **[okex.tokens]**: specify the pairs of ERC20 token contract address and the corresponding token address on okex chain network. Leave it empty if you don't care about the tokens on pkex chain network
 ### 3. Start the bridge
 
 Use below command to start the bridge, it will use the configuration in the default home directory:
