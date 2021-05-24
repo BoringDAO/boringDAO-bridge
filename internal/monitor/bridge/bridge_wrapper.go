@@ -1,4 +1,4 @@
-package bsc_okex
+package bridge
 
 import (
 	"context"
