@@ -6,6 +6,11 @@ import (
 	"math/big"
 	"regexp"
 	"strings"
+	"time"
+
+	"github.com/Rican7/retry"
+	"github.com/Rican7/retry/strategy"
+	"github.com/shopspring/decimal"
 
 	"github.com/boringdao/bridge/internal/repo"
 	"github.com/boringdao/bridge/pkg/kit/hexutil"
@@ -71,107 +76,187 @@ func NewEthWrapper(config *repo.Eth, logger logrus.FieldLogger) (*EthWrapper, er
 	}, nil
 }
 
-func (ew *EthWrapper) HeaderByNumber(ctx context.Context, number *big.Int) (*types.Header, error) {
-	for {
-		header, err := ew.ethClient.HeaderByNumber(ctx, number)
-		if ew.isNetworkError(err) {
-			ew.switchToNextAddr()
-			continue
-		}
-		return header, err
-	}
-}
-
-func (ew *EthWrapper) FilterLock(opts *bind.FilterOpts) (*CrossLockLockIterator, error) {
-	for {
-		itrator, err := ew.lock.FilterLock(opts)
-		if ew.isNetworkError(err) {
-			ew.switchToNextAddr()
-			continue
-		}
-		return itrator, err
-	}
-}
-
-func (ew *EthWrapper) TxUnlocked(txId string) (bool, error) {
-	for {
-		result, err := ew.session.TxUnlocked(txId)
-		if ew.isNetworkError(err) {
-			ew.switchToNextAddr()
-			continue
-		}
-		return result, err
-	}
-}
-
-func (ew *EthWrapper) SuggestGasPrice(ctx context.Context) (*big.Int, error) {
-	for {
-		result, err := ew.ethClient.SuggestGasPrice(ctx)
-		if ew.isNetworkError(err) {
-			ew.switchToNextAddr()
-			continue
-		}
-		return result, err
-	}
-}
-
-func (ew *EthWrapper) NonceAt(ctx context.Context, address common.Address) (uint64, error) {
-	for {
-		result, err := ew.ethClient.NonceAt(ctx, address, nil)
-		if ew.isNetworkError(err) {
-			ew.switchToNextAddr()
-			continue
-		}
-		return result, err
-	}
-}
-
-func (ew *EthWrapper) Unlock(token common.Address, from common.Address, to common.Address, amount *big.Int, txid string) (*types.Transaction, error) {
-	for {
-		result, err := ew.session.Unlock(token, from, to, amount, txid)
-		if ew.isNetworkError(err) {
-			ew.switchToNextAddr()
-			continue
-		}
-		return result, err
-	}
-}
-
-func (ew *EthWrapper) TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error) {
-	for {
-		result, err := ew.ethClient.TransactionReceipt(ctx, txHash)
-		if ew.isNetworkError(err) {
-			ew.switchToNextAddr()
-			continue
-		}
-		return result, err
-	}
-}
-
-func (ew *EthWrapper) switchToNextAddr() {
+func (lw *EthWrapper) HeaderByNumber(ctx context.Context, number *big.Int) *types.Header {
+	var header *types.Header
 	var err error
 
-	for i := 0; i < len(ew.eth.Addrs); i++ {
-		ew.addrIdx++
-		if ew.addrIdx == len(ew.eth.Addrs) {
-			ew.addrIdx = 0
+	if err := retry.Retry(func(attempt uint) error {
+		header, err = lw.ethClient.HeaderByNumber(ctx, number)
+		if err != nil {
+			lw.logger.Warnf("HeaderByNumber: %s", err.Error())
+
+			if lw.isNetworkError(err) {
+				lw.switchToNextAddr()
+			}
+		}
+		return err
+	}, strategy.Wait(10*time.Second)); err != nil {
+		lw.logger.Panic(err)
+	}
+
+	return header
+}
+
+func (lw *EthWrapper) FilterLock(opts *bind.FilterOpts) *CrossLockLockIterator {
+	var iterator *CrossLockLockIterator
+	var err error
+
+	if err := retry.Retry(func(attempt uint) error {
+		iterator, err = lw.lock.FilterLock(opts)
+		if err != nil {
+			lw.logger.Warnf("FilterLock: %s", err.Error())
+
+			if lw.isNetworkError(err) {
+				lw.switchToNextAddr()
+			}
+		}
+		return err
+	}, strategy.Wait(10*time.Second)); err != nil {
+		lw.logger.Panic(err)
+	}
+
+	return iterator
+}
+
+func (lw *EthWrapper) TxUnlocked(txId string) bool {
+	var result bool
+	var err error
+
+	if err := retry.Retry(func(attempt uint) error {
+		result, err = lw.session.TxUnlocked(txId)
+		if err != nil {
+			lw.logger.Warnf("TxUnlocked: %s", err.Error())
+
+			if lw.isNetworkError(err) {
+				lw.switchToNextAddr()
+			}
+		}
+		return err
+	}, strategy.Wait(10*time.Second)); err != nil {
+		lw.logger.Panic(err)
+	}
+
+	return result
+}
+
+func (lw *EthWrapper) SuggestGasPrice(ctx context.Context) *big.Int {
+	var result *big.Int
+	var err error
+
+	if err := retry.Retry(func(attempt uint) error {
+		result, err = lw.ethClient.SuggestGasPrice(ctx)
+		if err != nil {
+			lw.logger.Warnf("SuggestGasPrice: %s", err.Error())
+
+			if lw.isNetworkError(err) {
+				lw.switchToNextAddr()
+			}
+		}
+		return err
+	}, strategy.Wait(10*time.Second)); err != nil {
+		lw.logger.Panic(err)
+	}
+
+	return result
+}
+
+func (lw *EthWrapper) Unlock(token common.Address, from common.Address, to common.Address, amount *big.Int, txid string) *types.Transaction {
+	var result *types.Transaction
+	var err error
+
+	if err := retry.Retry(func(attempt uint) error {
+		price := lw.SuggestGasPrice(context.TODO())
+		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
+		lw.session.TransactOpts.GasPrice = gasPrice.BigInt()
+
+		result, err = lw.session.Unlock(token, from, to, amount, txid)
+		if err != nil {
+			lw.logger.Warnf("Unlock: %s", err.Error())
+
+			if lw.isNetworkError(err) {
+				lw.switchToNextAddr()
+			}
+
+		}
+		return err
+	}, strategy.Wait(10*time.Second)); err != nil {
+		lw.logger.Panic(err)
+	}
+
+	return result
+}
+
+func (lw *EthWrapper) TransactionReceiptsLimitedRetry(ctx context.Context, txHashes []common.Hash) (*types.Receipt, error) {
+	var result *types.Receipt
+	var err error
+
+	if err := retry.Retry(func(attempt uint) error {
+		for _, txHash := range txHashes {
+			result, err = lw.ethClient.TransactionReceipt(ctx, txHash)
+			if err != nil {
+				lw.logger.Warnf("TransactionReceipt: %s", err.Error())
+
+				if lw.isNetworkError(err) {
+					lw.switchToNextAddr()
+				}
+			}
+			if err == nil {
+				return nil
+			}
+		}
+		return err
+	}, strategy.Wait(10*time.Second), strategy.Limit(30)); err != nil {
+		lw.logger.Warnf("retry TransactionReceipt: %s", err.Error())
+	}
+
+	return result, err
+}
+
+func (lw *EthWrapper) TransactionReceipt(ctx context.Context, txHash common.Hash) *types.Receipt {
+	var result *types.Receipt
+	var err error
+
+	if err := retry.Retry(func(attempt uint) error {
+		result, err = lw.ethClient.TransactionReceipt(ctx, txHash)
+		if err != nil {
+			lw.logger.Warnf("TransactionReceipt: %s", err.Error())
+
+			if lw.isNetworkError(err) {
+				lw.switchToNextAddr()
+			}
+		}
+		return err
+	}, strategy.Wait(10*time.Second)); err != nil {
+		lw.logger.Panic(err)
+	}
+
+	return result
+}
+
+func (lw *EthWrapper) switchToNextAddr() {
+	var err error
+
+	for i := 0; i < len(lw.eth.Addrs); i++ {
+		lw.addrIdx++
+		if lw.addrIdx == len(lw.eth.Addrs) {
+			lw.addrIdx = 0
 		}
 
-		ew.logger.Warnf("try to switch to %s", ew.eth.Addrs[ew.addrIdx])
+		lw.logger.Warnf("try to switch to %s", lw.eth.Addrs[lw.addrIdx])
 
-		ew.ethClient, err = ethclient.Dial(ew.eth.Addrs[ew.addrIdx])
+		lw.ethClient, err = ethclient.Dial(lw.eth.Addrs[lw.addrIdx])
 		if err != nil {
 			continue
 		}
 
-		ew.lock, err = NewCrossLock(common.HexToAddress(ew.eth.CrossLockContract), ew.ethClient)
+		lw.lock, err = NewCrossLock(common.HexToAddress(lw.eth.CrossLockContract), lw.ethClient)
 		if err != nil {
 			continue
 		}
 
-		ew.session.Contract = ew.lock
+		lw.session.Contract = lw.lock
 
-		ew.logger.Infof("switch to %s successfully", ew.eth.Addrs[ew.addrIdx])
+		lw.logger.Infof("switch to %s successfully", lw.eth.Addrs[lw.addrIdx])
 
 		return
 	}
@@ -179,17 +264,16 @@ func (ew *EthWrapper) switchToNextAddr() {
 	panic("all eth addrs are not valid")
 }
 
-func (ew *EthWrapper) Close() {
-	ew.ethClient.Close()
+func (lw *EthWrapper) Close() {
+	lw.ethClient.Close()
 }
 
-func (ew *EthWrapper) isNetworkError(err error) bool {
+func (lw *EthWrapper) isNetworkError(err error) bool {
 	if err == nil {
 		return false
 	}
 
-	ew.logger.Infof("check network error for %s", err.Error())
-
 	return regexp.MustCompile("Post .* EOF").MatchString(err.Error()) ||
-		strings.Contains(err.Error(), "connection reset by peer")
+		strings.Contains(err.Error(), "connection reset by peer") ||
+		strings.Contains(err.Error(), "TLS handshake timeout")
 }
