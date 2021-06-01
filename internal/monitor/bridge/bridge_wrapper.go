@@ -86,14 +86,14 @@ func NewBridgeWrapper(config *repo.BridgeConfig, logger logrus.FieldLogger) (*Br
 	}, nil
 }
 
-func (bw *BridgeWrapper) HeaderByNumber(ctx context.Context, number *big.Int) *types.Header {
-	var header *types.Header
+func (bw *BridgeWrapper) BlockNumber(ctx context.Context) uint64 {
+	var number uint64
 	var err error
 
 	if err := retry.Retry(func(attempt uint) error {
-		header, err = bw.ethClient.HeaderByNumber(ctx, number)
+		number, err = bw.ethClient.BlockNumber(ctx)
 		if err != nil {
-			bw.logger.Warnf("HeaderByNumber: %s", err.Error())
+			bw.logger.Warnf("BlockNumber: %s", err.Error())
 
 			if bw.isNetworkError(err) {
 				bw.switchToNextAddr()
@@ -104,7 +104,7 @@ func (bw *BridgeWrapper) HeaderByNumber(ctx context.Context, number *big.Int) *t
 		bw.logger.Panic(err)
 	}
 
-	return header
+	return number
 }
 
 func (bw *BridgeWrapper) FilterCrossBurn(opts *bind.FilterOpts) *BridgeCrossBurnIterator {

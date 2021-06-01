@@ -109,7 +109,7 @@ func (m *Monitor) ListenCrossBurnEvent() {
 	for {
 		select {
 		case <-ticker.C:
-			num := m.fetchBlockNum()
+			num := m.bridgeWrapper.BlockNumber(context.TODO())
 			end := num - m.minConfirms
 			if end < start {
 				continue
@@ -123,7 +123,7 @@ func (m *Monitor) ListenCrossBurnEvent() {
 			for filter.Next() {
 				m.handleCross(filter.Event, true)
 			}
-			m.logger.WithFields(logrus.Fields{"start": start, "end": end}).Infof("BridgeCrossBurnIterator")
+			m.logger.WithFields(logrus.Fields{"start": start, "end": end}).Infof("BridgeCrossBurnIterator end")
 
 			start = end + 1
 		case <-m.ctx.Done():
@@ -202,7 +202,7 @@ func (m *Monitor) handleCross(lock *BridgeCrossBurn, isHistory bool) {
 
 func (m *Monitor) confirmEvent(event types.Log) bool {
 	for {
-		num := m.fetchBlockNum()
+		num := m.bridgeWrapper.BlockNumber(context.TODO())
 		isConfirmed := num-event.BlockNumber >= m.minConfirms
 		if !isConfirmed {
 			time.Sleep(15 * time.Second)
@@ -312,13 +312,8 @@ func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
 	return nil, fmt.Errorf("not found BridgeCrossBurn log in tx:%s", txId)
 }
 
-func (m *Monitor) fetchBlockNum() uint64 {
-	header := m.bridgeWrapper.HeaderByNumber(context.TODO(), nil)
-	return header.Number.Uint64()
-}
-
 func (m *Monitor) loadHeightFromStorage() {
-	height := m.fetchBlockNum()
+	height := m.bridgeWrapper.BlockNumber(context.TODO())
 
 	// load block height
 	b := m.storage.Get(bHeightKey())
