@@ -146,6 +146,9 @@ func (m *Monitor) handleCross(lock *BridgeCrossBurn, isHistory bool) {
 	}
 
 	token1, ok := m.config.Tokens[strings.ToLower(lock.Token0.String())]
+	if !ok {
+		token1, ok = m.config.Tokens[lock.Token0.String()]
+	}
 	if !ok || !strings.EqualFold(token1, lock.Token1.String()) {
 		m.logger.Debugf("ignore log with token address: %s, %s", lock.Token0.String(), lock.Token1.String())
 		return

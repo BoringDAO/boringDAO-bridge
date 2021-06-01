@@ -56,7 +56,11 @@ func NewBridgeWrapper(config *repo.BridgeConfig, logger logrus.FieldLogger) (*Br
 		return nil, err
 	}
 
-	auth := bind.NewKeyedTransactor(privKey)
+	auth, err := bind.NewKeyedTransactorWithChainID(privKey, big.NewInt(int64(config.ChainID)))
+	if err != nil {
+		return nil, fmt.Errorf("failed to NewKeyedTransactorWithChainID %d: %w", config.ChainID, err)
+	}
+
 	if config.GasLimit < 800000 {
 		auth.GasLimit = 1500000
 	} else {

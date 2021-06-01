@@ -10,7 +10,7 @@ title = "Bridge configuration file"
   ]
   minConfirms = 15 # min confirms
   gasLimit = 1500000 # gas Limit
-  crossLockContract = "0x00B1EfAEa47492C933630D63b1d1fe17982Ec2F1" # crosslock contract address
+  crossLockContract = "0x3b59f709C669bAd4535ED1366cE5f7Ee3e8B9B5A" # crosslock contract address
   tokens = [
     "0xe5dB9ed82982943eFecAA439c82CCBb1b2AFC2A0", #nsure
     "0xa9C744B12AB13Cd4cAC6f3cbbE33113d5DBB09Ee", #boring
@@ -24,10 +24,10 @@ title = "Bridge configuration file"
   ]
   chainID = 97 # bsc test
   gasLimit = 1500000 # gas Limit
-  bridgeContract = "0x233d05Ed7B712167D040d52961D9f18ae282A87C" # bridge contract address
+  bridgeContract = "0x54303673Bfe010ECc7754664B8B2a8b0CfcB2EEe" # bridge contract address
   [bridges.tokens]
 #    "0xe5dB9ed82982943eFecAA439c82CCBb1b2AFC2A0" = "0xb78d5C8817bf0985932115B7700194ffCD79AfB3" #nsure
-#    "0xa9C744B12AB13Cd4cAC6f3cbbE33113d5DBB09Ee" = "0x9a40dB98775015EB2452754e905e22E087ad3842" #boring
+    "0xa9C744B12AB13Cd4cAC6f3cbbE33113d5DBB09Ee" = "0x9a40dB98775015EB2452754e905e22E087ad3842" #boring
 
 [[bridges]]
   name = "okex"
@@ -37,9 +37,9 @@ title = "Bridge configuration file"
   chainID = 65 # okex chain test
   minConfirms = 15 # min confirms
   gasLimit = 1500000 # gas Limit
-  bridgeContract = "0x26Ec036Be42907eA15a273833816539B26d2BE53" # bridge contract address
+  bridgeContract = "0x2CDAb8942b09bAF07E76F8B5b97fdF72140064aB" # bridge contract address
   [bridges.tokens]
-#    "0xa9C744B12AB13Cd4cAC6f3cbbE33113d5DBB09Ee" = "0x19783469f2485b702b89f98A64F2179877D0391E" #boring
+    "0xa9C744B12AB13Cd4cAC6f3cbbE33113d5DBB09Ee" = "0x19783469f2485b702b89f98A64F2179877D0391E" #boring
 
 [[bridges]]
   name = "avax"
@@ -49,9 +49,9 @@ title = "Bridge configuration file"
   chainID = 43113 # avax chain test
   minConfirms = 1 # min confirms
   gasLimit = 1500000 # gas Limit
-  bridgeContract = "0x26Ec036Be42907eA15a273833816539B26d2BE53" # bridge contract address
+  bridgeContract = "0xBBa308eA846c95F0b5fc215AdC611e9C675f9E38" # bridge contract address
   [bridges.tokens]
-  #  "0xa9C744B12AB13Cd4cAC6f3cbbE33113d5DBB09Ee" = "0x19783469f2485b702b89f98A64F2179877D0391E" #boring
+    "0xa9C744B12AB13Cd4cAC6f3cbbE33113d5DBB09Ee" = "0x26Ec036Be42907eA15a273833816539B26d2BE53" #boring
 
 [[bridges]]
   name = "harmony"
@@ -63,7 +63,7 @@ title = "Bridge configuration file"
   gasLimit = 1500000 # gas Limit
   bridgeContract = "0x26Ec036Be42907eA15a273833816539B26d2BE53" # bridge contract address
   [bridges.tokens]
-    "0xa9C744B12AB13Cd4cAC6f3cbbE33113d5DBB09Ee" = "0x19783469f2485b702b89f98A64F2179877D0391E" #boring
+#    "0xa9C744B12AB13Cd4cAC6f3cbbE33113d5DBB09Ee" = "0x19783469f2485b702b89f98A64F2179877D0391E" #boring
 
 [log]
   level = "info"
