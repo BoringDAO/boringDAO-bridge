@@ -23,6 +23,7 @@ title = "Bridge configuration file"
     "https://data-seed-prebsc-1-s1.binance.org:8545"
   ]
   chainID = 97 # bsc test
+  minConfirms = 15 # min confirms
   gasLimit = 1500000 # gas Limit
   bridgeContract = "0x54303673Bfe010ECc7754664B8B2a8b0CfcB2EEe" # bridge contract address
   [bridges.tokens]
