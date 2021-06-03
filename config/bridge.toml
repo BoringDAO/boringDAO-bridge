@@ -9,6 +9,7 @@ title = "Bridge configuration file"
 #    "https://eth-ropsten.alchemyapi.io/v2/K36BtEv6HiX4gn-b_XEB-l1mjqtm7FEI"
   ]
   minConfirms = 15 # min confirms
+  chainID = 42
   gasLimit = 1500000 # gas Limit
   crossLockContract = "0x3b59f709C669bAd4535ED1366cE5f7Ee3e8B9B5A" # crosslock contract address
   tokens = [

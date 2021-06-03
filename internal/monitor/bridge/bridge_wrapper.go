@@ -56,7 +56,7 @@ func NewBridgeWrapper(config *repo.BridgeConfig, logger logrus.FieldLogger) (*Br
 		return nil, err
 	}
 
-	auth, err := bind.NewKeyedTransactorWithChainID(privKey, big.NewInt(int64(config.ChainID)))
+	auth, err := bind.NewKeyedTransactorWithChainID(privKey, new(big.Int).SetUint64(config.ChainID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to NewKeyedTransactorWithChainID %d: %w", config.ChainID, err)
 	}

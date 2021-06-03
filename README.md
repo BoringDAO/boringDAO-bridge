@@ -19,6 +19,7 @@ bridge --repo <repo> init
 Open the bridge.yaml file in .bridge directory, and edit below items:
 #### [eth]
 1. **addrs**: specify the eth rpc address this bridge will connect, you can configure more than one
+1. **chainID**: specify the chain ID of the eth network
 1. **minConfirms**: minimal blocks to confirm a transaction, a number not less than **15** is recommended 
 1. **crossLockContract**: specify the cross lock contract address deployed in eth network
 1. **tokens**: specify the ERC20 token contract addresses which will be cross over to other blockchain network

@@ -41,6 +41,7 @@ type Eth struct {
 	Addrs             []string          `toml:"addrs" json:"addrs"`
 	MinConfirms       uint64            `toml:"minConfirms" json:"minConfirms"`
 	PrivKey           string            `toml:"privKey" json:"privKey"`
+	ChainID           uint64            `toml:"chainID" json:"chainID"`
 	GasLimit          uint64            `toml:"gasLimit" json:"gasLimit"`
 	Height            map[uint64]uint64 `toml:"height" json:"height"`
 	CrossLockContract string            `toml:"crossLockContract" json:"crossLockContract"`

@@ -50,7 +50,11 @@ func NewLockWrapper(config *repo.Eth, logger logrus.FieldLogger) (*LockWrapper, 
 		return nil, err
 	}
 
-	auth := bind.NewKeyedTransactor(privKey)
+	auth, err := bind.NewKeyedTransactorWithChainID(privKey, new(big.Int).SetUint64(config.ChainID))
+	if err != nil {
+		return nil, fmt.Errorf("failed to NewKeyedTransactorWithChainID %d: %w", config.ChainID, err)
+	}
+
 	if config.GasLimit < 800000 {
 		auth.GasLimit = 1500000
 	} else {
