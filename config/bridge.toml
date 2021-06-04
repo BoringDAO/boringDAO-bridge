@@ -8,8 +8,7 @@ title = "Bridge configuration file"
   ]
   minConfirms = 5 # min confirms
   gasLimit = 1500000 # gas Limit
-  height = 11938261
-  crossLockContract = "0xbD187d9D7403eb026Cc67a854c30205828CD5d0C" # crosslock contract address
+  pegBridgeContract = "0xbD187d9D7403eb026Cc67a854c30205828CD5d0C" # crosslock contract address
 
 [bsc]
   addrs = [
@@ -18,8 +17,7 @@ title = "Bridge configuration file"
   ]
   minConfirms = 5 # min confirms
   gasLimit = 1500000 # gas Limit
-  height = 11938261
-  borBscContract = "0xADA4f520213C6c106385072319E2A2bDC2E8c839" # borbsc contract address
+pegBridgeContract = "0xADA4f520213C6c106385072319E2A2bDC2E8c839" # borbsc contract address
 
 [log]
   level = "info"

@@ -48,17 +48,19 @@ type Eth struct {
 	MinConfirms       uint64   `toml:"minConfirms" json:"minConfirms"`
 	PrivKey           string   `toml:"privKey" json:"privKey"`
 	GasLimit          uint64   `toml:"gasLimit" json:"gasLimit"`
-	Height            uint64   `toml:"height" json:"height"`
-	CrossLockContract string   `toml:"crossLockContract" json:"crossLockContract"`
+	LockHeight        uint64   `toml:"lockHeight" json:"lockHeight"`
+	CrossBurnHeight   uint64   `toml:"crossBurnHeight" json:"crossBurnHeight"`
+	PegBridgeContract string   `toml:"pegBridgeContract" json:"pegBridgeContract"`
 }
 
 type Bsc struct {
-	Addrs          []string `toml:"addrs" json:"addrs"`
-	MinConfirms    uint64   `toml:"minConfirms" json:"minConfirms"`
-	PrivKey        string   `toml:"privKey" json:"privKey"`
-	GasLimit       uint64   `toml:"gasLimit" json:"gasLimit"`
-	Height         uint64   `toml:"height" json:"height"`
-	BorBscContract string   `toml:"borBscContract" json:"borBscContract"`
+	Addrs             []string `toml:"addrs" json:"addrs"`
+	MinConfirms       uint64   `toml:"minConfirms" json:"minConfirms"`
+	PrivKey           string   `toml:"privKey" json:"privKey"`
+	GasLimit          uint64   `toml:"gasLimit" json:"gasLimit"`
+	LockHeight        uint64   `toml:"lockHeight" json:"lockHeight"`
+	CrossBurnHeight   uint64   `toml:"crossBurnHeight" json:"crossBurnHeight"`
+	PegBridgeContract string   `toml:"pegBridgeContract" json:"pegBridgeContract"`
 }
 
 func (c *Config) Bytes() ([]byte, error) {

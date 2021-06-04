@@ -10,6 +10,7 @@ import (
 
 	"github.com/Rican7/retry"
 	"github.com/Rican7/retry/strategy"
+	mnt "github.com/boringdao/bridge/internal/monitor"
 	"github.com/boringdao/bridge/internal/repo"
 	"github.com/boringdao/bridge/pkg/kit/hexutil"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -25,8 +26,8 @@ type BscWrapper struct {
 	addrIdx   int
 	bsc       *repo.Bsc
 	ethClient *ethclient.Client
-	borBsc    *BorBSC
-	session   *BorBSCSession
+	pegProxy  *mnt.PegProxy
+	session   *mnt.PegProxySession
 	logger    logrus.FieldLogger
 }
 
@@ -40,7 +41,7 @@ func NewBscWrapper(config *repo.Bsc, logger logrus.FieldLogger) (*BscWrapper, er
 		return nil, fmt.Errorf("dial bsc node: %w", err)
 	}
 
-	borBsc, err := NewBorBSC(common.HexToAddress(config.BorBscContract), etherCli)
+	pegProxy, err := mnt.NewPegProxy(common.HexToAddress(config.PegBridgeContract), etherCli)
 	if err != nil {
 		return nil, fmt.Errorf("failed to instantiate a cross contract: %w", err)
 	}
@@ -57,8 +58,8 @@ func NewBscWrapper(config *repo.Bsc, logger logrus.FieldLogger) (*BscWrapper, er
 		auth.GasLimit = config.GasLimit
 	}
 
-	session := &BorBSCSession{
-		Contract: borBsc,
+	session := &mnt.PegProxySession{
+		Contract: pegProxy,
 		CallOpts: bind.CallOpts{
 			Pending: false,
 		},
@@ -69,7 +70,7 @@ func NewBscWrapper(config *repo.Bsc, logger logrus.FieldLogger) (*BscWrapper, er
 		addrIdx:   0,
 		bsc:       config,
 		ethClient: etherCli,
-		borBsc:    borBsc,
+		pegProxy:  pegProxy,
 		session:   session,
 		logger:    logger,
 	}, nil
@@ -96,12 +97,33 @@ func (bw *BscWrapper) HeaderByNumber(ctx context.Context, number *big.Int) *type
 	return header
 }
 
-func (bw *BscWrapper) FilterCrossBurn(opts *bind.FilterOpts) *BorBSCCrossBurnIterator {
-	var iterator *BorBSCCrossBurnIterator
+func (bw *BscWrapper) FilterLock(opts *bind.FilterOpts) *mnt.PegProxyLockIterator {
+	var iterator *mnt.PegProxyLockIterator
 	var err error
 
 	if err := retry.Retry(func(attempt uint) error {
-		iterator, err = bw.borBsc.FilterCrossBurn(opts)
+		iterator, err = bw.pegProxy.FilterLock(opts)
+		if err != nil {
+			bw.logger.Warnf("FilterLock: %s", err.Error())
+
+			if bw.isNetworkError(err) {
+				bw.switchToNextAddr()
+			}
+		}
+		return err
+	}, strategy.Wait(10*time.Second)); err != nil {
+		bw.logger.Panic(err)
+	}
+
+	return iterator
+}
+
+func (bw *BscWrapper) FilterCrossBurn(opts *bind.FilterOpts) *mnt.PegProxyCrossBurnIterator {
+	var iterator *mnt.PegProxyCrossBurnIterator
+	var err error
+
+	if err := retry.Retry(func(attempt uint) error {
+		iterator, err = bw.pegProxy.FilterCrossBurn(opts)
 		if err != nil {
 			bw.logger.Warnf("FilterCrossBurn: %s", err.Error())
 
@@ -159,7 +181,7 @@ func (bw *BscWrapper) SuggestGasPrice(ctx context.Context) *big.Int {
 	return result
 }
 
-func (bw *BscWrapper) CrossMint(from common.Address, to common.Address, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
+func (bw *BscWrapper) CrossIn(token, from, to common.Address, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
 	var tx *types.Transaction
 	var err error
 	var hash common.Hash
@@ -169,12 +191,12 @@ func (bw *BscWrapper) CrossMint(from common.Address, to common.Address, amount *
 		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
 		bw.session.TransactOpts.GasPrice = gasPrice.BigInt()
 
-		tx, err = bw.session.CrossMint(from, to, amount, txid)
+		tx, err = bw.session.CrossIn(token, from, to, amount, txid)
 		if tx != nil {
 			hash = tx.Hash()
 		}
 		if err != nil {
-			bw.logger.Warnf("CrossMint: %s", err.Error())
+			bw.logger.Warnf("CrossIn: %s", err.Error())
 
 			if bw.isNetworkError(err) {
 				bw.switchToNextAddr()
@@ -188,6 +210,32 @@ func (bw *BscWrapper) CrossMint(from common.Address, to common.Address, amount *
 	}
 
 	return tx, hash
+}
+
+func (bw *BscWrapper) Unlock(token common.Address, from common.Address, to common.Address, amount *big.Int, txid string) *types.Transaction {
+	var result *types.Transaction
+	var err error
+
+	if err := retry.Retry(func(attempt uint) error {
+		price := bw.SuggestGasPrice(context.TODO())
+		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
+		bw.session.TransactOpts.GasPrice = gasPrice.BigInt()
+
+		result, err = bw.session.Unlock(token, from, to, amount, txid)
+		if err != nil {
+			bw.logger.Warnf("Unlock: %s", err.Error())
+
+			if bw.isNetworkError(err) {
+				bw.switchToNextAddr()
+			}
+
+		}
+		return err
+	}, strategy.Wait(10*time.Second)); err != nil {
+		bw.logger.Panic(err)
+	}
+
+	return result
 }
 
 func (bw *BscWrapper) TransactionReceiptsLimitedRetry(ctx context.Context, txHashes []common.Hash) (*types.Receipt, error) {
@@ -238,6 +286,27 @@ func (bw *BscWrapper) TransactionReceipt(ctx context.Context, txHash common.Hash
 	return receipt
 }
 
+func (bw *BscWrapper) TxUnlocked(txId string) bool {
+	var result bool
+	var err error
+
+	if err := retry.Retry(func(attempt uint) error {
+		result, err = bw.session.TxUnlocked(txId)
+		if err != nil {
+			bw.logger.Warnf("TxUnlocked: %s", err.Error())
+
+			if bw.isNetworkError(err) {
+				bw.switchToNextAddr()
+			}
+		}
+		return err
+	}, strategy.Wait(10*time.Second)); err != nil {
+		bw.logger.Panic(err)
+	}
+
+	return result
+}
+
 func (bw *BscWrapper) switchToNextAddr() {
 	var err error
 
@@ -254,12 +323,12 @@ func (bw *BscWrapper) switchToNextAddr() {
 			continue
 		}
 
-		bw.borBsc, err = NewBorBSC(common.HexToAddress(bw.bsc.BorBscContract), bw.ethClient)
+		bw.pegProxy, err = mnt.NewPegProxy(common.HexToAddress(bw.bsc.PegBridgeContract), bw.ethClient)
 		if err != nil {
 			continue
 		}
 
-		bw.session.Contract = bw.borBsc
+		bw.session.Contract = bw.pegProxy
 
 		bw.logger.Infof("switch to %s successfully", bw.bsc.Addrs[bw.addrIdx])
 

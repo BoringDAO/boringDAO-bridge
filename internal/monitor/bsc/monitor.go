@@ -8,8 +8,9 @@ import (
 	"fmt"
 	"math/big"
 	"strings"
-	"sync"
 	"time"
+
+	mnt "github.com/boringdao/bridge/internal/monitor"
 
 	"github.com/boringdao/bridge/internal/repo"
 	"github.com/boringdao/bridge/pkg/kit/hexutil"
@@ -24,7 +25,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const Lock = 0
+const CrossBurn = 1
+
 type Coco struct {
+	Typ         int            `json:"typ"`
 	IsHistory   bool           `json:"isHistory"`
 	Coin        string         `json:"coin"`
 	Sender      common.Address `json:"sender"`
@@ -32,23 +37,22 @@ type Coco struct {
 	Amount      *big.Int       `json:"amount"`
 	TxId        string         `json:"tx_id"`
 	BlockHeight uint64         `json:"block_height"`
-	EthToken    common.Address `json:"eth_token"`
-	BscToken    common.Address `json:"bsc_token"`
+	SrcToken    common.Address `json:"src_token"`
+	DstToken    common.Address `json:"dst_token"`
 }
 
 type Monitor struct {
-	bHeight     uint64
-	borBscAbi   abi.ABI
-	bscWrapper  *BscWrapper
-	topic       common.Hash
-	cocoC       chan *Coco
-	logger      logrus.FieldLogger
-	storage     storage.Storage
-	config      *repo.Config
-	minConfirms uint64
-	mux         sync.Mutex
-	borBscAddr  common.Address
-	address     common.Address
+	lHeight      uint64
+	cHeight      uint64
+	pegProxyAbi  abi.ABI
+	bscWrapper   *BscWrapper
+	cocoC        chan *Coco
+	logger       logrus.FieldLogger
+	storage      storage.Storage
+	config       *repo.Config
+	minConfirms  uint64
+	pegProxyAddr common.Address
+	address      common.Address
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -80,7 +84,7 @@ func New(config *repo.Config, logger logrus.FieldLogger) (*Monitor, error) {
 		minConfirms = int(config.Bsc.MinConfirms)
 	}
 
-	borAbi, err := abi.JSON(bytes.NewReader([]byte(BorBSCABI)))
+	pegProxyAbi, err := abi.JSON(bytes.NewReader([]byte(mnt.PegProxyABI)))
 	if err != nil {
 		return nil, fmt.Errorf("abi unmarshal: %s", err.Error())
 	}
@@ -93,23 +97,24 @@ func New(config *repo.Config, logger logrus.FieldLogger) (*Monitor, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &Monitor{
-		config:      config,
-		storage:     ethStorage,
-		bscWrapper:  bscWrapper,
-		address:     address,
-		borBscAbi:   borAbi,
-		borBscAddr:  common.HexToAddress(config.Bsc.BorBscContract),
-		minConfirms: uint64(minConfirms),
-		cocoC:       make(chan *Coco),
-		logger:      logger,
-		ctx:         ctx,
-		cancel:      cancel,
+		config:       config,
+		storage:      ethStorage,
+		bscWrapper:   bscWrapper,
+		address:      address,
+		pegProxyAbi:  pegProxyAbi,
+		pegProxyAddr: common.HexToAddress(config.Eth.PegBridgeContract),
+		minConfirms:  uint64(minConfirms),
+		cocoC:        make(chan *Coco),
+		logger:       logger,
+		ctx:          ctx,
+		cancel:       cancel,
 	}, nil
 }
 
 func (m *Monitor) Start() error {
 	m.loadHeightFromStorage()
 	go m.listenLockEvent()
+	go m.listenCrossBurnEvent()
 	return nil
 }
 
@@ -120,10 +125,10 @@ func (m *Monitor) Stop() error {
 }
 
 func (m *Monitor) listenLockEvent() {
-	ticker := time.NewTicker(30 * time.Second)
+	ticker := time.NewTicker(60 * time.Second)
 	defer ticker.Stop()
 
-	start := m.bHeight
+	start := m.lHeight
 
 	for {
 		select {
@@ -132,7 +137,40 @@ func (m *Monitor) listenLockEvent() {
 			if err != nil {
 				continue
 			}
+			end := num - m.minConfirms
+			if num < m.minConfirms || end < start {
+				continue
+			}
+			if end >= start+2000 {
+				end = start + 2000
+			}
+			filter := m.bscWrapper.FilterLock(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
+			for filter.Next() {
+				m.handleLock(filter.Event, true)
+			}
 
+			m.logger.WithFields(logrus.Fields{"start": start, "end": end, "current": num}).Infof("CrossLockLockIterator")
+			start = end + 1
+		case <-m.ctx.Done():
+			m.logger.Info("CrossLockLockIterator done")
+			return
+		}
+	}
+}
+
+func (m *Monitor) listenCrossBurnEvent() {
+	ticker := time.NewTicker(60 * time.Second)
+	defer ticker.Stop()
+
+	start := m.cHeight
+
+	for {
+		select {
+		case <-ticker.C:
+			num, err := m.fetchBlockNum()
+			if err != nil {
+				continue
+			}
 			end := num - m.minConfirms
 			if num < m.minConfirms || end < start {
 				continue
@@ -142,69 +180,119 @@ func (m *Monitor) listenLockEvent() {
 			}
 			filter := m.bscWrapper.FilterCrossBurn(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
 			for filter.Next() {
-				m.handleCross(filter.Event, true)
+				m.handleCrossBurn(filter.Event, true)
 			}
-			m.logger.WithFields(logrus.Fields{"start": start, "end": end, "current": num}).Infof("BridgeCrossBurnIterator")
 
+			m.logger.WithFields(logrus.Fields{"start": start, "end": end, "current": num}).Infof("CrossBurn")
 			start = end + 1
 		case <-m.ctx.Done():
-			m.logger.Info("BridgeCrossBurnIterator done")
+			m.logger.Info("CrossBurn done")
 			return
 		}
 	}
-
 }
 
-func (m *Monitor) handleCross(lock *BorBSCCrossBurn, isHistory bool) {
-	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Bsc.BorBscContract) {
+func (m *Monitor) HandleCocoC() chan *Coco {
+	return m.cocoC
+}
+
+func (m *Monitor) handleLock(lock *mnt.PegProxyLock, isHistory bool) {
+	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Eth.PegBridgeContract) {
 		return
 	}
 
 	if m.storage.Has(TxKey(lock.Raw.TxHash.String())) {
 		return
 	}
-
 	coco := &Coco{
+		Typ:         Lock,
 		IsHistory:   isHistory,
+		SrcToken:    lock.SrcToken,
+		DstToken:    lock.DestToken,
 		Sender:      lock.From,
 		Recipient:   lock.To,
 		Amount:      lock.Amount,
-		EthToken:    lock.EthToken,
-		BscToken:    lock.BscToken,
 		TxId:        lock.Raw.TxHash.String(),
 		BlockHeight: lock.Raw.BlockNumber,
 	}
 
 	m.logger.WithFields(logrus.Fields{
-		"Sender":       coco.Sender.String(),
-		"Recipient":    coco.Recipient.String(),
-		"EthToken":     coco.EthToken.String(),
-		"BscToken":     coco.BscToken.String(),
+		"src_token":    coco.SrcToken.String(),
+		"dst_token":    coco.DstToken.String(),
+		"sender":       coco.Sender.String(),
+		"recipient":    coco.Recipient.String(),
 		"amount":       coco.Amount.String(),
 		"txId":         lock.Raw.TxHash.String(),
 		"block_height": lock.Raw.BlockNumber,
 		"removed":      lock.Raw.Removed,
-	}).Info("CrossBurn")
+	}).Info("PegProxyLock")
 
 	if lock.Raw.Removed {
 		return
 	}
 
-	if !m.confirmEvent(lock.Raw) {
+	if !m.confirmEvent(lock.Raw, Lock) {
 		m.logger.WithFields(logrus.Fields{
 			"txId":         lock.Raw.TxHash.String(),
 			"block_height": lock.Raw.BlockNumber,
-		}).Info("CrossBurn has not confirmed")
+		}).Info("PegProxyLock has not confirmed")
 		return
 	}
 
 	m.logger.WithField("tx", lock.Raw.TxHash.String()).Info("confirmEvent")
-
 	m.cocoC <- coco
-	m.persistBBlockHeight(lock.Raw.TxHash.String(), lock.Raw.BlockNumber)
+	m.persistLBlockHeight(lock.Raw.TxHash.String(), lock.Raw.BlockNumber)
 }
 
-func (m *Monitor) confirmEvent(event types.Log) bool {
+func (m *Monitor) handleCrossBurn(crossBurn *mnt.PegProxyCrossBurn, isHistory bool) {
+	if !strings.EqualFold(crossBurn.Raw.Address.String(), m.config.Eth.PegBridgeContract) {
+		return
+	}
+
+	if m.storage.Has(TxKey(crossBurn.Raw.TxHash.String())) {
+		return
+	}
+	coco := &Coco{
+		Typ:         CrossBurn,
+		IsHistory:   isHistory,
+		SrcToken:    crossBurn.SrcToken,
+		DstToken:    crossBurn.DestToken,
+		Sender:      crossBurn.From,
+		Recipient:   crossBurn.To,
+		Amount:      crossBurn.Amount,
+		TxId:        crossBurn.Raw.TxHash.String(),
+		BlockHeight: crossBurn.Raw.BlockNumber,
+	}
+
+	m.logger.WithFields(logrus.Fields{
+		"src_token":    coco.SrcToken.String(),
+		"dst_token":    coco.DstToken.String(),
+		"sender":       coco.Sender.String(),
+		"recipient":    coco.Recipient.String(),
+		"amount":       coco.Amount.String(),
+		"txId":         crossBurn.Raw.TxHash.String(),
+		"block_height": crossBurn.Raw.BlockNumber,
+		"removed":      crossBurn.Raw.Removed,
+	}).Info("PegProxyCrossBurn")
+
+	if crossBurn.Raw.Removed {
+		return
+	}
+
+	if !m.confirmEvent(crossBurn.Raw, CrossBurn) {
+		m.logger.WithFields(logrus.Fields{
+			"txId":         crossBurn.Raw.TxHash.String(),
+			"block_height": crossBurn.Raw.BlockNumber,
+		}).Info("PegProxyCrossBurn has not confirmed")
+		return
+	}
+
+	m.logger.WithField("tx", crossBurn.Raw.TxHash.String()).Info("confirmEvent")
+	m.cocoC <- coco
+	m.persistCBlockHeight(crossBurn.Raw.TxHash.String(), crossBurn.Raw.BlockNumber)
+}
+
+func (m *Monitor) confirmEvent(event types.Log, typ int) bool {
 	for {
 		num, err := m.fetchBlockNum()
 		if err != nil {
@@ -216,41 +304,43 @@ func (m *Monitor) confirmEvent(event types.Log) bool {
 			time.Sleep(15 * time.Second)
 			continue
 		}
-		log, err := m.GetLockLog(event.TxHash.String())
+		var log *Coco
+		switch typ {
+		case Lock:
+			log, err = m.GetLockLog(event.TxHash.String())
+		case CrossBurn:
+			log, err = m.GetCrossBurnLog(event.TxHash.String())
+		}
 		if err != nil {
 			m.logger.WithFields(logrus.Fields{
 				"err":        err,
 				"now_height": num,
 			}).Error("confirmEvent")
-			return false
+			continue
 		}
 		return log.BlockHeight == event.BlockNumber
 	}
 }
-func (m *Monitor) HandleCocoC() chan *Coco {
-	return m.cocoC
-}
 
-func (m *Monitor) CrossMint(txId string, addrFromEth common.Address, recipient common.Address, amount *big.Int) error {
-	m.mux.Lock()
-	defer m.mux.Unlock()
-
-	unlocked := m.bscWrapper.TxMinted(txId)
+func (m *Monitor) Unlock(txId string, token common.Address, from common.Address, recipient common.Address, amount *big.Int) error {
+	unlocked := m.bscWrapper.TxUnlocked(txId)
 	if unlocked {
-		m.logger.Infof("find TxMinted eth txId:%s", txId)
+		m.logger.Infof("find txUnlocked Chain %d txId:%s", txId)
 		return nil
 	}
 
 	m.logger.WithFields(logrus.Fields{
+		"tx_id":     txId,
+		"token":     token.String(),
+		"sender":    from.String(),
 		"recipient": recipient.String(),
 		"amount":    amount.String(),
-	}).Info("will crossMint")
+	}).Info("will unlock")
 
 	var (
 		transaction *types.Transaction
 		receipt     *types.Receipt
 		err         error
-		hash        common.Hash
 		hashes      []common.Hash
 	)
 
@@ -264,14 +354,13 @@ func (m *Monitor) CrossMint(txId string, addrFromEth common.Address, recipient c
 			gasPrice.BigInt().Cmp(m.bscWrapper.session.TransactOpts.GasPrice) == 1 {
 			m.bscWrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
 
-			transaction, hash = m.bscWrapper.CrossMint(addrFromEth, recipient, amount, txId)
+			transaction = m.bscWrapper.Unlock(token, from, recipient, amount, txId)
 			m.bscWrapper.session.TransactOpts.Nonce = big.NewInt(int64(transaction.Nonce()))
-			hashes = append(hashes, hash)
+			hashes = append(hashes, transaction.Hash())
 
-			m.logger.Infof("send CrossMint tx %s with gasPrice %s and nonce %d",
-				hash.String(), gasPrice.String(), transaction.Nonce())
+			m.logger.Infof("send UnlockBor tx %s with gasPrice %s and nonce %d",
+				transaction.Hash().String(), gasPrice.String(), transaction.Nonce())
 		}
-
 		receipt, err = m.bscWrapper.TransactionReceiptsLimitedRetry(context.TODO(), hashes)
 		if err == nil {
 			break
@@ -279,44 +368,118 @@ func (m *Monitor) CrossMint(txId string, addrFromEth common.Address, recipient c
 	}
 
 	if receipt.Status == 1 {
-		m.logger.WithField("tx_hash", hash.String()).Info("crossMint success")
+		m.logger.WithField("tx_hash", receipt.TxHash.String()).Info("unlock success")
 	} else {
-		return fmt.Errorf("crossMint fail:%s", hash.String())
+		return fmt.Errorf("unlock fail:%s", receipt.TxHash.String())
+	}
+	return nil
+}
+
+func (m *Monitor) CrossIn(txId string, token common.Address, from common.Address, recipient common.Address, amount *big.Int) error {
+	unlocked := m.bscWrapper.TxMinted(txId)
+	if unlocked {
+		m.logger.Infof("find TxMinted txId:%s", txId)
+		return nil
 	}
 
+	m.logger.WithFields(logrus.Fields{
+		"tx_id":     txId,
+		"token":     token.String(),
+		"sender":    from.String(),
+		"recipient": recipient.String(),
+		"amount":    amount.String(),
+	}).Info("will unlock")
+
+	var (
+		transaction *types.Transaction
+		receipt     *types.Receipt
+		err         error
+		hashes      []common.Hash
+	)
+
+	m.bscWrapper.session.TransactOpts.Nonce = nil
+	m.bscWrapper.session.TransactOpts.GasPrice = nil
+
+	for {
+		price := m.bscWrapper.SuggestGasPrice(context.TODO())
+		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
+		if m.bscWrapper.session.TransactOpts.GasPrice == nil ||
+			gasPrice.BigInt().Cmp(m.bscWrapper.session.TransactOpts.GasPrice) == 1 {
+			m.bscWrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
+
+			transaction, _ = m.bscWrapper.CrossIn(token, from, recipient, amount, txId)
+			m.bscWrapper.session.TransactOpts.Nonce = big.NewInt(int64(transaction.Nonce()))
+			hashes = append(hashes, transaction.Hash())
+
+			m.logger.Infof("send UnlockBor tx %s with gasPrice %s and nonce %d",
+				transaction.Hash().String(), gasPrice.String(), transaction.Nonce())
+		}
+		receipt, err = m.bscWrapper.TransactionReceiptsLimitedRetry(context.TODO(), hashes)
+		if err == nil {
+			break
+		}
+	}
+
+	if receipt.Status == 1 {
+		m.logger.WithField("tx_hash", receipt.TxHash.String()).Info("CrossIn success")
+	} else {
+		return fmt.Errorf("unlock fail:%s", receipt.TxHash.String())
+	}
 	return nil
 }
 
 func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
 	receipt := m.bscWrapper.TransactionReceipt(context.TODO(), common.HexToHash(txId))
 	for _, log := range receipt.Logs {
-		if !strings.EqualFold(log.Address.String(), m.config.Bsc.BorBscContract) {
+		if !strings.EqualFold(log.Address.String(), m.config.Eth.PegBridgeContract) {
 			continue
 		}
 
 		if log.Removed {
 			continue
 		}
-		for _, topic := range log.Topics {
-			if strings.EqualFold(topic.String(), m.borBscAbi.Events["CrossBurn"].ID.String()) {
-				var lock BorBSCCrossBurn
-				if err := m.borBscAbi.UnpackIntoInterface(&lock, "CrossBurn", log.Data); err != nil {
-					m.logger.Error(err)
-					continue
-				}
-				return &Coco{
-					Sender:      lock.From,
-					Recipient:   lock.To,
-					Amount:      lock.Amount,
-					EthToken:    lock.EthToken,
-					BscToken:    lock.BscToken,
-					TxId:        log.TxHash.String(),
-					BlockHeight: receipt.BlockNumber.Uint64(),
-				}, nil
-			}
+		lock, err := m.bscWrapper.pegProxy.ParseLock(*log)
+		if err != nil {
+			return nil, err
 		}
+		return &Coco{
+			SrcToken:    lock.SrcToken,
+			DstToken:    lock.DestToken,
+			Sender:      lock.From,
+			Recipient:   lock.To,
+			Amount:      lock.Amount,
+			TxId:        log.TxHash.String(),
+			BlockHeight: receipt.BlockNumber.Uint64(),
+		}, nil
 	}
-	return nil, fmt.Errorf("not found BorBSCCrossBurn log in tx:%s", txId)
+	return nil, fmt.Errorf("not found Lock log in tx:%s", txId)
+}
+
+func (m *Monitor) GetCrossBurnLog(txId string) (*Coco, error) {
+	receipt := m.bscWrapper.TransactionReceipt(context.TODO(), common.HexToHash(txId))
+	for _, log := range receipt.Logs {
+		if !strings.EqualFold(log.Address.String(), m.config.Eth.PegBridgeContract) {
+			continue
+		}
+
+		if log.Removed {
+			continue
+		}
+		crossBurn, err := m.bscWrapper.pegProxy.ParseCrossBurn(*log)
+		if err != nil {
+			return nil, err
+		}
+		return &Coco{
+			SrcToken:    crossBurn.SrcToken,
+			DstToken:    crossBurn.DestToken,
+			Sender:      crossBurn.From,
+			Recipient:   crossBurn.To,
+			Amount:      crossBurn.Amount,
+			TxId:        log.TxHash.String(),
+			BlockHeight: receipt.BlockNumber.Uint64(),
+		}, nil
+	}
+	return nil, fmt.Errorf("not found crossBurn log in tx:%s", txId)
 }
 
 func (m *Monitor) fetchBlockNum() (uint64, error) {
@@ -325,32 +488,62 @@ func (m *Monitor) fetchBlockNum() (uint64, error) {
 }
 
 func (m *Monitor) loadHeightFromStorage() {
-	header := m.bscWrapper.HeaderByNumber(context.TODO(), nil)
+	var header *types.Header
+	header = m.bscWrapper.HeaderByNumber(context.TODO(), nil)
 
 	// load block height
-	b := m.storage.Get(bHeightKey())
+	b := m.storage.Get(lHeightKey())
 	if b == nil {
-		m.bHeight = header.Number.Uint64() - m.minConfirms
-		m.persistBHeight(m.bHeight)
+		m.lHeight = header.Number.Uint64() - m.minConfirms
+		m.persistLHeight(m.lHeight)
 	} else {
-		m.bHeight = binary.LittleEndian.Uint64(b)
+		m.lHeight = binary.LittleEndian.Uint64(b)
+
 	}
 
-	if m.config.Bsc.Height != 0 {
-		m.bHeight = m.config.Bsc.Height
+	// load block height
+	c := m.storage.Get(cHeightKey())
+	if c == nil {
+		m.cHeight = header.Number.Uint64() - m.minConfirms
+		m.persistCHeight(m.cHeight)
+	} else {
+		m.lHeight = binary.LittleEndian.Uint64(c)
+
+	}
+
+	if m.config.Eth.LockHeight != 0 {
+		m.lHeight = m.config.Eth.LockHeight
+	}
+
+	if m.config.Eth.CrossBurnHeight != 0 {
+		m.lHeight = m.config.Eth.CrossBurnHeight
 	}
 
 	m.logger.WithFields(logrus.Fields{
-		"bsc_height": m.bHeight,
+		"Lock_height": m.lHeight,
 	}).Info("Subscribe")
 }
 
-func bHeightKey() []byte {
-	return []byte(fmt.Sprintf("bHeight"))
+func lHeightKey() []byte {
+	return []byte(fmt.Sprintf("lHeight"))
 }
 
-func (m *Monitor) persistBBlockHeight(txId string, height uint64) {
-	m.persistBHeight(height)
+func cHeightKey() []byte {
+	return []byte(fmt.Sprintf("cHeight"))
+}
+
+func (m *Monitor) persistLBlockHeight(txId string, height uint64) {
+	m.persistLHeight(height)
+	for {
+		if m.storage.Has(TxKey(txId)) {
+			return
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+}
+
+func (m *Monitor) persistCBlockHeight(txId string, height uint64) {
+	m.persistCHeight(height)
 	for {
 		if m.storage.Has(TxKey(txId)) {
 			return
@@ -363,19 +556,30 @@ func (m *Monitor) HasTx(txId string) bool {
 	return m.storage.Has(TxKey(txId))
 }
 
-func (m *Monitor) persistBHeight(height uint64) {
+func (m *Monitor) persistLHeight(height uint64) {
 	buf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(buf, height)
-	m.storage.Put(bHeightKey(), buf)
-	m.bHeight = height
+	m.storage.Put(lHeightKey(), buf)
+	m.lHeight = height
 	m.logger.WithFields(logrus.Fields{
-		"height": m.bHeight,
-	}).Info("Persist Bsc Block Height")
+		"height": m.lHeight,
+	}).Info("Persist Lock Block Height")
+}
+
+func (m *Monitor) persistCHeight(height uint64) {
+	buf := make([]byte, 8)
+	binary.LittleEndian.PutUint64(buf, height)
+	m.storage.Put(cHeightKey(), buf)
+	m.cHeight = height
+	m.logger.WithFields(logrus.Fields{
+		"height": m.cHeight,
+	}).Info("Persist CrossBurn Block Height")
 }
 
 func TxKey(hash string) []byte {
-	return []byte(fmt.Sprintf("bsc-tx-%s", hash))
+	return []byte(fmt.Sprintf("eth-tx-%s", hash))
 }
+
 func (m *Monitor) PutTxID(txId string, coco *Coco) {
 	data, err := json.Marshal(&coco)
 	if err != nil {
