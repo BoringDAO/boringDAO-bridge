@@ -507,7 +507,7 @@ func (m *Monitor) loadHeightFromStorage() {
 		m.cHeight = header.Number.Uint64() - m.minConfirms
 		m.persistCHeight(m.cHeight)
 	} else {
-		m.lHeight = binary.LittleEndian.Uint64(c)
+		m.cHeight = binary.LittleEndian.Uint64(c)
 
 	}
 
@@ -516,11 +516,12 @@ func (m *Monitor) loadHeightFromStorage() {
 	}
 
 	if m.config.Eth.CrossBurnHeight != 0 {
-		m.lHeight = m.config.Eth.CrossBurnHeight
+		m.cHeight = m.config.Eth.CrossBurnHeight
 	}
 
 	m.logger.WithFields(logrus.Fields{
-		"Lock_height": m.lHeight,
+		"lock_height":  m.lHeight,
+		"cross_height": m.cHeight,
 	}).Info("Subscribe")
 }
 

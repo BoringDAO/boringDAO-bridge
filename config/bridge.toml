@@ -3,12 +3,12 @@ title = "Bridge configuration file"
 
 [eth]
   addrs = [
-    "https://ropsten.infura.io/v3/3e8a2d2286964b62bc6b1d67c379badd",
-    "https://eth-ropsten.alchemyapi.io/v2/K36BtEv6HiX4gn-b_XEB-l1mjqtm7FEI"
+    "https://kovan.infura.io/v3/3e8a2d2286964b62bc6b1d67c379badd",
+    "https://eth-kovan.alchemyapi.io/v2/K36BtEv6HiX4gn-b_XEB-l1mjqtm7FEI"
   ]
   minConfirms = 5 # min confirms
   gasLimit = 1500000 # gas Limit
-  pegBridgeContract = "0xbD187d9D7403eb026Cc67a854c30205828CD5d0C" # crosslock contract address
+  pegBridgeContract = "0x63651c56cb3F5f0Fd4Ac6734E9B3F8B51aB49B70" # crosslock contract address
 
 [bsc]
   addrs = [
@@ -17,7 +17,7 @@ title = "Bridge configuration file"
   ]
   minConfirms = 5 # min confirms
   gasLimit = 1500000 # gas Limit
-pegBridgeContract = "0xADA4f520213C6c106385072319E2A2bDC2E8c839" # borbsc contract address
+  pegBridgeContract = "0x4b8832f9E22928f2De2DF6Fc1313F3eB079024Ad" # borbsc contract address
 
 [log]
   level = "info"
