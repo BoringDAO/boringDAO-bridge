@@ -25,30 +25,23 @@ type Config struct {
 	RepoRoot string `json:"repo_root"`
 	Title    string `json:"title"`
 	Eth      `json:"eth"`
-	Bsc      BridgeConfig `json:"bsc"`
-	Okex     BridgeConfig `json:"okex"`
+	Bridges  []*BridgeConfig `json:"bridges"`
 	Log      `json:"log"`
 }
 
 type Log struct {
-	Level        string    `toml:"level" json:"level"`
-	Dir          string    `toml:"dir" json:"dir"`
-	Filename     string    `toml:"filename" json:"filename"`
-	ReportCaller bool      `mapstructure:"report_caller" json:"report_caller"`
-	Module       LogModule `toml:"module" json:"module"`
-}
-
-type LogModule struct {
-	BSC  string `toml:"bsc" json:"bsc"`
-	OKEX string `toml:"okex" json:"okex"`
-	ETH  string `toml:"eth" json:"eth"`
-	APP  string `toml:"app" json:"app"`
+	Level        string            `toml:"level" json:"level"`
+	Dir          string            `toml:"dir" json:"dir"`
+	Filename     string            `toml:"filename" json:"filename"`
+	ReportCaller bool              `mapstructure:"report_caller" json:"report_caller"`
+	Module       map[string]string `toml:"module" json:"module"`
 }
 
 type Eth struct {
 	Addrs             []string          `toml:"addrs" json:"addrs"`
 	MinConfirms       uint64            `toml:"minConfirms" json:"minConfirms"`
 	PrivKey           string            `toml:"privKey" json:"privKey"`
+	ChainID           uint64            `toml:"chainID" json:"chainID"`
 	GasLimit          uint64            `toml:"gasLimit" json:"gasLimit"`
 	Height            map[uint64]uint64 `toml:"height" json:"height"`
 	CrossLockContract string            `toml:"crossLockContract" json:"crossLockContract"`
@@ -56,6 +49,7 @@ type Eth struct {
 }
 
 type BridgeConfig struct {
+	Name           string            `toml:"name" json:"name"`
 	Addrs          []string          `toml:"addrs" json:"addrs"`
 	ChainID        uint64            `toml:"chainID" json:"chainID"`
 	MinConfirms    uint64            `toml:"minConfirms" json:"minConfirms"`
@@ -86,10 +80,7 @@ func DefaultConfig() (*Config, error) {
 			Level:    "info",
 			Dir:      "logs",
 			Filename: "bridge.log",
-			Module: LogModule{
-				APP: "info",
-				ETH: "info",
-			},
+			Module:   make(map[string]string),
 		},
 		Eth: Eth{
 			GasLimit: 1500000,

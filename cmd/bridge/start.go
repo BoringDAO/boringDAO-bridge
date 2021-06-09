@@ -60,8 +60,9 @@ func start(ctx *cli.Context) error {
 		return err
 	}
 	repo.Config.Eth.PrivKey = ethKey
-	repo.Config.Bsc.PrivKey = ethKey
-	repo.Config.Okex.PrivKey = ethKey
+	for _, config := range repo.Config.Bridges {
+		config.PrivKey = ethKey
+	}
 
 	bridge, err := app.New(repo)
 	if err != nil {
@@ -83,7 +84,7 @@ func start(ctx *cli.Context) error {
 }
 
 func ethKey() (string, error) {
-	key, err := gopass.GetPasswdPrompt("Please input eth/bsc/okex private key: ", true, os.Stdin, os.Stdout)
+	key, err := gopass.GetPasswdPrompt("Please input eth/bridge private key: ", true, os.Stdin, os.Stdout)
 	priv, err := crypto.ToECDSA(hexutil.Decode(string(key)))
 	if err != nil || priv == nil {
 		return "", fmt.Errorf("eth private key format error:%w", err)

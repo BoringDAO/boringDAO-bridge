@@ -37,40 +37,34 @@ func checkConfig(config *Config) error {
 		fmt.Println("Warning: eth minconfirms should be at least 15, please change it if it's in prod environment")
 	}
 
-	if len(config.Bsc.Tokens) != 0 {
-		if config.Bsc.BridgeContract == "" {
-			return fmt.Errorf("bsc bridge contract is not configured")
+	for _, bConfig := range config.Bridges {
+		if bConfig.Name != "bsc" && bConfig.Name != "okex" && bConfig.Name != "avax" && bConfig.Name != "harmony" {
+			return fmt.Errorf("unknown blockchain %s, current only bsc, okex and avax are supported", bConfig.Name)
 		}
 
-		if len(config.Bsc.Addrs) == 0 {
-			return fmt.Errorf("bsc addrs are not configured")
-		}
+		if len(bConfig.Tokens) != 0 {
+			if bConfig.BridgeContract == "" {
+				return fmt.Errorf("%s bridge contract is not configured", bConfig.Name)
+			}
 
-		if config.Bsc.MinConfirms < 15 {
-			fmt.Println("Warning: bsc minconfirms should be at least 15, please change it if it's in prod environment")
-		}
-	}
+			if len(bConfig.Addrs) == 0 {
+				return fmt.Errorf("%s addrs are not configured", bConfig.Name)
+			}
 
-	if len(config.Okex.Tokens) != 0 {
-		if config.Okex.BridgeContract == "" {
-			return fmt.Errorf("okex chain bridge contract is not configured")
-		}
-
-		if len(config.Okex.Addrs) == 0 {
-			return fmt.Errorf("okex chain addrs are not configured")
-		}
-
-		if config.Okex.MinConfirms != 0 {
-			config.Okex.MinConfirms = 0
-			fmt.Println("Warning: okex chain minconfirms will be set to 0")
+			if bConfig.Name == "bsc" && bConfig.MinConfirms < 15 {
+				fmt.Println("Warning: bsc minconfirms should be at least 15, please change it if it's in prod environment")
+			} else if bConfig.Name == "okex" && bConfig.MinConfirms != 0 {
+				bConfig.MinConfirms = 0
+				fmt.Println("Warning: okex chain minconfirms will be set to 0")
+			}
 		}
 	}
 
 	fmt.Println(config.Eth)
 
-	fmt.Println(config.Bsc)
-
-	fmt.Println(config.Okex)
+	for _, bConfig := range config.Bridges {
+		fmt.Println(bConfig)
+	}
 
 	return nil
 }

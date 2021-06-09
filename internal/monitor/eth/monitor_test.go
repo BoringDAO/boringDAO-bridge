@@ -3,15 +3,14 @@ package eth
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/boringdao/bridge/internal/loggers"
 	"github.com/boringdao/bridge/internal/repo"
 	"github.com/boringdao/bridge/pkg/kit/log"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
-	"math/big"
-	"testing"
 )
 
 func TestNewLockWrapper(t *testing.T) {
@@ -63,13 +62,6 @@ func TestLockWrapper_FilterLock(t *testing.T) {
 	assert.NotNil(t, iterator)
 
 	fmt.Println(iterator.Next())
-}
-
-func TestLockWrapper_TxUnlocked(t *testing.T) {
-	lw := newWrapper(t)
-
-	result := lw.Unlock(common.Address{}, common.Address{}, common.Address{}, big.NewInt(1), "")
-	assert.NotNil(t, result)
 }
 
 func TestLockWrapper_SuggestGasPrice(t *testing.T) {

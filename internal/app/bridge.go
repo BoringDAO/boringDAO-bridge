@@ -8,7 +8,6 @@ import (
 
 	"github.com/boringdao/bridge/internal/loggers"
 	"github.com/boringdao/bridge/internal/monitor/bridge"
-	"github.com/boringdao/bridge/internal/monitor/bsc_okex"
 	"github.com/boringdao/bridge/internal/monitor/eth"
 	"github.com/boringdao/bridge/internal/repo"
 	"github.com/boringdao/bridge/pkg/storage"
@@ -19,7 +18,7 @@ import (
 
 type MntPair struct {
 	ethMnt    *eth.Monitor
-	bridgeMnt bridge.Monitor
+	bridgeMnt bridge.IMonitor
 }
 
 type Bridge struct {
@@ -41,32 +40,21 @@ func New(repoRoot *repo.Repo) (*Bridge, error) {
 	}
 
 	mntPairs := make(map[uint64]*MntPair)
-	if len(repoRoot.Config.Bsc.Tokens) != 0 {
-		ethMnt, err := eth.New(repoRoot.Config, repoRoot.Config.Bsc.ChainID, loggers.Logger(loggers.ETH))
-		if err != nil {
-			return nil, err
-		}
-		bscMnt, err := bsc_okex.New(repoRoot.Config.RepoRoot, &repoRoot.Config.Bsc, loggers.Logger(loggers.BSC))
-		if err != nil {
-			return nil, err
-		}
-		mntPairs[repoRoot.Config.Bsc.ChainID] = &MntPair{
-			ethMnt:    ethMnt,
-			bridgeMnt: bscMnt,
-		}
-	}
-	if len(repoRoot.Config.Okex.Tokens) != 0 {
-		ethMnt, err := eth.New(repoRoot.Config, repoRoot.Config.Okex.ChainID, loggers.Logger(loggers.ETH))
-		if err != nil {
-			return nil, err
-		}
-		okexMnt, err := bsc_okex.New(repoRoot.Config.RepoRoot, &repoRoot.Config.Okex, loggers.Logger(loggers.OKEX))
-		if err != nil {
-			return nil, err
-		}
-		mntPairs[repoRoot.Config.Okex.ChainID] = &MntPair{
-			ethMnt:    ethMnt,
-			bridgeMnt: okexMnt,
+
+	for _, bConfig := range repoRoot.Config.Bridges {
+		if len(bConfig.Tokens) != 0 {
+			ethMnt, err := eth.New(repoRoot.Config, bConfig.ChainID, loggers.Logger(loggers.ETH))
+			if err != nil {
+				return nil, err
+			}
+			bridgeMnt, err := bridge.New(repoRoot.Config.RepoRoot, bConfig, loggers.Logger(bConfig.Name))
+			if err != nil {
+				return nil, err
+			}
+			mntPairs[bConfig.ChainID] = &MntPair{
+				ethMnt:    ethMnt,
+				bridgeMnt: bridgeMnt,
+			}
 		}
 	}
 
