@@ -511,12 +511,12 @@ func (m *Monitor) loadHeightFromStorage() {
 
 	}
 
-	if m.config.Eth.LockHeight != 0 {
-		m.lHeight = m.config.Eth.LockHeight
+	if m.config.Bsc.LockHeight != 0 {
+		m.lHeight = m.config.Bsc.LockHeight
 	}
 
-	if m.config.Eth.CrossBurnHeight != 0 {
-		m.cHeight = m.config.Eth.CrossBurnHeight
+	if m.config.Bsc.CrossBurnHeight != 0 {
+		m.cHeight = m.config.Bsc.CrossBurnHeight
 	}
 
 	m.logger.WithFields(logrus.Fields{
