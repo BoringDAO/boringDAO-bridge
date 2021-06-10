@@ -102,7 +102,7 @@ func New(config *repo.Config, logger logrus.FieldLogger) (*Monitor, error) {
 		bscWrapper:   bscWrapper,
 		address:      address,
 		pegProxyAbi:  pegProxyAbi,
-		pegProxyAddr: common.HexToAddress(config.Eth.PegBridgeContract),
+		pegProxyAddr: common.HexToAddress(config.Bsc.PegBridgeContract),
 		minConfirms:  uint64(minConfirms),
 		cocoC:        make(chan *Coco),
 		logger:       logger,
