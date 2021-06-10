@@ -48,8 +48,8 @@ type Eth struct {
 	MinConfirms       uint64   `toml:"minConfirms" json:"minConfirms"`
 	PrivKey           string   `toml:"privKey" json:"privKey"`
 	GasLimit          uint64   `toml:"gasLimit" json:"gasLimit"`
-	LockHeight        uint64   `toml:"lockHeight" json:"lockHeight"`
-	CrossBurnHeight   uint64   `toml:"crossBurnHeight" json:"crossBurnHeight"`
+	LockHeight        uint64   `toml:"lHeight" json:"lHeight"`
+	CrossBurnHeight   uint64   `toml:"cHeight" json:"cHeight"`
 	PegBridgeContract string   `toml:"pegBridgeContract" json:"pegBridgeContract"`
 }
 
@@ -58,8 +58,8 @@ type Bsc struct {
 	MinConfirms       uint64   `toml:"minConfirms" json:"minConfirms"`
 	PrivKey           string   `toml:"privKey" json:"privKey"`
 	GasLimit          uint64   `toml:"gasLimit" json:"gasLimit"`
-	LockHeight        uint64   `toml:"lockHeight" json:"lockHeight"`
-	CrossBurnHeight   uint64   `toml:"crossBurnHeight" json:"crossBurnHeight"`
+	LockHeight        uint64   `toml:"lHeight" json:"lHeight"`
+	CrossBurnHeight   uint64   `toml:"cHeight" json:"cHeight"`
 	PegBridgeContract string   `toml:"pegBridgeContract" json:"pegBridgeContract"`
 }
 
