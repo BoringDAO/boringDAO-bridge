@@ -197,7 +197,7 @@ func (m *Monitor) HandleCocoC() chan *Coco {
 }
 
 func (m *Monitor) handleLock(lock *mnt.PegProxyLock, isHistory bool) {
-	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Eth.PegBridgeContract) {
+	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Bsc.PegBridgeContract) {
 		return
 	}
 
@@ -245,7 +245,7 @@ func (m *Monitor) handleLock(lock *mnt.PegProxyLock, isHistory bool) {
 }
 
 func (m *Monitor) handleCrossBurn(crossBurn *mnt.PegProxyCrossBurn, isHistory bool) {
-	if !strings.EqualFold(crossBurn.Raw.Address.String(), m.config.Eth.PegBridgeContract) {
+	if !strings.EqualFold(crossBurn.Raw.Address.String(), m.config.Bsc.PegBridgeContract) {
 		return
 	}
 
@@ -431,7 +431,7 @@ func (m *Monitor) CrossIn(txId string, token common.Address, from common.Address
 func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
 	receipt := m.bscWrapper.TransactionReceipt(context.TODO(), common.HexToHash(txId))
 	for _, log := range receipt.Logs {
-		if !strings.EqualFold(log.Address.String(), m.config.Eth.PegBridgeContract) {
+		if !strings.EqualFold(log.Address.String(), m.config.Bsc.PegBridgeContract) {
 			continue
 		}
 
@@ -458,7 +458,7 @@ func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
 func (m *Monitor) GetCrossBurnLog(txId string) (*Coco, error) {
 	receipt := m.bscWrapper.TransactionReceipt(context.TODO(), common.HexToHash(txId))
 	for _, log := range receipt.Logs {
-		if !strings.EqualFold(log.Address.String(), m.config.Eth.PegBridgeContract) {
+		if !strings.EqualFold(log.Address.String(), m.config.Bsc.PegBridgeContract) {
 			continue
 		}
 
