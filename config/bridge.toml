@@ -12,8 +12,8 @@ title = "Bridge configuration file"
 
 [bsc]
   addrs = [
-    "http://data-seed-prebsc-1-s1.binance.org:8545", # rpc host
-    "http://data-seed-prebsc-1-s2.binance.org:8545", # rpc host
+    "https://data-seed-prebsc-1-s1.binance.org:8545", # rpc host
+    "https://data-seed-prebsc-1-s2.binance.org:8545", # rpc host
   ]
   minConfirms = 5 # min confirms
   gasLimit = 1500000 # gas Limit
