@@ -53,9 +53,6 @@ func checkConfig(config *Config) error {
 
 			if bConfig.Name == "bsc" && bConfig.MinConfirms < 15 {
 				fmt.Println("Warning: bsc minconfirms should be at least 15, please change it if it's in prod environment")
-			} else if bConfig.Name == "okex" && bConfig.MinConfirms != 0 {
-				bConfig.MinConfirms = 0
-				fmt.Println("Warning: okex chain minconfirms will be set to 0")
 			}
 		}
 	}
