@@ -73,8 +73,8 @@ title = "Bridge configuration file"
   filename = "bridge.log"
 [log.module]
   bsc = "info"
-  okex = "debug"
+  okex = "info"
   avax = "info"
-  eth = "debug"
+  eth = "info"
   app = "info"
 

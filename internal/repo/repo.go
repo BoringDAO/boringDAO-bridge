@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"encoding/json"
 	"fmt"
 	"path/filepath"
 )
@@ -57,10 +58,12 @@ func checkConfig(config *Config) error {
 		}
 	}
 
-	fmt.Println(config.Eth)
+	fmt.Println("Eth configuration:")
+	prettyPrint(config.Eth)
 
 	for _, bConfig := range config.Bridges {
-		fmt.Println(bConfig)
+		fmt.Println(fmt.Sprintf("%s configuration:", bConfig.Name))
+		prettyPrint(bConfig)
 	}
 
 	return nil
@@ -84,4 +87,13 @@ func LoadWithNotKey(repoRoot string) (*Repo, error) {
 	return &Repo{
 		Config: config,
 	}, nil
+}
+
+func prettyPrint(input interface{}) {
+	data, err := json.MarshalIndent(input, "", "    ")
+	if err != nil {
+		panic(fmt.Errorf("Fail to marshal: %v", err))
+	}
+
+	fmt.Println(string(data))
 }
