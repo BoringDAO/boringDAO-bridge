@@ -14,8 +14,8 @@ type Coco struct {
 	Amount      *big.Int       `json:"amount"`
 	TxId        string         `json:"tx_id"`
 	BlockHeight uint64         `json:"block_height"`
-	EthToken    common.Address `json:"eth_token"`
-	BscToken    common.Address `json:"bsc_token"`
+	Token0      common.Address `json:"token0"`
+	Token1      common.Address `json:"token1"`
 	ChainID     *big.Int       `json:"chain_id"`
 }
 

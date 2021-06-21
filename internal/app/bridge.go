@@ -106,7 +106,7 @@ func (b *Bridge) listenEthCocoC(mntPair *MntPair) {
 					b.logger.WithField("tx", coco.TxId).Error("has handled the interchain event")
 					return
 				}
-				err := mntPair.bridgeMnt.CrossMint(coco.EthToken, coco.TxId, coco.Sender, coco.Recipient, coco.Amount)
+				err := mntPair.bridgeMnt.CrossMint(coco.Token0, coco.TxId, coco.Sender, coco.Recipient, coco.Amount)
 				if err != nil {
 					b.logger.Panic(err)
 				}
@@ -135,7 +135,7 @@ func (b *Bridge) listenBridgeCocoC(mntPair *MntPair) {
 					return
 				}
 
-				err := mntPair.ethMnt.UnlockBor(coco.TxId, coco.EthToken, coco.ChainID, coco.Sender, coco.Recipient, coco.Amount)
+				err := mntPair.ethMnt.UnlockBor(coco.TxId, coco.Token0, coco.ChainID, coco.Sender, coco.Recipient, coco.Amount)
 				if err != nil {
 					b.logger.Panic(err)
 				}

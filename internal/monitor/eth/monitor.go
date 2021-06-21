@@ -29,8 +29,8 @@ type Coco struct {
 	Sender      common.Address `json:"sender"`
 	Recipient   common.Address `json:"recipient"`
 	Amount      *big.Int       `json:"amount"`
-	EthToken    common.Address `json:"eth_token"`
-	BscToken    common.Address `json:"bsc_token"`
+	Token0      common.Address `json:"token0"`
+	Token1      common.Address `json:"token1"`
 	ChainID     *big.Int       `json:"chain_id"`
 	TxId        string         `json:"tx_id"`
 	BlockHeight uint64         `json:"block_height"`
@@ -183,8 +183,8 @@ func (m *Monitor) handleLock(lock *CrossLockLock, isHistory bool) {
 	}
 	coco := &Coco{
 		IsHistory:   isHistory,
-		EthToken:    lock.Token0,
-		BscToken:    lock.Token1,
+		Token0:      lock.Token0,
+		Token1:      lock.Token1,
 		ChainID:     lock.ChainID,
 		Sender:      lock.Locker,
 		Recipient:   lock.To,
@@ -194,8 +194,8 @@ func (m *Monitor) handleLock(lock *CrossLockLock, isHistory bool) {
 	}
 
 	m.logger.WithFields(logrus.Fields{
-		"eth_token":    coco.EthToken.String(),
-		"bsc_token":    coco.BscToken.String(),
+		"token0":       coco.Token0.String(),
+		"token1":       coco.Token1.String(),
 		"chainID":      coco.ChainID.String(),
 		"sender":       coco.Sender.String(),
 		"recipient":    coco.Recipient.String(),
@@ -317,8 +317,8 @@ func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
 					continue
 				}
 				return &Coco{
-					EthToken:    lock.Token0,
-					BscToken:    lock.Token1,
+					Token0:      lock.Token0,
+					Token1:      lock.Token1,
 					ChainID:     lock.ChainID,
 					Sender:      lock.Locker,
 					Recipient:   lock.To,
