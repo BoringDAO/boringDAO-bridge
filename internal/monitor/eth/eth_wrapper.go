@@ -51,7 +51,15 @@ func NewEthWrapper(config *repo.Eth, logger logrus.FieldLogger) (*EthWrapper, er
 		return nil, err
 	}
 
-	auth := bind.NewKeyedTransactor(privKey)
+	chainID, err := etherCli.ChainID(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	auth, err := bind.NewKeyedTransactorWithChainID(privKey, chainID)
+	if err != nil {
+		return nil, err
+	}
 	if config.GasLimit < 800000 {
 		auth.GasLimit = 1500000
 	} else {
@@ -118,6 +126,27 @@ func (lw *EthWrapper) FilterCrossBurn(opts *bind.FilterOpts) *mnt.PegProxyCrossB
 	return iterator
 }
 
+func (lw *EthWrapper) FilterRollback(opts *bind.FilterOpts) *mnt.PegProxyRollbackIterator {
+	var iterator *mnt.PegProxyRollbackIterator
+	var err error
+
+	if err := retry.Retry(func(attempt uint) error {
+		iterator, err = lw.pegProxy.FilterRollback(opts)
+		if err != nil {
+			lw.logger.Warnf("FilterRollback: %s", err.Error())
+
+			if lw.isNetworkError(err) {
+				lw.switchToNextAddr()
+			}
+		}
+		return err
+	}, strategy.Wait(10*time.Second)); err != nil {
+		lw.logger.Panic(err)
+	}
+
+	return iterator
+}
+
 func (lw *EthWrapper) FilterLock(opts *bind.FilterOpts) *mnt.PegProxyLockIterator {
 	var iterator *mnt.PegProxyLockIterator
 	var err error
@@ -147,6 +176,27 @@ func (lw *EthWrapper) TxUnlocked(txId string) bool {
 		result, err = lw.session.TxUnlocked(txId)
 		if err != nil {
 			lw.logger.Warnf("TxUnlocked: %s", err.Error())
+
+			if lw.isNetworkError(err) {
+				lw.switchToNextAddr()
+			}
+		}
+		return err
+	}, strategy.Wait(10*time.Second)); err != nil {
+		lw.logger.Panic(err)
+	}
+
+	return result
+}
+
+func (lw *EthWrapper) TxRollbacked(txId string) bool {
+	var result bool
+	var err error
+
+	if err := retry.Retry(func(attempt uint) error {
+		result, err = lw.session.TxRollbacked(txId)
+		if err != nil {
+			lw.logger.Warnf("TxRollbacked: %s", err.Error())
 
 			if lw.isNetworkError(err) {
 				lw.switchToNextAddr()
@@ -202,7 +252,7 @@ func (lw *EthWrapper) SuggestGasPrice(ctx context.Context) *big.Int {
 	return result
 }
 
-func (lw *EthWrapper) CrossIn(token, from, to common.Address, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
+func (lw *EthWrapper) CrossIn(token, from, to common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
 	var tx *types.Transaction
 	var err error
 	var hash common.Hash
@@ -212,7 +262,7 @@ func (lw *EthWrapper) CrossIn(token, from, to common.Address, amount *big.Int, t
 		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
 		lw.session.TransactOpts.GasPrice = gasPrice.BigInt()
 
-		tx, err = lw.session.CrossIn(token, from, to, amount, txid)
+		tx, err = lw.session.CrossIn(token, chainID, from, to, amount, txid)
 		if tx != nil {
 			hash = tx.Hash()
 		}
@@ -233,7 +283,37 @@ func (lw *EthWrapper) CrossIn(token, from, to common.Address, amount *big.Int, t
 	return tx, hash
 }
 
-func (lw *EthWrapper) Unlock(token common.Address, from common.Address, to common.Address, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
+func (lw *EthWrapper) Rollback(token common.Address, from common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
+	var result *types.Transaction
+	var err error
+	var hash common.Hash
+
+	if err := retry.Retry(func(attempt uint) error {
+		price := lw.SuggestGasPrice(context.TODO())
+		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
+		lw.session.TransactOpts.GasPrice = gasPrice.BigInt()
+
+		result, err = lw.session.Rollback(token, chainID, from, amount, txid)
+		if result != nil {
+			hash = result.Hash()
+		}
+		if err != nil {
+			lw.logger.Warnf("Rollback: %s", err.Error())
+
+			if lw.isNetworkError(err) {
+				lw.switchToNextAddr()
+			}
+
+		}
+		return err
+	}, strategy.Wait(10*time.Second)); err != nil {
+		lw.logger.Panic(err)
+	}
+
+	return result, hash
+}
+
+func (lw *EthWrapper) Unlock(token common.Address, from common.Address, to common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
 	var tx *types.Transaction
 	var err error
 	var hash common.Hash
@@ -243,7 +323,7 @@ func (lw *EthWrapper) Unlock(token common.Address, from common.Address, to commo
 		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
 		lw.session.TransactOpts.GasPrice = gasPrice.BigInt()
 
-		tx, err = lw.session.Unlock(token, from, to, amount, txid)
+		tx, err = lw.session.Unlock(token, chainID, from, to, amount, txid)
 		if tx != nil {
 			hash = tx.Hash()
 		}

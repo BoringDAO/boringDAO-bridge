@@ -139,6 +139,27 @@ func (bw *BscWrapper) FilterCrossBurn(opts *bind.FilterOpts) *mnt.PegProxyCrossB
 	return iterator
 }
 
+func (bw *BscWrapper) FilterRollback(opts *bind.FilterOpts) *mnt.PegProxyRollbackIterator {
+	var iterator *mnt.PegProxyRollbackIterator
+	var err error
+
+	if err := retry.Retry(func(attempt uint) error {
+		iterator, err = bw.pegProxy.FilterRollback(opts)
+		if err != nil {
+			bw.logger.Warnf("FilterRollback: %s", err.Error())
+
+			if bw.isNetworkError(err) {
+				bw.switchToNextAddr()
+			}
+		}
+		return err
+	}, strategy.Wait(10*time.Second)); err != nil {
+		bw.logger.Panic(err)
+	}
+
+	return iterator
+}
+
 func (bw *BscWrapper) TxMinted(txId string) bool {
 	var unlocked bool
 	var err error
@@ -181,7 +202,7 @@ func (bw *BscWrapper) SuggestGasPrice(ctx context.Context) *big.Int {
 	return result
 }
 
-func (bw *BscWrapper) CrossIn(token, from, to common.Address, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
+func (bw *BscWrapper) CrossIn(token, from, to common.Address, chainId, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
 	var tx *types.Transaction
 	var err error
 	var hash common.Hash
@@ -191,7 +212,7 @@ func (bw *BscWrapper) CrossIn(token, from, to common.Address, amount *big.Int, t
 		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
 		bw.session.TransactOpts.GasPrice = gasPrice.BigInt()
 
-		tx, err = bw.session.CrossIn(token, from, to, amount, txid)
+		tx, err = bw.session.CrossIn(token, chainId, from, to, amount, txid)
 		if tx != nil {
 			hash = tx.Hash()
 		}
@@ -212,7 +233,7 @@ func (bw *BscWrapper) CrossIn(token, from, to common.Address, amount *big.Int, t
 	return tx, hash
 }
 
-func (bw *BscWrapper) Unlock(token common.Address, from common.Address, to common.Address, amount *big.Int, txid string) *types.Transaction {
+func (bw *BscWrapper) Unlock(token common.Address, from common.Address, to common.Address, chainID, amount *big.Int, txid string) *types.Transaction {
 	var result *types.Transaction
 	var err error
 
@@ -221,7 +242,7 @@ func (bw *BscWrapper) Unlock(token common.Address, from common.Address, to commo
 		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
 		bw.session.TransactOpts.GasPrice = gasPrice.BigInt()
 
-		result, err = bw.session.Unlock(token, from, to, amount, txid)
+		result, err = bw.session.Unlock(token, chainID, from, to, amount, txid)
 		if err != nil {
 			bw.logger.Warnf("Unlock: %s", err.Error())
 
@@ -236,6 +257,36 @@ func (bw *BscWrapper) Unlock(token common.Address, from common.Address, to commo
 	}
 
 	return result
+}
+
+func (bw *BscWrapper) Rollback(token, from common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
+	var result *types.Transaction
+	var err error
+	var hash common.Hash
+
+	if err := retry.Retry(func(attempt uint) error {
+		price := bw.SuggestGasPrice(context.TODO())
+		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
+		bw.session.TransactOpts.GasPrice = gasPrice.BigInt()
+
+		result, err = bw.session.Rollback(token, chainID, from, amount, txid)
+		if result != nil {
+			hash = result.Hash()
+		}
+		if err != nil {
+			bw.logger.Warnf("Rollback: %s", err.Error())
+
+			if bw.isNetworkError(err) {
+				bw.switchToNextAddr()
+			}
+
+		}
+		return err
+	}, strategy.Wait(10*time.Second)); err != nil {
+		bw.logger.Panic(err)
+	}
+
+	return result, hash
 }
 
 func (bw *BscWrapper) TransactionReceiptsLimitedRetry(ctx context.Context, txHashes []common.Hash) (*types.Receipt, error) {
@@ -284,6 +335,27 @@ func (bw *BscWrapper) TransactionReceipt(ctx context.Context, txHash common.Hash
 	}
 
 	return receipt
+}
+
+func (bw *BscWrapper) TxRollbacked(txId string) bool {
+	var result bool
+	var err error
+
+	if err := retry.Retry(func(attempt uint) error {
+		result, err = bw.session.TxRollbacked(txId)
+		if err != nil {
+			bw.logger.Warnf("TxRollbacked: %s", err.Error())
+
+			if bw.isNetworkError(err) {
+				bw.switchToNextAddr()
+			}
+		}
+		return err
+	}, strategy.Wait(10*time.Second)); err != nil {
+		bw.logger.Panic(err)
+	}
+
+	return result
 }
 
 func (bw *BscWrapper) TxUnlocked(txId string) bool {

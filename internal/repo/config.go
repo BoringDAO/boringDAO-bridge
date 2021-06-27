@@ -50,6 +50,7 @@ type Eth struct {
 	GasLimit          uint64   `toml:"gasLimit" json:"gasLimit"`
 	LockHeight        uint64   `toml:"lHeight" json:"lHeight"`
 	CrossBurnHeight   uint64   `toml:"cHeight" json:"cHeight"`
+	RollbackHeight    uint64   `toml:"rHeight" json:"rHeight"`
 	PegBridgeContract string   `toml:"pegBridgeContract" json:"pegBridgeContract"`
 }
 
@@ -61,6 +62,7 @@ type Bsc struct {
 	LockHeight        uint64   `toml:"lHeight" json:"lHeight"`
 	CrossBurnHeight   uint64   `toml:"cHeight" json:"cHeight"`
 	PegBridgeContract string   `toml:"pegBridgeContract" json:"pegBridgeContract"`
+	RollbackHeight    uint64   `toml:"rHeight" json:"rHeight"`
 }
 
 func (c *Config) Bytes() ([]byte, error) {

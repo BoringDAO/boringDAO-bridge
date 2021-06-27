@@ -1,7 +1,7 @@
 // Code generated - DO NOT EDIT.
 // This file is a generated binding and any manual changes will be lost.
 
-package mnt
+package contracts
 
 import (
 	"math/big"
@@ -859,7 +859,7 @@ func (_AccessControl *AccessControlFilterer) ParseRoleRevoked(log types.Log) (*A
 const AddressABI = "[]"
 
 // AddressBin is the compiled bytecode used for deploying new contracts.
-var AddressBin = "0x60566037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea2646970667358221220ba23902febd09b9aec9c7bf92ff40e4246ff1b18f75e543afcea9fea08683e5c64736f6c63430008040033"
+var AddressBin = "0x60566037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea264697066735822122011de2343aa2f23f85efb933e5e2693d002df32dbac0dce1947fd55565db1ab5664736f6c63430008060033"
 
 // DeployAddress deploys a new Ethereum contract, binding an instance of Address to it.
 func DeployAddress(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *Address, error) {
@@ -3086,14 +3086,15 @@ func (_IERC20 *IERC20Filterer) ParseTransfer(log types.Log) (*IERC20Transfer, er
 }
 
 // IPegSwapABI is the input ABI used to generate the binding from.
-const IPegSwapABI = "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token0\",\"type\":\"address\"}],\"name\":\"getMaxToken1AmountOut\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"}],\"name\":\"getPair\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token0\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amountIn\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"}],\"name\":\"swapToken0ForToken1\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token0\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amountIn\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"}],\"name\":\"swapToken1ForToken0\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
+const IPegSwapABI = "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token0\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"chainID\",\"type\":\"uint256\"}],\"name\":\"getMaxToken0AmountOut\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token0\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"chainID\",\"type\":\"uint256\"}],\"name\":\"getMaxToken1AmountOut\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"chainID\",\"type\":\"uint256\"}],\"name\":\"getPair\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token0\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"chainID\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amountIn\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"}],\"name\":\"swapToken0ForToken1\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token0\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"chainID\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amountIn\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"}],\"name\":\"swapToken1ForToken0\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
 
 // IPegSwapFuncSigs maps the 4-byte function signature to its string representation.
 var IPegSwapFuncSigs = map[string]string{
-	"542e99b8": "getMaxToken1AmountOut(address)",
-	"1a788a02": "getPair(address)",
-	"5a454299": "swapToken0ForToken1(address,uint256,address)",
-	"f51af111": "swapToken1ForToken0(address,uint256,address)",
+	"934ac707": "getMaxToken0AmountOut(address,uint256)",
+	"56ecaeb7": "getMaxToken1AmountOut(address,uint256)",
+	"006349fb": "getPair(address,uint256)",
+	"4ff2c804": "swapToken0ForToken1(address,uint256,uint256,address)",
+	"40ec1723": "swapToken1ForToken0(address,uint256,uint256,address)",
 }
 
 // IPegSwap is an auto generated Go binding around an Ethereum contract.
@@ -3238,12 +3239,12 @@ func (_IPegSwap *IPegSwapTransactorRaw) Transact(opts *bind.TransactOpts, method
 	return _IPegSwap.Contract.contract.Transact(opts, method, params...)
 }
 
-// GetMaxToken1AmountOut is a free data retrieval call binding the contract method 0x542e99b8.
+// GetMaxToken0AmountOut is a free data retrieval call binding the contract method 0x934ac707.
 //
-// Solidity: function getMaxToken1AmountOut(address token0) view returns(uint256)
-func (_IPegSwap *IPegSwapCaller) GetMaxToken1AmountOut(opts *bind.CallOpts, token0 common.Address) (*big.Int, error) {
+// Solidity: function getMaxToken0AmountOut(address token0, uint256 chainID) view returns(uint256)
+func (_IPegSwap *IPegSwapCaller) GetMaxToken0AmountOut(opts *bind.CallOpts, token0 common.Address, chainID *big.Int) (*big.Int, error) {
 	var out []interface{}
-	err := _IPegSwap.contract.Call(opts, &out, "getMaxToken1AmountOut", token0)
+	err := _IPegSwap.contract.Call(opts, &out, "getMaxToken0AmountOut", token0, chainID)
 
 	if err != nil {
 		return *new(*big.Int), err
@@ -3255,26 +3256,57 @@ func (_IPegSwap *IPegSwapCaller) GetMaxToken1AmountOut(opts *bind.CallOpts, toke
 
 }
 
-// GetMaxToken1AmountOut is a free data retrieval call binding the contract method 0x542e99b8.
+// GetMaxToken0AmountOut is a free data retrieval call binding the contract method 0x934ac707.
 //
-// Solidity: function getMaxToken1AmountOut(address token0) view returns(uint256)
-func (_IPegSwap *IPegSwapSession) GetMaxToken1AmountOut(token0 common.Address) (*big.Int, error) {
-	return _IPegSwap.Contract.GetMaxToken1AmountOut(&_IPegSwap.CallOpts, token0)
+// Solidity: function getMaxToken0AmountOut(address token0, uint256 chainID) view returns(uint256)
+func (_IPegSwap *IPegSwapSession) GetMaxToken0AmountOut(token0 common.Address, chainID *big.Int) (*big.Int, error) {
+	return _IPegSwap.Contract.GetMaxToken0AmountOut(&_IPegSwap.CallOpts, token0, chainID)
 }
 
-// GetMaxToken1AmountOut is a free data retrieval call binding the contract method 0x542e99b8.
+// GetMaxToken0AmountOut is a free data retrieval call binding the contract method 0x934ac707.
 //
-// Solidity: function getMaxToken1AmountOut(address token0) view returns(uint256)
-func (_IPegSwap *IPegSwapCallerSession) GetMaxToken1AmountOut(token0 common.Address) (*big.Int, error) {
-	return _IPegSwap.Contract.GetMaxToken1AmountOut(&_IPegSwap.CallOpts, token0)
+// Solidity: function getMaxToken0AmountOut(address token0, uint256 chainID) view returns(uint256)
+func (_IPegSwap *IPegSwapCallerSession) GetMaxToken0AmountOut(token0 common.Address, chainID *big.Int) (*big.Int, error) {
+	return _IPegSwap.Contract.GetMaxToken0AmountOut(&_IPegSwap.CallOpts, token0, chainID)
 }
 
-// GetPair is a free data retrieval call binding the contract method 0x1a788a02.
+// GetMaxToken1AmountOut is a free data retrieval call binding the contract method 0x56ecaeb7.
 //
-// Solidity: function getPair(address token) view returns(address)
-func (_IPegSwap *IPegSwapCaller) GetPair(opts *bind.CallOpts, token common.Address) (common.Address, error) {
+// Solidity: function getMaxToken1AmountOut(address token0, uint256 chainID) view returns(uint256)
+func (_IPegSwap *IPegSwapCaller) GetMaxToken1AmountOut(opts *bind.CallOpts, token0 common.Address, chainID *big.Int) (*big.Int, error) {
 	var out []interface{}
-	err := _IPegSwap.contract.Call(opts, &out, "getPair", token)
+	err := _IPegSwap.contract.Call(opts, &out, "getMaxToken1AmountOut", token0, chainID)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// GetMaxToken1AmountOut is a free data retrieval call binding the contract method 0x56ecaeb7.
+//
+// Solidity: function getMaxToken1AmountOut(address token0, uint256 chainID) view returns(uint256)
+func (_IPegSwap *IPegSwapSession) GetMaxToken1AmountOut(token0 common.Address, chainID *big.Int) (*big.Int, error) {
+	return _IPegSwap.Contract.GetMaxToken1AmountOut(&_IPegSwap.CallOpts, token0, chainID)
+}
+
+// GetMaxToken1AmountOut is a free data retrieval call binding the contract method 0x56ecaeb7.
+//
+// Solidity: function getMaxToken1AmountOut(address token0, uint256 chainID) view returns(uint256)
+func (_IPegSwap *IPegSwapCallerSession) GetMaxToken1AmountOut(token0 common.Address, chainID *big.Int) (*big.Int, error) {
+	return _IPegSwap.Contract.GetMaxToken1AmountOut(&_IPegSwap.CallOpts, token0, chainID)
+}
+
+// GetPair is a free data retrieval call binding the contract method 0x006349fb.
+//
+// Solidity: function getPair(address token, uint256 chainID) view returns(address)
+func (_IPegSwap *IPegSwapCaller) GetPair(opts *bind.CallOpts, token common.Address, chainID *big.Int) (common.Address, error) {
+	var out []interface{}
+	err := _IPegSwap.contract.Call(opts, &out, "getPair", token, chainID)
 
 	if err != nil {
 		return *new(common.Address), err
@@ -3286,60 +3318,60 @@ func (_IPegSwap *IPegSwapCaller) GetPair(opts *bind.CallOpts, token common.Addre
 
 }
 
-// GetPair is a free data retrieval call binding the contract method 0x1a788a02.
+// GetPair is a free data retrieval call binding the contract method 0x006349fb.
 //
-// Solidity: function getPair(address token) view returns(address)
-func (_IPegSwap *IPegSwapSession) GetPair(token common.Address) (common.Address, error) {
-	return _IPegSwap.Contract.GetPair(&_IPegSwap.CallOpts, token)
+// Solidity: function getPair(address token, uint256 chainID) view returns(address)
+func (_IPegSwap *IPegSwapSession) GetPair(token common.Address, chainID *big.Int) (common.Address, error) {
+	return _IPegSwap.Contract.GetPair(&_IPegSwap.CallOpts, token, chainID)
 }
 
-// GetPair is a free data retrieval call binding the contract method 0x1a788a02.
+// GetPair is a free data retrieval call binding the contract method 0x006349fb.
 //
-// Solidity: function getPair(address token) view returns(address)
-func (_IPegSwap *IPegSwapCallerSession) GetPair(token common.Address) (common.Address, error) {
-	return _IPegSwap.Contract.GetPair(&_IPegSwap.CallOpts, token)
+// Solidity: function getPair(address token, uint256 chainID) view returns(address)
+func (_IPegSwap *IPegSwapCallerSession) GetPair(token common.Address, chainID *big.Int) (common.Address, error) {
+	return _IPegSwap.Contract.GetPair(&_IPegSwap.CallOpts, token, chainID)
 }
 
-// SwapToken0ForToken1 is a paid mutator transaction binding the contract method 0x5a454299.
+// SwapToken0ForToken1 is a paid mutator transaction binding the contract method 0x4ff2c804.
 //
-// Solidity: function swapToken0ForToken1(address token0, uint256 amountIn, address to) returns()
-func (_IPegSwap *IPegSwapTransactor) SwapToken0ForToken1(opts *bind.TransactOpts, token0 common.Address, amountIn *big.Int, to common.Address) (*types.Transaction, error) {
-	return _IPegSwap.contract.Transact(opts, "swapToken0ForToken1", token0, amountIn, to)
+// Solidity: function swapToken0ForToken1(address token0, uint256 chainID, uint256 amountIn, address to) returns()
+func (_IPegSwap *IPegSwapTransactor) SwapToken0ForToken1(opts *bind.TransactOpts, token0 common.Address, chainID *big.Int, amountIn *big.Int, to common.Address) (*types.Transaction, error) {
+	return _IPegSwap.contract.Transact(opts, "swapToken0ForToken1", token0, chainID, amountIn, to)
 }
 
-// SwapToken0ForToken1 is a paid mutator transaction binding the contract method 0x5a454299.
+// SwapToken0ForToken1 is a paid mutator transaction binding the contract method 0x4ff2c804.
 //
-// Solidity: function swapToken0ForToken1(address token0, uint256 amountIn, address to) returns()
-func (_IPegSwap *IPegSwapSession) SwapToken0ForToken1(token0 common.Address, amountIn *big.Int, to common.Address) (*types.Transaction, error) {
-	return _IPegSwap.Contract.SwapToken0ForToken1(&_IPegSwap.TransactOpts, token0, amountIn, to)
+// Solidity: function swapToken0ForToken1(address token0, uint256 chainID, uint256 amountIn, address to) returns()
+func (_IPegSwap *IPegSwapSession) SwapToken0ForToken1(token0 common.Address, chainID *big.Int, amountIn *big.Int, to common.Address) (*types.Transaction, error) {
+	return _IPegSwap.Contract.SwapToken0ForToken1(&_IPegSwap.TransactOpts, token0, chainID, amountIn, to)
 }
 
-// SwapToken0ForToken1 is a paid mutator transaction binding the contract method 0x5a454299.
+// SwapToken0ForToken1 is a paid mutator transaction binding the contract method 0x4ff2c804.
 //
-// Solidity: function swapToken0ForToken1(address token0, uint256 amountIn, address to) returns()
-func (_IPegSwap *IPegSwapTransactorSession) SwapToken0ForToken1(token0 common.Address, amountIn *big.Int, to common.Address) (*types.Transaction, error) {
-	return _IPegSwap.Contract.SwapToken0ForToken1(&_IPegSwap.TransactOpts, token0, amountIn, to)
+// Solidity: function swapToken0ForToken1(address token0, uint256 chainID, uint256 amountIn, address to) returns()
+func (_IPegSwap *IPegSwapTransactorSession) SwapToken0ForToken1(token0 common.Address, chainID *big.Int, amountIn *big.Int, to common.Address) (*types.Transaction, error) {
+	return _IPegSwap.Contract.SwapToken0ForToken1(&_IPegSwap.TransactOpts, token0, chainID, amountIn, to)
 }
 
-// SwapToken1ForToken0 is a paid mutator transaction binding the contract method 0xf51af111.
+// SwapToken1ForToken0 is a paid mutator transaction binding the contract method 0x40ec1723.
 //
-// Solidity: function swapToken1ForToken0(address token0, uint256 amountIn, address to) returns()
-func (_IPegSwap *IPegSwapTransactor) SwapToken1ForToken0(opts *bind.TransactOpts, token0 common.Address, amountIn *big.Int, to common.Address) (*types.Transaction, error) {
-	return _IPegSwap.contract.Transact(opts, "swapToken1ForToken0", token0, amountIn, to)
+// Solidity: function swapToken1ForToken0(address token0, uint256 chainID, uint256 amountIn, address to) returns()
+func (_IPegSwap *IPegSwapTransactor) SwapToken1ForToken0(opts *bind.TransactOpts, token0 common.Address, chainID *big.Int, amountIn *big.Int, to common.Address) (*types.Transaction, error) {
+	return _IPegSwap.contract.Transact(opts, "swapToken1ForToken0", token0, chainID, amountIn, to)
 }
 
-// SwapToken1ForToken0 is a paid mutator transaction binding the contract method 0xf51af111.
+// SwapToken1ForToken0 is a paid mutator transaction binding the contract method 0x40ec1723.
 //
-// Solidity: function swapToken1ForToken0(address token0, uint256 amountIn, address to) returns()
-func (_IPegSwap *IPegSwapSession) SwapToken1ForToken0(token0 common.Address, amountIn *big.Int, to common.Address) (*types.Transaction, error) {
-	return _IPegSwap.Contract.SwapToken1ForToken0(&_IPegSwap.TransactOpts, token0, amountIn, to)
+// Solidity: function swapToken1ForToken0(address token0, uint256 chainID, uint256 amountIn, address to) returns()
+func (_IPegSwap *IPegSwapSession) SwapToken1ForToken0(token0 common.Address, chainID *big.Int, amountIn *big.Int, to common.Address) (*types.Transaction, error) {
+	return _IPegSwap.Contract.SwapToken1ForToken0(&_IPegSwap.TransactOpts, token0, chainID, amountIn, to)
 }
 
-// SwapToken1ForToken0 is a paid mutator transaction binding the contract method 0xf51af111.
+// SwapToken1ForToken0 is a paid mutator transaction binding the contract method 0x40ec1723.
 //
-// Solidity: function swapToken1ForToken0(address token0, uint256 amountIn, address to) returns()
-func (_IPegSwap *IPegSwapTransactorSession) SwapToken1ForToken0(token0 common.Address, amountIn *big.Int, to common.Address) (*types.Transaction, error) {
-	return _IPegSwap.Contract.SwapToken1ForToken0(&_IPegSwap.TransactOpts, token0, amountIn, to)
+// Solidity: function swapToken1ForToken0(address token0, uint256 chainID, uint256 amountIn, address to) returns()
+func (_IPegSwap *IPegSwapTransactorSession) SwapToken1ForToken0(token0 common.Address, chainID *big.Int, amountIn *big.Int, to common.Address) (*types.Transaction, error) {
+	return _IPegSwap.Contract.SwapToken1ForToken0(&_IPegSwap.TransactOpts, token0, chainID, amountIn, to)
 }
 
 // IPegSwapPairABI is the input ABI used to generate the binding from.
@@ -3638,7 +3670,7 @@ func (_IPegSwapPair *IPegSwapPairTransactorSession) Token1() (*types.Transaction
 const MathABI = "[]"
 
 // MathBin is the compiled bytecode used for deploying new contracts.
-var MathBin = "0x60566037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea2646970667358221220b92fefef5f547f3014fea0ef50087dbfb8b7fb9dc9273dd96746e197e9a266be64736f6c63430008040033"
+var MathBin = "0x60566037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea2646970667358221220ca239e63e3264f4b076cbbdd7c18909b3991277b6574292ef85cb24f5921c98b64736f6c63430008060033"
 
 // DeployMath deploys a new Ethereum contract, binding an instance of Math to it.
 func DeployMath(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *Math, error) {
@@ -4175,38 +4207,39 @@ func (_Ownable *OwnableFilterer) ParseOwnershipTransferred(log types.Log) (*Owna
 }
 
 // PegProxyABI is the input ABI used to generate the binding from.
-const PegProxyABI = "[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"srcToken\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"destToken\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"CrossBurn\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"srcToken\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"destToken\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"Lock\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"proposer\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"count\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"threshold\",\"type\":\"uint256\"}],\"name\":\"ProposalVoted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"previousAdminRole\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"newAdminRole\",\"type\":\"bytes32\"}],\"name\":\"RoleAdminChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"RoleGranted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"RoleRevoked\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"srcToken\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"destToken\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"txid\",\"type\":\"string\"}],\"name\":\"Rollback\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"oldThreshold\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"newThreshold\",\"type\":\"uint256\"}],\"name\":\"ThresholdChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"srcToken\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"destToken\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"txid\",\"type\":\"string\"}],\"name\":\"Unlock\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"CROSSER_ROLE\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"DEFAULT_ADMIN_ROLE\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"ethTokenAddr\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"bscTokenAddr\",\"type\":\"address\"}],\"name\":\"addSupportToken\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"ethTokenAddrs\",\"type\":\"address[]\"},{\"internalType\":\"address[]\",\"name\":\"bscTokenAddrs\",\"type\":\"address[]\"}],\"name\":\"addSupportTokens\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"burnBoringToken\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"txid\",\"type\":\"string\"}],\"name\":\"crossIn\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"crossOut\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"}],\"name\":\"getRoleAdmin\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"grantRole\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"hasRole\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"pegSwap\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"ethTokenAddr\",\"type\":\"address\"}],\"name\":\"removeSupportToken\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"ethTokenAddrs\",\"type\":\"address[]\"}],\"name\":\"removeSupportTokens\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"renounceRole\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"revokeRole\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"rollback\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_pegSwap\",\"type\":\"address\"}],\"name\":\"setPegSwap\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_threshold\",\"type\":\"uint256\"}],\"name\":\"setThreshold\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"supportToken\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"supportsInterface\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"threshold\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"name\":\"txMinted\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"name\":\"txUnlocked\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"txid\",\"type\":\"string\"}],\"name\":\"unlock\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
+const PegProxyABI = "[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"token0\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"token1\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"chainID0\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"chainID1\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"CrossBurn\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"token0\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"token1\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"chainID0\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"chainID1\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"Lock\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"proposer\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"count\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"threshold\",\"type\":\"uint256\"}],\"name\":\"ProposalVoted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"previousAdminRole\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"newAdminRole\",\"type\":\"bytes32\"}],\"name\":\"RoleAdminChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"RoleGranted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"RoleRevoked\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"token0\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"token1\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"chainID0\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"chainID1\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"txid\",\"type\":\"string\"}],\"name\":\"Rollback\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"token0\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"txid\",\"type\":\"string\"}],\"name\":\"Rollbacked\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"oldThreshold\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"newThreshold\",\"type\":\"uint256\"}],\"name\":\"ThresholdChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"token0\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"token1\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"chianID0\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"chainID1\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"txid\",\"type\":\"string\"}],\"name\":\"Unlock\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"CROSSER_ROLE\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"DEFAULT_ADMIN_ROLE\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token0\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"token1\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"chainID\",\"type\":\"uint256\"}],\"name\":\"addSupportToken\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"token0s\",\"type\":\"address[]\"},{\"internalType\":\"address[]\",\"name\":\"token1s\",\"type\":\"address[]\"},{\"internalType\":\"uint256[]\",\"name\":\"chainIDs\",\"type\":\"uint256[]\"}],\"name\":\"addSupportTokens\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token0\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"chainID\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"burnBoringToken\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token0\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"chainID\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"txid\",\"type\":\"string\"}],\"name\":\"crossIn\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token0\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"chainID\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"crossOut\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"}],\"name\":\"getRoleAdmin\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"grantRole\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"hasRole\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"pegSwap\",\"outputs\":[{\"internalType\":\"contractIPegSwap\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token0\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"chainID\",\"type\":\"uint256\"}],\"name\":\"removeSupportToken\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"token0s\",\"type\":\"address[]\"},{\"internalType\":\"uint256[]\",\"name\":\"chainIDs\",\"type\":\"uint256[]\"}],\"name\":\"removeSupportTokens\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"renounceRole\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"revokeRole\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token0\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"chainID\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"txid\",\"type\":\"string\"}],\"name\":\"rollback\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_pegSwap\",\"type\":\"address\"}],\"name\":\"setPegSwap\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_threshold\",\"type\":\"uint256\"}],\"name\":\"setThreshold\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"supportToken\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"supportsInterface\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"threshold\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"name\":\"txMinted\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"name\":\"txRollbacked\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"name\":\"txUnlocked\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token0\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"chainID\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"txid\",\"type\":\"string\"}],\"name\":\"unlock\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
 
 // PegProxyFuncSigs maps the 4-byte function signature to its string representation.
 var PegProxyFuncSigs = map[string]string{
 	"56cf02d9": "CROSSER_ROLE()",
 	"a217fddf": "DEFAULT_ADMIN_ROLE()",
-	"7010584c": "addSupportToken(address,address)",
-	"ab1494de": "addSupportTokens(address[],address[])",
-	"fb3b3194": "burnBoringToken(address,address,uint256)",
-	"3fc4186c": "crossIn(address,address,address,uint256,string)",
-	"cc460c27": "crossOut(address,address,uint256)",
+	"1b322be4": "addSupportToken(address,address,uint256)",
+	"ee8a6acf": "addSupportTokens(address[],address[],uint256[])",
+	"afd51390": "burnBoringToken(address,uint256,address,uint256)",
+	"cf28f67c": "crossIn(address,uint256,address,address,uint256,string)",
+	"df7e600a": "crossOut(address,uint256,address,uint256)",
 	"248a9ca3": "getRoleAdmin(bytes32)",
 	"2f2ff15d": "grantRole(bytes32,address)",
 	"91d14854": "hasRole(bytes32,address)",
 	"2e6bef33": "pegSwap()",
-	"e2769cfa": "removeSupportToken(address)",
-	"0daff621": "removeSupportTokens(address[])",
+	"f8f8d5c0": "removeSupportToken(address,uint256)",
+	"03507ba5": "removeSupportTokens(address[],uint256[])",
 	"36568abe": "renounceRole(bytes32,address)",
 	"d547741f": "revokeRole(bytes32,address)",
-	"9afd9d78": "rollback()",
+	"81660f5d": "rollback(address,uint256,address,uint256,string)",
 	"14681c84": "setPegSwap(address)",
 	"9d879990": "setThreshold(address,uint256)",
-	"2a4f1621": "supportToken(address)",
+	"d692f4c5": "supportToken(address,uint256)",
 	"01ffc9a7": "supportsInterface(bytes4)",
 	"c86ec2bf": "threshold(address)",
 	"10c27402": "txMinted(string)",
+	"53ad72e5": "txRollbacked(string)",
 	"967145af": "txUnlocked(string)",
-	"8ccc356c": "unlock(address,address,address,uint256,string)",
+	"715ec45c": "unlock(address,uint256,address,address,uint256,string)",
 }
 
 // PegProxyBin is the compiled bytecode used for deploying new contracts.
-var PegProxyBin = "0x60806040523480156200001157600080fd5b506200001f60003362000025565b620000d9565b62000031828262000035565b5050565b60008281526004602090815260408083206001600160a01b038516845290915290205460ff16620000315760008281526004602090815260408083206001600160a01b03851684529091529020805460ff19166001179055620000953390565b6001600160a01b0316816001600160a01b0316837f2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d60405160405180910390a45050565b61225a80620000e96000396000f3fe608060405234801561001057600080fd5b50600436106101585760003560e01c80638ccc356c116100c3578063ab1494de1161007c578063ab1494de14610331578063c86ec2bf14610344578063cc460c2714610364578063d547741f14610377578063e2769cfa1461038a578063fb3b31941461039d57600080fd5b80638ccc356c146102c257806391d14854146102d5578063967145af146102e85780639afd9d78146101985780639d87999014610316578063a217fddf1461032957600080fd5b80632e6bef33116101155780632e6bef331461024d5780632f2ff15d1461026057806336568abe146102735780633fc4186c1461028657806356cf02d9146102995780637010584c146102af57600080fd5b806301ffc9a71461015d5780630daff6211461018557806310c274021461019a57806314681c84146101c8578063248a9ca3146101db5780632a4f16211461020c575b600080fd5b61017061016b366004611ea8565b6103b0565b60405190151581526020015b60405180910390f35b610198610193366004611db8565b6103e7565b005b6101706101a8366004611ed0565b805160208183018101805160078252928201919093012091525460ff1681565b6101986101d6366004611c60565b610439565b6101fe6101e9366004611e6c565b60009081526004602052604090206001015490565b60405190815260200161017c565b61023561021a366004611c60565b6006602052600090815260409020546001600160a01b031681565b6040516001600160a01b03909116815260200161017c565b600554610235906001600160a01b031681565b61019861026e366004611e84565b61048b565b610198610281366004611e84565b6104b6565b610198610294366004611cd0565b610530565b6101fe6b43524f535345525f524f4c4560a01b81565b6101986102bd366004611c98565b610816565b6101986102d0366004611cd0565b6108d3565b6101706102e3366004611e84565b610aa0565b6101706102f6366004611ed0565b805160208183018101805160088252928201919093012091525460ff1681565b610198610324366004611d8d565b610acb565b6101fe600081565b61019861033f366004611deb565b610afc565b6101fe610352366004611c60565b60006020819052908152604090205481565b610198610372366004611d4d565b610bc3565b610198610385366004611e84565b610e5b565b610198610398366004611c60565b610e81565b6101986103ab366004611d4d565b610f36565b60006001600160e01b03198216637965db0b60e01b14806103e157506301ffc9a760e01b6001600160e01b03198316145b92915050565b60005b81518110156104355761042382828151811061041657634e487b7160e01b600052603260045260246000fd5b6020026020010151610e81565b8061042d816121c5565b9150506103ea565b5050565b610444600033610aa0565b6104695760405162461bcd60e51b8152600401610460906120c8565b60405180910390fd5b600580546001600160a01b0319166001600160a01b0392909216919091179055565b6000828152600460205260409020600101546104a78133611216565b6104b1838361127a565b505050565b6001600160a01b03811633146105265760405162461bcd60e51b815260206004820152602f60248201527f416363657373436f6e74726f6c3a2063616e206f6e6c792072656e6f756e636560448201526e103937b632b9903337b91039b2b63360891b6064820152608401610460565b6104358282611300565b6105496b43524f535345525f524f4c4560a01b33610aa0565b6105955760405162461bcd60e51b815260206004820152601f60248201527f50656750726f78793a2063616c6c6572206973206e6f742063726f73736572006044820152606401610460565b806007816040516105a69190611fa0565b9081526040519081900360200190205460ff16156105fc5760405162461bcd60e51b8152602060048201526013602482015272141959d41c9bde1e4e881d1e081b5a5b9d1959606a1b6044820152606401610460565b600061060b8787878787611367565b9050801561080d5760016007846040516106259190611fa0565b908152604051908190036020018120805492151560ff1990931692909217909155600554630d3c450160e11b82526001600160a01b038981166004840152600092911690631a788a029060240160206040518083038186803b15801561068a57600080fd5b505afa15801561069e573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906106c29190611c7c565b90506000816001600160a01b031663d21220a76040518163ffffffff1660e01b8152600401602060405180830381600087803b15801561070157600080fd5b505af1158015610715573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906107399190611c7c565b6040516340c10f1960e01b8152306004820152602481018890529091506001600160a01b038216906340c10f1990604401600060405180830381600087803b15801561078457600080fd5b505af1158015610798573d6000803e3d6000fd5b505060055460405163f51af11160e01b81526001600160a01b038d81166004830152602482018b90528b81166044830152909116925063f51af1119150606401600060405180830381600087803b1580156107f257600080fd5b505af1158015610806573d6000803e3d6000fd5b5050505050505b50505050505050565b610821600033610aa0565b61083d5760405162461bcd60e51b8152600401610460906120c8565b6001600160a01b0382811660009081526006602052604090205416156108a55760405162461bcd60e51b815260206004820181905260248201527f50656750726f78793a20546f6b6520616c726561647920537570706f727465646044820152606401610460565b6001600160a01b03918216600090815260066020526040902080546001600160a01b03191691909216179055565b6001600160a01b0380861660009081526006602052604090205486911661090c5760405162461bcd60e51b815260040161046090612093565b6109256b43524f535345525f524f4c4560a01b33610aa0565b6109715760405162461bcd60e51b815260206004820152601f60248201527f50656750726f78793a2063616c6c6572206973206e6f742063726f73736572006044820152606401610460565b816008816040516109829190611fa0565b9081526040519081900360200190205460ff16156109da5760405162461bcd60e51b8152602060048201526015602482015274141959d41c9bde1e4e881d1e081d5b9b1bd8dad959605a1b6044820152606401610460565b60006109e98888888888611367565b90508015610a96576001600885604051610a039190611fa0565b908152604051908190036020019020805491151560ff19909216919091179055610a376001600160a01b03891687876115ef565b6001600160a01b03808916600090815260066020526040908190205490517f5800596ed55e41c52e6e763640e29ff0d4c09c47408a512c4fb0974a452c1f0c92610a8d928c929116908b908b908b908b90612031565b60405180910390a15b5050505050505050565b60009182526004602090815260408084206001600160a01b0393909316845291905290205460ff1690565b610ad6600033610aa0565b610af25760405162461bcd60e51b8152600401610460906120c8565b6104358282611641565b8051825114610b4d5760405162461bcd60e51b815260206004820181905260248201527f50656750726f78793a20746f6b656e206c656e677468206e6f74206d617463686044820152606401610460565b60005b82518110156104b157610bb1838281518110610b7c57634e487b7160e01b600052603260045260246000fd5b6020026020010151838381518110610ba457634e487b7160e01b600052603260045260246000fd5b6020026020010151610816565b80610bbb816121c5565b915050610b50565b6001600160a01b03808416600090815260066020526040902054849116610bfc5760405162461bcd60e51b815260040161046090612093565b60008211610c5c5760405162461bcd60e51b815260206004820152602760248201527f50656750726f78793a20616d6f756e74206d75737420626520677265617465726044820152660207468616e20360cc1b6064820152608401610460565b6001600160a01b038316610caa5760405162461bcd60e51b815260206004820152601560248201527450656750726f78793a20746f20697320656d70747960581b6044820152606401610460565b6040516323b872dd60e01b8152336004820152306024820152604481018390526001600160a01b038516906323b872dd90606401602060405180830381600087803b158015610cf857600080fd5b505af1158015610d0c573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190610d309190611e4c565b50600554604051630a85d33760e31b81526001600160a01b038681166004830152600092169063542e99b89060240160206040518083038186803b158015610d7757600080fd5b505afa158015610d8b573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190610daf9190611f03565b90506000610dbd84836116a6565b90508015610e3c57600554604051635a45429960e01b81526001600160a01b0388811660048301526024820184905230604483015290911690635a45429990606401600060405180830381600087803b158015610e1957600080fd5b505af1158015610e2d573d6000803e3d6000fd5b50505050610e3c868683610f36565b6000610e4885836116be565b9050801561080d5761080d8787836116ca565b600082815260046020526040902060010154610e778133611216565b6104b18383611300565b610e8c600033610aa0565b610ea85760405162461bcd60e51b8152600401610460906120c8565b6001600160a01b0381811660009081526006602052604090205416610f0f5760405162461bcd60e51b815260206004820152601c60248201527f50656750726f78793a20746f6b65206e6f7420737570706f72746564000000006044820152606401610460565b6001600160a01b0316600090815260066020526040902080546001600160a01b0319169055565b6001600160a01b03808416600090815260066020526040902054849116610f6f5760405162461bcd60e51b815260040161046090612093565b600554604051630d3c450160e11b81526001600160a01b0386811660048301526000921690631a788a029060240160206040518083038186803b158015610fb557600080fd5b505afa158015610fc9573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190610fed9190611c7c565b90506000816001600160a01b031663d21220a76040518163ffffffff1660e01b8152600401602060405180830381600087803b15801561102c57600080fd5b505af1158015611040573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906110649190611c7c565b6040516370a0823160e01b815233600482015290915084906001600160a01b038316906370a082319060240160206040518083038186803b1580156110a857600080fd5b505afa1580156110bc573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906110e09190611f03565b10156111445760405162461bcd60e51b815260206004820152602d60248201527f50656750726f78793a206d73672e73656e646572206e6f7420656e6f7567682060448201526c3a37b5b2b7103a3790313ab93760991b6064820152608401610460565b604051632770a7eb60e21b8152336004820152602481018590526001600160a01b03821690639dc29fac90604401600060405180830381600087803b15801561118c57600080fd5b505af11580156111a0573d6000803e3d6000fd5b505050506001600160a01b0386811660008181526006602090815260409182902054825193845284169083015233908201529086166060820152608081018590527f63db45e521861dc5b6514d863ebf6814df6c1079c65b0d1b49a59ac5c5d4aebc9060a00160405180910390a1505050505050565b6112208282610aa0565b61043557611238816001600160a01b03166014611731565b611243836020611731565b604051602001611254929190611fbc565b60408051601f198184030181529082905262461bcd60e51b825261046091600401612080565b6112848282610aa0565b6104355760008281526004602090815260408083206001600160a01b03851684529091529020805460ff191660011790556112bc3390565b6001600160a01b0316816001600160a01b0316837f2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d60405160405180910390a45050565b61130a8282610aa0565b156104355760008281526004602090815260408083206001600160a01b0385168085529252808320805460ff1916905551339285917ff6391f5c32d9c69d2a47ea670b442974b53935d1edc7fd64eb21e047a839171b9190a45050565b6001600160a01b0385166000908152602081905260408120546113e55760405162461bcd60e51b815260206004820152603060248201527f50726f706f73616c566f74653a207468726573686f6c642073686f756c64206260448201526f0652067726561746572207468616e20360841b6064820152608401610460565b6001600160a01b038616600090815260208181526040808320549051909291611418918a918a918a918a918a9101611f47565b60408051601f1981840301815291815281516020928301206000818152600190935291205490915060ff16156114905760405162461bcd60e51b815260206004820152601860248201527f5f766f74653a3a70726f706f73616c2066696e697368656400000000000000006044820152606401610460565b600081815260026020908152604080832033845290915290205460ff16156114fa5760405162461bcd60e51b815260206004820152601760248201527f5f766f74653a3a6d73672e73656e64657220766f7465640000000000000000006044820152606401610460565b600081815260036020526040902054611514906001611913565b60008281526003602081815260408084209485556002825280842033855282528320805460ff1916600117905591849052905254821161156c576000818152600160208190526040909120805460ff19168217905592505b6000818152600360209081526040918290205482516001600160a01b038c811682528b811693820193909352918916828401526060820188905233608083015260a082015260c0810184905290517fe458477b94285c9f254a407e2614c39f55230b527ff7f51d76fdf33e251ae9369181900360e00190a1505095945050505050565b604080516001600160a01b038416602482015260448082018490528251808303909101815260649091019091526020810180516001600160e01b031663a9059cbb60e01b1790526104b190849061191f565b6001600160a01b038216600081815260208181526040918290208054908590558251938452908301819052908201839052907fb18e91516e037486aa6fa38f56a8aac933fd127180efe9c9745ecbf660a78e44906060015b60405180910390a1505050565b60008183106116b557816116b7565b825b9392505050565b60006116b78284612167565b6001600160a01b0383811660008181526006602090815260409182902054825193845284169083015233908201529083166060820152608081018290527f4e9dc37847123badcca2493e1da785f59908e20645214cf795e6914bfdbaada29060a001611699565b60606000611740836002612148565b61174b906002612130565b67ffffffffffffffff81111561177157634e487b7160e01b600052604160045260246000fd5b6040519080825280601f01601f19166020018201604052801561179b576020820181803683370190505b509050600360fc1b816000815181106117c457634e487b7160e01b600052603260045260246000fd5b60200101906001600160f81b031916908160001a905350600f60fb1b8160018151811061180157634e487b7160e01b600052603260045260246000fd5b60200101906001600160f81b031916908160001a9053506000611825846002612148565b611830906001612130565b90505b60018111156118c4576f181899199a1a9b1b9c1cb0b131b232b360811b85600f166010811061187257634e487b7160e01b600052603260045260246000fd5b1a60f81b82828151811061189657634e487b7160e01b600052603260045260246000fd5b60200101906001600160f81b031916908160001a90535060049490941c936118bd816121ae565b9050611833565b5083156116b75760405162461bcd60e51b815260206004820181905260248201527f537472696e67733a20686578206c656e67746820696e73756666696369656e746044820152606401610460565b60006116b78284612130565b6000611974826040518060400160405280602081526020017f5361666545524332303a206c6f772d6c6576656c2063616c6c206661696c6564815250856001600160a01b03166119f19092919063ffffffff16565b8051909150156104b157808060200190518101906119929190611e4c565b6104b15760405162461bcd60e51b815260206004820152602a60248201527f5361666545524332303a204552433230206f7065726174696f6e20646964206e6044820152691bdd081cdd58d8d9595960b21b6064820152608401610460565b6060611a008484600085611a08565b949350505050565b606082471015611a695760405162461bcd60e51b815260206004820152602660248201527f416464726573733a20696e73756666696369656e742062616c616e636520666f6044820152651c8818d85b1b60d21b6064820152608401610460565b843b611ab75760405162461bcd60e51b815260206004820152601d60248201527f416464726573733a2063616c6c20746f206e6f6e2d636f6e74726163740000006044820152606401610460565b600080866001600160a01b03168587604051611ad39190611fa0565b60006040518083038185875af1925050503d8060008114611b10576040519150601f19603f3d011682016040523d82523d6000602084013e611b15565b606091505b5091509150611b25828286611b30565b979650505050505050565b60608315611b3f5750816116b7565b825115611b4f5782518084602001fd5b8160405162461bcd60e51b81526004016104609190612080565b600082601f830112611b79578081fd5b8135602067ffffffffffffffff821115611b9557611b956121f6565b8160051b611ba48282016120ff565b838152828101908684018388018501891015611bbe578687fd5b8693505b85841015611be9578035611bd58161220c565b835260019390930192918401918401611bc2565b50979650505050505050565b600082601f830112611c05578081fd5b813567ffffffffffffffff811115611c1f57611c1f6121f6565b611c32601f8201601f19166020016120ff565b818152846020838601011115611c46578283fd5b816020850160208301379081016020019190915292915050565b600060208284031215611c71578081fd5b81356116b78161220c565b600060208284031215611c8d578081fd5b81516116b78161220c565b60008060408385031215611caa578081fd5b8235611cb58161220c565b91506020830135611cc58161220c565b809150509250929050565b600080600080600060a08688031215611ce7578081fd5b8535611cf28161220c565b94506020860135611d028161220c565b93506040860135611d128161220c565b925060608601359150608086013567ffffffffffffffff811115611d34578182fd5b611d4088828901611bf5565b9150509295509295909350565b600080600060608486031215611d61578283fd5b8335611d6c8161220c565b92506020840135611d7c8161220c565b929592945050506040919091013590565b60008060408385031215611d9f578182fd5b8235611daa8161220c565b946020939093013593505050565b600060208284031215611dc9578081fd5b813567ffffffffffffffff811115611ddf578182fd5b611a0084828501611b69565b60008060408385031215611dfd578182fd5b823567ffffffffffffffff80821115611e14578384fd5b611e2086838701611b69565b93506020850135915080821115611e35578283fd5b50611e4285828601611b69565b9150509250929050565b600060208284031215611e5d578081fd5b815180151581146116b7578182fd5b600060208284031215611e7d578081fd5b5035919050565b60008060408385031215611e96578182fd5b823591506020830135611cc58161220c565b600060208284031215611eb9578081fd5b81356001600160e01b0319811681146116b7578182fd5b600060208284031215611ee1578081fd5b813567ffffffffffffffff811115611ef7578182fd5b611a0084828501611bf5565b600060208284031215611f14578081fd5b5051919050565b60008151808452611f3381602086016020860161217e565b601f01601f19169290920160200192915050565b60006bffffffffffffffffffffffff19808860601b168352808760601b166014840152808660601b1660288401525083603c8301528251611f8f81605c85016020870161217e565b91909101605c019695505050505050565b60008251611fb281846020870161217e565b9190910192915050565b7f416363657373436f6e74726f6c3a206163636f756e7420000000000000000000815260008351611ff481601785016020880161217e565b7001034b99036b4b9b9b4b733903937b6329607d1b601791840191820152835161202581602884016020880161217e565b01602801949350505050565b6001600160a01b03878116825286811660208301528581166040830152841660608201526080810183905260c060a0820181905260009061207490830184611f1b565b98975050505050505050565b6020815260006116b76020830184611f1b565b6020808252818101527f50656750726f78793a206e6f7420737570706f7274207468697320746f6b656e604082015260600190565b6020808252601d908201527f50656750726f78793a2063616c6c6572206973206e6f742061646d696e000000604082015260600190565b604051601f8201601f1916810167ffffffffffffffff81118282101715612128576121286121f6565b604052919050565b60008219821115612143576121436121e0565b500190565b6000816000190483118215151615612162576121626121e0565b500290565b600082821015612179576121796121e0565b500390565b60005b83811015612199578181015183820152602001612181565b838111156121a8576000848401525b50505050565b6000816121bd576121bd6121e0565b506000190190565b60006000198214156121d9576121d96121e0565b5060010190565b634e487b7160e01b600052601160045260246000fd5b634e487b7160e01b600052604160045260246000fd5b6001600160a01b038116811461222157600080fd5b5056fea2646970667358221220c9f3bd6965b01b6cefee3c200f173c7c632bc68569ba68454d9ce34d1d60589464736f6c63430008040033"
+var PegProxyBin = "0x60806040523480156200001157600080fd5b506200001f60003362000025565b620000d9565b62000031828262000035565b5050565b60008281526004602090815260408083206001600160a01b038516845290915290205460ff16620000315760008281526004602090815260408083206001600160a01b03851684529091529020805460ff19166001179055620000953390565b6001600160a01b0316816001600160a01b0316837f2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d60405160405180910390a45050565b61299880620000e96000396000f3fe608060405234801561001057600080fd5b50600436106101735760003560e01c806381660f5d116100de578063c86ec2bf11610097578063d692f4c511610071578063d692f4c5146103aa578063df7e600a146103de578063ee8a6acf146103f1578063f8f8d5c01461040457600080fd5b8063c86ec2bf14610364578063cf28f67c14610384578063d547741f1461039757600080fd5b806381660f5d146102e257806391d14854146102f5578063967145af146103085780639d87999014610336578063a217fddf14610349578063afd513901461035157600080fd5b80632e6bef33116101305780632e6bef331461023a5780632f2ff15d1461026557806336568abe1461027857806353ad72e51461028b57806356cf02d9146102b9578063715ec45c146102cf57600080fd5b806301ffc9a71461017857806303507ba5146101a057806310c27402146101b557806314681c84146101e35780631b322be4146101f6578063248a9ca314610209575b600080fd5b61018b610186366004612487565b610417565b60405190151581526020015b60405180910390f35b6101b36101ae3660046123b8565b61044e565b005b61018b6101c33660046124b1565b805160208183018101805160078252928201919093012091525460ff1681565b6101b36101f1366004612144565b6104d7565b6101b361020436600461217e565b610520565b61022c61021736600461243e565b60009081526004602052604090206001015490565b604051908152602001610197565b60055461024d906001600160a01b031681565b6040516001600160a01b039091168152602001610197565b6101b3610273366004612457565b6105f2565b6101b3610286366004612457565b610618565b61018b6102993660046124b1565b805160208183018101805160098252928201919093012091525460ff1681565b61022c6b43524f535345525f524f4c4560a01b81565b6101b36102dd3660046121eb565b610696565b6101b36102f03660046122ba565b610851565b61018b610303366004612457565b610a4e565b61018b6103163660046124b1565b805160208183018101805160088252928201919093012091525460ff1681565b6101b36103443660046121bf565b610a79565b61022c600081565b6101b361035f366004612272565b610aaa565b61022c610372366004612144565b60006020819052908152604090205481565b6101b36103923660046121eb565b610d9c565b6101b36103a5366004612457565b6111e6565b61024d6103b83660046121bf565b60066020908152600092835260408084209091529082529020546001600160a01b031681565b6101b36103ec366004612272565b61120c565b6101b36103ff366004612330565b611598565b6101b36104123660046121bf565b611684565b60006001600160e01b03198216637965db0b60e01b148061044857506301ffc9a760e01b6001600160e01b03198316145b92915050565b80518251146104785760405162461bcd60e51b815260040161046f9061278d565b60405180910390fd5b60005b82518110156104d2576104c08382815181106104995761049961291e565b60200260200101518383815181106104b3576104b361291e565b6020026020010151611684565b806104ca816128ed565b91505061047b565b505050565b6104e2600033610a4e565b6104fe5760405162461bcd60e51b815260040161046f906127d0565b600580546001600160a01b0319166001600160a01b0392909216919091179055565b61052b600033610a4e565b6105475760405162461bcd60e51b815260040161046f906127d0565b6001600160a01b03838116600090815260066020908152604080832085845290915290205416156105ba5760405162461bcd60e51b815260206004820181905260248201527f50656750726f78793a20546f6b6520616c726561647920537570706f72746564604482015260640161046f565b6001600160a01b0392831660009081526006602090815260408083209383529290522080546001600160a01b03191691909216179055565b60008281526004602052604090206001015461060e8133611750565b6104d283836117b4565b6001600160a01b03811633146106885760405162461bcd60e51b815260206004820152602f60248201527f416363657373436f6e74726f6c3a2063616e206f6e6c792072656e6f756e636560448201526e103937b632b9903337b91039b2b63360891b606482015260840161046f565b610692828261183a565b5050565b6001600160a01b03808716600090815260066020908152604080832089845290915290205487918791166106dc5760405162461bcd60e51b815260040161046f90612758565b6106f56b43524f535345525f524f4c4560a01b33610a4e565b6107115760405162461bcd60e51b815260040161046f90612721565b826008816040516107229190612584565b9081526040519081900360200190205460ff161561077a5760405162461bcd60e51b8152602060048201526015602482015274141959d41c9bde1e4e881d1e081d5b9b1bd8dad959605a1b604482015260640161046f565b60006107898a898989896118a1565b905080156108455760016008866040516107a39190612584565b908152604051908190036020019020805491151560ff199092169190911790556107d76001600160a01b038b168888611b29565b6001600160a01b03808b1660009081526006602090815260408083208d8452909152908190205490517fe8a9cddb11d86358ad5c2fdd6359f0a6f41de0d399033319becf1364409dacbc9261083c928e9291169046908e908e908e908e908e90612694565b60405180910390a15b50505050505050505050565b6001600160a01b03808616600090815260066020908152604080832088845290915290205486918691166108975760405162461bcd60e51b815260040161046f90612758565b6108b06b43524f535345525f524f4c4560a01b33610a4e565b6108cc5760405162461bcd60e51b815260040161046f90612721565b826009816040516108dd9190612584565b9081526040519081900360200190205460ff161561093d5760405162461bcd60e51b815260206004820152601760248201527f50656750726f78793a20747820726f6c6c6261636b6564000000000000000000604482015260640161046f565b600061094c89888989896118a1565b90508015610a435760016009866040516109669190612584565b908152604051908190036020018120805492151560ff199093169290921790915563a9059cbb60e01b81526001600160a01b038a169063a9059cbb906109b2908a908a906004016126f5565b602060405180830381600087803b1580156109cc57600080fd5b505af11580156109e0573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190610a04919061241c565b507f9420db1a0c5e4f45cc0dac05f17e8eb893645981e3c01e8d14120353a487d9e989888888604051610a3a9493929190612615565b60405180910390a15b505050505050505050565b60009182526004602090815260408084206001600160a01b0393909316845291905290205460ff1690565b610a84600033610a4e565b610aa05760405162461bcd60e51b815260040161046f906127d0565b6106928282611b7f565b6001600160a01b0380851660009081526006602090815260408083208784529091529020548591859116610af05760405162461bcd60e51b815260040161046f90612758565b600554604051626349fb60e01b81526000916001600160a01b031690626349fb90610b21908a908a906004016126f5565b60206040518083038186803b158015610b3957600080fd5b505afa158015610b4d573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190610b719190612161565b90506000816001600160a01b031663d21220a76040518163ffffffff1660e01b8152600401602060405180830381600087803b158015610bb057600080fd5b505af1158015610bc4573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190610be89190612161565b6040516370a0823160e01b815233600482015290915085906001600160a01b038316906370a082319060240160206040518083038186803b158015610c2c57600080fd5b505afa158015610c40573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190610c6491906124e6565b1015610cc85760405162461bcd60e51b815260206004820152602d60248201527f50656750726f78793a206d73672e73656e646572206e6f7420656e6f7567682060448201526c3a37b5b2b7103a3790313ab93760991b606482015260840161046f565b604051632770a7eb60e21b81526001600160a01b03821690639dc29fac90610cf690339089906004016126f5565b600060405180830381600087803b158015610d1057600080fd5b505af1158015610d24573d6000803e3d6000fd5b5050506001600160a01b03808a1660009081526006602090815260408083208c8452909152908190205490517f79aee25f54411be6ea1ab53c9d3cc3e245c301d481091deda6343da926932c0c9350610d8a928c92169046908c9033908d908d90612652565b60405180910390a15050505050505050565b610db56b43524f535345525f524f4c4560a01b33610a4e565b610dd15760405162461bcd60e51b815260040161046f90612721565b80600781604051610de29190612584565b9081526040519081900360200190205460ff1615610e385760405162461bcd60e51b8152602060048201526013602482015272141959d41c9bde1e4e881d1e081b5a5b9d1959606a1b604482015260640161046f565b6000610e4788878787876118a1565b905080156111dc576001600784604051610e619190612584565b908152604051908190036020018120805492151560ff1990931692909217909155600554626349fb60e01b82526000916001600160a01b0390911690626349fb90610eb2908c908c906004016126f5565b60206040518083038186803b158015610eca57600080fd5b505afa158015610ede573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190610f029190612161565b90506000816001600160a01b031663d21220a76040518163ffffffff1660e01b8152600401602060405180830381600087803b158015610f4157600080fd5b505af1158015610f55573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190610f799190612161565b60055460405163934ac70760e01b81529192506000916001600160a01b039091169063934ac70790610fb1908e908e906004016126f5565b60206040518083038186803b158015610fc957600080fd5b505afa158015610fdd573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061100191906124e6565b90508087111561107d576001600160a01b03808c1660009081526006602090815260408083208e8452909152908190205490517f56a316ee63540abb5f8fd44be7a6eb2016a90fc9bb3a34ffe13948a44c49a61692611070928f9291169046908f908f908f908f908f90612694565b60405180910390a16111d8565b6040516340c10f1960e01b81526001600160a01b038316906340c10f19906110ab9030908b906004016126f5565b600060405180830381600087803b1580156110c557600080fd5b505af11580156110d9573d6000803e3d6000fd5b505060055460405163095ea7b360e01b81526001600160a01b03808716945063095ea7b3935061110f9216908b906004016126f5565b602060405180830381600087803b15801561112957600080fd5b505af115801561113d573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190611161919061241c565b506005546040516340ec172360e01b81526001600160a01b038d81166004830152602482018d9052604482018a90528a81166064830152909116906340ec172390608401600060405180830381600087803b1580156111bf57600080fd5b505af11580156111d3573d6000803e3d6000fd5b505050505b5050505b5050505050505050565b6000828152600460205260409020600101546112028133611750565b6104d2838361183a565b6001600160a01b03808516600090815260066020908152604080832087845290915290205485918591166112525760405162461bcd60e51b815260040161046f90612758565b600083116112b25760405162461bcd60e51b815260206004820152602760248201527f50656750726f78793a20616d6f756e74206d75737420626520677265617465726044820152660207468616e20360cc1b606482015260840161046f565b6001600160a01b0384166113005760405162461bcd60e51b815260206004820152601560248201527450656750726f78793a20746f20697320656d70747960581b604482015260640161046f565b6040516323b872dd60e01b8152336004820152306024820152604481018490526001600160a01b038716906323b872dd90606401602060405180830381600087803b15801561134e57600080fd5b505af1158015611362573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190611386919061241c565b506005546040516356ecaeb760e01b81526000916001600160a01b0316906356ecaeb7906113ba908a908a906004016126f5565b60206040518083038186803b1580156113d257600080fd5b505afa1580156113e6573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061140a91906124e6565b905060006114188583611be3565b60055460405163095ea7b360e01b81529192506001600160a01b03808b169263095ea7b39261144d92169085906004016126f5565b602060405180830381600087803b15801561146757600080fd5b505af115801561147b573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061149f919061241c565b506005546040516313fcb20160e21b81526001600160a01b038a81166004830152602482018a90526044820184905230606483015290911690634ff2c80490608401600060405180830381600087803b1580156114fb57600080fd5b505af115801561150f573d6000803e3d6000fd5b5050505061151f88888884610aaa565b818511156111dc5760006115338683611bfb565b6001600160a01b03808b1660009081526006602090815260408083208d8452909152908190205490519293507f7cb5e2d54d5587c3a3448631884061009b0e2c30e37922a4dd4aed50e11dd7f392610a3a928d92169046908d9033908e908990612652565b81518351146115e95760405162461bcd60e51b815260206004820181905260248201527f50656750726f78793a20746f6b656e206c656e677468206e6f74206d61746368604482015260640161046f565b805183511461160a5760405162461bcd60e51b815260040161046f9061278d565b60005b835181101561167e5761166c84828151811061162b5761162b61291e565b60200260200101518483815181106116455761164561291e565b602002602001015184848151811061165f5761165f61291e565b6020026020010151610520565b80611676816128ed565b91505061160d565b50505050565b61168f600033610a4e565b6116ab5760405162461bcd60e51b815260040161046f906127d0565b6001600160a01b0382811660009081526006602090815260408083208584529091529020541661171d5760405162461bcd60e51b815260206004820152601c60248201527f50656750726f78793a20746f6b65206e6f7420737570706f7274656400000000604482015260640161046f565b6001600160a01b0390911660009081526006602090815260408083209383529290522080546001600160a01b0319169055565b61175a8282610a4e565b61069257611772816001600160a01b03166014611c07565b61177d836020611c07565b60405160200161178e9291906125a0565b60408051601f198184030181529082905262461bcd60e51b825261046f9160040161270e565b6117be8282610a4e565b6106925760008281526004602090815260408083206001600160a01b03851684529091529020805460ff191660011790556117f63390565b6001600160a01b0316816001600160a01b0316837f2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d60405160405180910390a45050565b6118448282610a4e565b156106925760008281526004602090815260408083206001600160a01b0385168085529252808320805460ff1916905551339285917ff6391f5c32d9c69d2a47ea670b442974b53935d1edc7fd64eb21e047a839171b9190a45050565b6001600160a01b03851660009081526020819052604081205461191f5760405162461bcd60e51b815260206004820152603060248201527f50726f706f73616c566f74653a207468726573686f6c642073686f756c64206260448201526f0652067726561746572207468616e20360841b606482015260840161046f565b6001600160a01b038616600090815260208181526040808320549051909291611952918a918a918a918a918a910161252b565b60408051601f1981840301815291815281516020928301206000818152600190935291205490915060ff16156119ca5760405162461bcd60e51b815260206004820152601860248201527f5f766f74653a3a70726f706f73616c2066696e69736865640000000000000000604482015260640161046f565b600081815260026020908152604080832033845290915290205460ff1615611a345760405162461bcd60e51b815260206004820152601760248201527f5f766f74653a3a6d73672e73656e64657220766f746564000000000000000000604482015260640161046f565b600081815260036020526040902054611a4e906001611da3565b60008281526003602081815260408084209485556002825280842033855282528320805460ff19166001179055918490529052548211611aa6576000818152600160208190526040909120805460ff19168217905592505b6000818152600360209081526040918290205482516001600160a01b038c811682528b811693820193909352918916828401526060820188905233608083015260a082015260c0810184905290517fe458477b94285c9f254a407e2614c39f55230b527ff7f51d76fdf33e251ae9369181900360e00190a1505095945050505050565b6104d28363a9059cbb60e01b8484604051602401611b489291906126f5565b60408051601f198184030181529190526020810180516001600160e01b03166001600160e01b031990931692909217909152611daf565b6001600160a01b038216600081815260208181526040918290208054908590558251938452908301819052908201839052907fb18e91516e037486aa6fa38f56a8aac933fd127180efe9c9745ecbf660a78e449060600160405180910390a1505050565b6000818310611bf25781611bf4565b825b9392505050565b6000611bf48284612893565b60606000611c16836002612874565b611c2190600261285c565b67ffffffffffffffff811115611c3957611c39612934565b6040519080825280601f01601f191660200182016040528015611c63576020820181803683370190505b509050600360fc1b81600081518110611c7e57611c7e61291e565b60200101906001600160f81b031916908160001a905350600f60fb1b81600181518110611cad57611cad61291e565b60200101906001600160f81b031916908160001a9053506000611cd1846002612874565b611cdc90600161285c565b90505b6001811115611d54576f181899199a1a9b1b9c1cb0b131b232b360811b85600f1660108110611d1057611d1061291e565b1a60f81b828281518110611d2657611d2661291e565b60200101906001600160f81b031916908160001a90535060049490941c93611d4d816128d6565b9050611cdf565b508315611bf45760405162461bcd60e51b815260206004820181905260248201527f537472696e67733a20686578206c656e67746820696e73756666696369656e74604482015260640161046f565b6000611bf4828461285c565b6000611e04826040518060400160405280602081526020017f5361666545524332303a206c6f772d6c6576656c2063616c6c206661696c6564815250856001600160a01b0316611e819092919063ffffffff16565b8051909150156104d25780806020019051810190611e22919061241c565b6104d25760405162461bcd60e51b815260206004820152602a60248201527f5361666545524332303a204552433230206f7065726174696f6e20646964206e6044820152691bdd081cdd58d8d9595960b21b606482015260840161046f565b6060611e908484600085611e98565b949350505050565b606082471015611ef95760405162461bcd60e51b815260206004820152602660248201527f416464726573733a20696e73756666696369656e742062616c616e636520666f6044820152651c8818d85b1b60d21b606482015260840161046f565b843b611f475760405162461bcd60e51b815260206004820152601d60248201527f416464726573733a2063616c6c20746f206e6f6e2d636f6e7472616374000000604482015260640161046f565b600080866001600160a01b03168587604051611f639190612584565b60006040518083038185875af1925050503d8060008114611fa0576040519150601f19603f3d011682016040523d82523d6000602084013e611fa5565b606091505b5091509150611fb5828286611fc0565b979650505050505050565b60608315611fcf575081611bf4565b825115611fdf5782518084602001fd5b8160405162461bcd60e51b815260040161046f919061270e565b600082601f83011261200a57600080fd5b8135602061201f61201a83612838565b612807565b80838252828201915082860187848660051b890101111561203f57600080fd5b60005b858110156120675781356120558161294a565b84529284019290840190600101612042565b5090979650505050505050565b600082601f83011261208557600080fd5b8135602061209561201a83612838565b80838252828201915082860187848660051b89010111156120b557600080fd5b60005b85811015612067578135845292840192908401906001016120b8565b600082601f8301126120e557600080fd5b813567ffffffffffffffff8111156120ff576120ff612934565b612112601f8201601f1916602001612807565b81815284602083860101111561212757600080fd5b816020850160208301376000918101602001919091529392505050565b60006020828403121561215657600080fd5b8135611bf48161294a565b60006020828403121561217357600080fd5b8151611bf48161294a565b60008060006060848603121561219357600080fd5b833561219e8161294a565b925060208401356121ae8161294a565b929592945050506040919091013590565b600080604083850312156121d257600080fd5b82356121dd8161294a565b946020939093013593505050565b60008060008060008060c0878903121561220457600080fd5b863561220f8161294a565b95506020870135945060408701356122268161294a565b935060608701356122368161294a565b92506080870135915060a087013567ffffffffffffffff81111561225957600080fd5b61226589828a016120d4565b9150509295509295509295565b6000806000806080858703121561228857600080fd5b84356122938161294a565b93506020850135925060408501356122aa8161294a565b9396929550929360600135925050565b600080600080600060a086880312156122d257600080fd5b85356122dd8161294a565b94506020860135935060408601356122f48161294a565b925060608601359150608086013567ffffffffffffffff81111561231757600080fd5b612323888289016120d4565b9150509295509295909350565b60008060006060848603121561234557600080fd5b833567ffffffffffffffff8082111561235d57600080fd5b61236987838801611ff9565b9450602086013591508082111561237f57600080fd5b61238b87838801611ff9565b935060408601359150808211156123a157600080fd5b506123ae86828701612074565b9150509250925092565b600080604083850312156123cb57600080fd5b823567ffffffffffffffff808211156123e357600080fd5b6123ef86838701611ff9565b9350602085013591508082111561240557600080fd5b5061241285828601612074565b9150509250929050565b60006020828403121561242e57600080fd5b81518015158114611bf457600080fd5b60006020828403121561245057600080fd5b5035919050565b6000806040838503121561246a57600080fd5b82359150602083013561247c8161294a565b809150509250929050565b60006020828403121561249957600080fd5b81356001600160e01b031981168114611bf457600080fd5b6000602082840312156124c357600080fd5b813567ffffffffffffffff8111156124da57600080fd5b611e90848285016120d4565b6000602082840312156124f857600080fd5b5051919050565b600081518084526125178160208601602086016128aa565b601f01601f19169290920160200192915050565b60006bffffffffffffffffffffffff19808860601b168352808760601b166014840152808660601b1660288401525083603c830152825161257381605c8501602087016128aa565b91909101605c019695505050505050565b600082516125968184602087016128aa565b9190910192915050565b7f416363657373436f6e74726f6c3a206163636f756e74200000000000000000008152600083516125d88160178501602088016128aa565b7001034b99036b4b9b9b4b733903937b6329607d1b60179184019182015283516126098160288401602088016128aa565b01602801949350505050565b6001600160a01b0385811682528416602082015260408101839052608060608201819052600090612648908301846124ff565b9695505050505050565b6001600160a01b0397881681529587166020870152604086019490945260608501929092528416608084015290921660a082015260c081019190915260e00190565b6001600160a01b038981168252888116602083015260408201889052606082018790528581166080830152841660a082015260c0810183905261010060e082018190526000906126e6838201856124ff565b9b9a5050505050505050505050565b6001600160a01b03929092168252602082015260400190565b602081526000611bf460208301846124ff565b6020808252601f908201527f50656750726f78793a2063616c6c6572206973206e6f742063726f7373657200604082015260600190565b6020808252818101527f50656750726f78793a206e6f7420737570706f7274207468697320746f6b656e604082015260600190565b60208082526023908201527f50656750726f78793a20636861696e494473206c656e677468206e6f74206d616040820152620e8c6d60eb1b606082015260800190565b6020808252601d908201527f50656750726f78793a2063616c6c6572206973206e6f742061646d696e000000604082015260600190565b604051601f8201601f1916810167ffffffffffffffff8111828210171561283057612830612934565b604052919050565b600067ffffffffffffffff82111561285257612852612934565b5060051b60200190565b6000821982111561286f5761286f612908565b500190565b600081600019048311821515161561288e5761288e612908565b500290565b6000828210156128a5576128a5612908565b500390565b60005b838110156128c55781810151838201526020016128ad565b8381111561167e5750506000910152565b6000816128e5576128e5612908565b506000190190565b600060001982141561290157612901612908565b5060010190565b634e487b7160e01b600052601160045260246000fd5b634e487b7160e01b600052603260045260246000fd5b634e487b7160e01b600052604160045260246000fd5b6001600160a01b038116811461295f57600080fd5b5056fea2646970667358221220b99239b5cf0cf1b1e98859734ad7cd3d739e8b4016312e131fd1788f35944f4e64736f6c63430008060033"
 
 // DeployPegProxy deploys a new Ethereum contract, binding an instance of PegProxy to it.
 func DeployPegProxy(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *PegProxy, error) {
@@ -4519,12 +4552,12 @@ func (_PegProxy *PegProxyCallerSession) PegSwap() (common.Address, error) {
 	return _PegProxy.Contract.PegSwap(&_PegProxy.CallOpts)
 }
 
-// SupportToken is a free data retrieval call binding the contract method 0x2a4f1621.
+// SupportToken is a free data retrieval call binding the contract method 0xd692f4c5.
 //
-// Solidity: function supportToken(address ) view returns(address)
-func (_PegProxy *PegProxyCaller) SupportToken(opts *bind.CallOpts, arg0 common.Address) (common.Address, error) {
+// Solidity: function supportToken(address , uint256 ) view returns(address)
+func (_PegProxy *PegProxyCaller) SupportToken(opts *bind.CallOpts, arg0 common.Address, arg1 *big.Int) (common.Address, error) {
 	var out []interface{}
-	err := _PegProxy.contract.Call(opts, &out, "supportToken", arg0)
+	err := _PegProxy.contract.Call(opts, &out, "supportToken", arg0, arg1)
 
 	if err != nil {
 		return *new(common.Address), err
@@ -4536,18 +4569,18 @@ func (_PegProxy *PegProxyCaller) SupportToken(opts *bind.CallOpts, arg0 common.A
 
 }
 
-// SupportToken is a free data retrieval call binding the contract method 0x2a4f1621.
+// SupportToken is a free data retrieval call binding the contract method 0xd692f4c5.
 //
-// Solidity: function supportToken(address ) view returns(address)
-func (_PegProxy *PegProxySession) SupportToken(arg0 common.Address) (common.Address, error) {
-	return _PegProxy.Contract.SupportToken(&_PegProxy.CallOpts, arg0)
+// Solidity: function supportToken(address , uint256 ) view returns(address)
+func (_PegProxy *PegProxySession) SupportToken(arg0 common.Address, arg1 *big.Int) (common.Address, error) {
+	return _PegProxy.Contract.SupportToken(&_PegProxy.CallOpts, arg0, arg1)
 }
 
-// SupportToken is a free data retrieval call binding the contract method 0x2a4f1621.
+// SupportToken is a free data retrieval call binding the contract method 0xd692f4c5.
 //
-// Solidity: function supportToken(address ) view returns(address)
-func (_PegProxy *PegProxyCallerSession) SupportToken(arg0 common.Address) (common.Address, error) {
-	return _PegProxy.Contract.SupportToken(&_PegProxy.CallOpts, arg0)
+// Solidity: function supportToken(address , uint256 ) view returns(address)
+func (_PegProxy *PegProxyCallerSession) SupportToken(arg0 common.Address, arg1 *big.Int) (common.Address, error) {
+	return _PegProxy.Contract.SupportToken(&_PegProxy.CallOpts, arg0, arg1)
 }
 
 // SupportsInterface is a free data retrieval call binding the contract method 0x01ffc9a7.
@@ -4643,6 +4676,37 @@ func (_PegProxy *PegProxyCallerSession) TxMinted(arg0 string) (bool, error) {
 	return _PegProxy.Contract.TxMinted(&_PegProxy.CallOpts, arg0)
 }
 
+// TxRollbacked is a free data retrieval call binding the contract method 0x53ad72e5.
+//
+// Solidity: function txRollbacked(string ) view returns(bool)
+func (_PegProxy *PegProxyCaller) TxRollbacked(opts *bind.CallOpts, arg0 string) (bool, error) {
+	var out []interface{}
+	err := _PegProxy.contract.Call(opts, &out, "txRollbacked", arg0)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
+}
+
+// TxRollbacked is a free data retrieval call binding the contract method 0x53ad72e5.
+//
+// Solidity: function txRollbacked(string ) view returns(bool)
+func (_PegProxy *PegProxySession) TxRollbacked(arg0 string) (bool, error) {
+	return _PegProxy.Contract.TxRollbacked(&_PegProxy.CallOpts, arg0)
+}
+
+// TxRollbacked is a free data retrieval call binding the contract method 0x53ad72e5.
+//
+// Solidity: function txRollbacked(string ) view returns(bool)
+func (_PegProxy *PegProxyCallerSession) TxRollbacked(arg0 string) (bool, error) {
+	return _PegProxy.Contract.TxRollbacked(&_PegProxy.CallOpts, arg0)
+}
+
 // TxUnlocked is a free data retrieval call binding the contract method 0x967145af.
 //
 // Solidity: function txUnlocked(string ) view returns(bool)
@@ -4674,109 +4738,109 @@ func (_PegProxy *PegProxyCallerSession) TxUnlocked(arg0 string) (bool, error) {
 	return _PegProxy.Contract.TxUnlocked(&_PegProxy.CallOpts, arg0)
 }
 
-// AddSupportToken is a paid mutator transaction binding the contract method 0x7010584c.
+// AddSupportToken is a paid mutator transaction binding the contract method 0x1b322be4.
 //
-// Solidity: function addSupportToken(address ethTokenAddr, address bscTokenAddr) returns()
-func (_PegProxy *PegProxyTransactor) AddSupportToken(opts *bind.TransactOpts, ethTokenAddr common.Address, bscTokenAddr common.Address) (*types.Transaction, error) {
-	return _PegProxy.contract.Transact(opts, "addSupportToken", ethTokenAddr, bscTokenAddr)
+// Solidity: function addSupportToken(address token0, address token1, uint256 chainID) returns()
+func (_PegProxy *PegProxyTransactor) AddSupportToken(opts *bind.TransactOpts, token0 common.Address, token1 common.Address, chainID *big.Int) (*types.Transaction, error) {
+	return _PegProxy.contract.Transact(opts, "addSupportToken", token0, token1, chainID)
 }
 
-// AddSupportToken is a paid mutator transaction binding the contract method 0x7010584c.
+// AddSupportToken is a paid mutator transaction binding the contract method 0x1b322be4.
 //
-// Solidity: function addSupportToken(address ethTokenAddr, address bscTokenAddr) returns()
-func (_PegProxy *PegProxySession) AddSupportToken(ethTokenAddr common.Address, bscTokenAddr common.Address) (*types.Transaction, error) {
-	return _PegProxy.Contract.AddSupportToken(&_PegProxy.TransactOpts, ethTokenAddr, bscTokenAddr)
+// Solidity: function addSupportToken(address token0, address token1, uint256 chainID) returns()
+func (_PegProxy *PegProxySession) AddSupportToken(token0 common.Address, token1 common.Address, chainID *big.Int) (*types.Transaction, error) {
+	return _PegProxy.Contract.AddSupportToken(&_PegProxy.TransactOpts, token0, token1, chainID)
 }
 
-// AddSupportToken is a paid mutator transaction binding the contract method 0x7010584c.
+// AddSupportToken is a paid mutator transaction binding the contract method 0x1b322be4.
 //
-// Solidity: function addSupportToken(address ethTokenAddr, address bscTokenAddr) returns()
-func (_PegProxy *PegProxyTransactorSession) AddSupportToken(ethTokenAddr common.Address, bscTokenAddr common.Address) (*types.Transaction, error) {
-	return _PegProxy.Contract.AddSupportToken(&_PegProxy.TransactOpts, ethTokenAddr, bscTokenAddr)
+// Solidity: function addSupportToken(address token0, address token1, uint256 chainID) returns()
+func (_PegProxy *PegProxyTransactorSession) AddSupportToken(token0 common.Address, token1 common.Address, chainID *big.Int) (*types.Transaction, error) {
+	return _PegProxy.Contract.AddSupportToken(&_PegProxy.TransactOpts, token0, token1, chainID)
 }
 
-// AddSupportTokens is a paid mutator transaction binding the contract method 0xab1494de.
+// AddSupportTokens is a paid mutator transaction binding the contract method 0xee8a6acf.
 //
-// Solidity: function addSupportTokens(address[] ethTokenAddrs, address[] bscTokenAddrs) returns()
-func (_PegProxy *PegProxyTransactor) AddSupportTokens(opts *bind.TransactOpts, ethTokenAddrs []common.Address, bscTokenAddrs []common.Address) (*types.Transaction, error) {
-	return _PegProxy.contract.Transact(opts, "addSupportTokens", ethTokenAddrs, bscTokenAddrs)
+// Solidity: function addSupportTokens(address[] token0s, address[] token1s, uint256[] chainIDs) returns()
+func (_PegProxy *PegProxyTransactor) AddSupportTokens(opts *bind.TransactOpts, token0s []common.Address, token1s []common.Address, chainIDs []*big.Int) (*types.Transaction, error) {
+	return _PegProxy.contract.Transact(opts, "addSupportTokens", token0s, token1s, chainIDs)
 }
 
-// AddSupportTokens is a paid mutator transaction binding the contract method 0xab1494de.
+// AddSupportTokens is a paid mutator transaction binding the contract method 0xee8a6acf.
 //
-// Solidity: function addSupportTokens(address[] ethTokenAddrs, address[] bscTokenAddrs) returns()
-func (_PegProxy *PegProxySession) AddSupportTokens(ethTokenAddrs []common.Address, bscTokenAddrs []common.Address) (*types.Transaction, error) {
-	return _PegProxy.Contract.AddSupportTokens(&_PegProxy.TransactOpts, ethTokenAddrs, bscTokenAddrs)
+// Solidity: function addSupportTokens(address[] token0s, address[] token1s, uint256[] chainIDs) returns()
+func (_PegProxy *PegProxySession) AddSupportTokens(token0s []common.Address, token1s []common.Address, chainIDs []*big.Int) (*types.Transaction, error) {
+	return _PegProxy.Contract.AddSupportTokens(&_PegProxy.TransactOpts, token0s, token1s, chainIDs)
 }
 
-// AddSupportTokens is a paid mutator transaction binding the contract method 0xab1494de.
+// AddSupportTokens is a paid mutator transaction binding the contract method 0xee8a6acf.
 //
-// Solidity: function addSupportTokens(address[] ethTokenAddrs, address[] bscTokenAddrs) returns()
-func (_PegProxy *PegProxyTransactorSession) AddSupportTokens(ethTokenAddrs []common.Address, bscTokenAddrs []common.Address) (*types.Transaction, error) {
-	return _PegProxy.Contract.AddSupportTokens(&_PegProxy.TransactOpts, ethTokenAddrs, bscTokenAddrs)
+// Solidity: function addSupportTokens(address[] token0s, address[] token1s, uint256[] chainIDs) returns()
+func (_PegProxy *PegProxyTransactorSession) AddSupportTokens(token0s []common.Address, token1s []common.Address, chainIDs []*big.Int) (*types.Transaction, error) {
+	return _PegProxy.Contract.AddSupportTokens(&_PegProxy.TransactOpts, token0s, token1s, chainIDs)
 }
 
-// BurnBoringToken is a paid mutator transaction binding the contract method 0xfb3b3194.
+// BurnBoringToken is a paid mutator transaction binding the contract method 0xafd51390.
 //
-// Solidity: function burnBoringToken(address token, address to, uint256 amount) returns()
-func (_PegProxy *PegProxyTransactor) BurnBoringToken(opts *bind.TransactOpts, token common.Address, to common.Address, amount *big.Int) (*types.Transaction, error) {
-	return _PegProxy.contract.Transact(opts, "burnBoringToken", token, to, amount)
+// Solidity: function burnBoringToken(address token0, uint256 chainID, address to, uint256 amount) returns()
+func (_PegProxy *PegProxyTransactor) BurnBoringToken(opts *bind.TransactOpts, token0 common.Address, chainID *big.Int, to common.Address, amount *big.Int) (*types.Transaction, error) {
+	return _PegProxy.contract.Transact(opts, "burnBoringToken", token0, chainID, to, amount)
 }
 
-// BurnBoringToken is a paid mutator transaction binding the contract method 0xfb3b3194.
+// BurnBoringToken is a paid mutator transaction binding the contract method 0xafd51390.
 //
-// Solidity: function burnBoringToken(address token, address to, uint256 amount) returns()
-func (_PegProxy *PegProxySession) BurnBoringToken(token common.Address, to common.Address, amount *big.Int) (*types.Transaction, error) {
-	return _PegProxy.Contract.BurnBoringToken(&_PegProxy.TransactOpts, token, to, amount)
+// Solidity: function burnBoringToken(address token0, uint256 chainID, address to, uint256 amount) returns()
+func (_PegProxy *PegProxySession) BurnBoringToken(token0 common.Address, chainID *big.Int, to common.Address, amount *big.Int) (*types.Transaction, error) {
+	return _PegProxy.Contract.BurnBoringToken(&_PegProxy.TransactOpts, token0, chainID, to, amount)
 }
 
-// BurnBoringToken is a paid mutator transaction binding the contract method 0xfb3b3194.
+// BurnBoringToken is a paid mutator transaction binding the contract method 0xafd51390.
 //
-// Solidity: function burnBoringToken(address token, address to, uint256 amount) returns()
-func (_PegProxy *PegProxyTransactorSession) BurnBoringToken(token common.Address, to common.Address, amount *big.Int) (*types.Transaction, error) {
-	return _PegProxy.Contract.BurnBoringToken(&_PegProxy.TransactOpts, token, to, amount)
+// Solidity: function burnBoringToken(address token0, uint256 chainID, address to, uint256 amount) returns()
+func (_PegProxy *PegProxyTransactorSession) BurnBoringToken(token0 common.Address, chainID *big.Int, to common.Address, amount *big.Int) (*types.Transaction, error) {
+	return _PegProxy.Contract.BurnBoringToken(&_PegProxy.TransactOpts, token0, chainID, to, amount)
 }
 
-// CrossIn is a paid mutator transaction binding the contract method 0x3fc4186c.
+// CrossIn is a paid mutator transaction binding the contract method 0xcf28f67c.
 //
-// Solidity: function crossIn(address token, address from, address to, uint256 amount, string txid) returns()
-func (_PegProxy *PegProxyTransactor) CrossIn(opts *bind.TransactOpts, token common.Address, from common.Address, to common.Address, amount *big.Int, txid string) (*types.Transaction, error) {
-	return _PegProxy.contract.Transact(opts, "crossIn", token, from, to, amount, txid)
+// Solidity: function crossIn(address token0, uint256 chainID, address from, address to, uint256 amount, string txid) returns()
+func (_PegProxy *PegProxyTransactor) CrossIn(opts *bind.TransactOpts, token0 common.Address, chainID *big.Int, from common.Address, to common.Address, amount *big.Int, txid string) (*types.Transaction, error) {
+	return _PegProxy.contract.Transact(opts, "crossIn", token0, chainID, from, to, amount, txid)
 }
 
-// CrossIn is a paid mutator transaction binding the contract method 0x3fc4186c.
+// CrossIn is a paid mutator transaction binding the contract method 0xcf28f67c.
 //
-// Solidity: function crossIn(address token, address from, address to, uint256 amount, string txid) returns()
-func (_PegProxy *PegProxySession) CrossIn(token common.Address, from common.Address, to common.Address, amount *big.Int, txid string) (*types.Transaction, error) {
-	return _PegProxy.Contract.CrossIn(&_PegProxy.TransactOpts, token, from, to, amount, txid)
+// Solidity: function crossIn(address token0, uint256 chainID, address from, address to, uint256 amount, string txid) returns()
+func (_PegProxy *PegProxySession) CrossIn(token0 common.Address, chainID *big.Int, from common.Address, to common.Address, amount *big.Int, txid string) (*types.Transaction, error) {
+	return _PegProxy.Contract.CrossIn(&_PegProxy.TransactOpts, token0, chainID, from, to, amount, txid)
 }
 
-// CrossIn is a paid mutator transaction binding the contract method 0x3fc4186c.
+// CrossIn is a paid mutator transaction binding the contract method 0xcf28f67c.
 //
-// Solidity: function crossIn(address token, address from, address to, uint256 amount, string txid) returns()
-func (_PegProxy *PegProxyTransactorSession) CrossIn(token common.Address, from common.Address, to common.Address, amount *big.Int, txid string) (*types.Transaction, error) {
-	return _PegProxy.Contract.CrossIn(&_PegProxy.TransactOpts, token, from, to, amount, txid)
+// Solidity: function crossIn(address token0, uint256 chainID, address from, address to, uint256 amount, string txid) returns()
+func (_PegProxy *PegProxyTransactorSession) CrossIn(token0 common.Address, chainID *big.Int, from common.Address, to common.Address, amount *big.Int, txid string) (*types.Transaction, error) {
+	return _PegProxy.Contract.CrossIn(&_PegProxy.TransactOpts, token0, chainID, from, to, amount, txid)
 }
 
-// CrossOut is a paid mutator transaction binding the contract method 0xcc460c27.
+// CrossOut is a paid mutator transaction binding the contract method 0xdf7e600a.
 //
-// Solidity: function crossOut(address token, address to, uint256 amount) returns()
-func (_PegProxy *PegProxyTransactor) CrossOut(opts *bind.TransactOpts, token common.Address, to common.Address, amount *big.Int) (*types.Transaction, error) {
-	return _PegProxy.contract.Transact(opts, "crossOut", token, to, amount)
+// Solidity: function crossOut(address token0, uint256 chainID, address to, uint256 amount) returns()
+func (_PegProxy *PegProxyTransactor) CrossOut(opts *bind.TransactOpts, token0 common.Address, chainID *big.Int, to common.Address, amount *big.Int) (*types.Transaction, error) {
+	return _PegProxy.contract.Transact(opts, "crossOut", token0, chainID, to, amount)
 }
 
-// CrossOut is a paid mutator transaction binding the contract method 0xcc460c27.
+// CrossOut is a paid mutator transaction binding the contract method 0xdf7e600a.
 //
-// Solidity: function crossOut(address token, address to, uint256 amount) returns()
-func (_PegProxy *PegProxySession) CrossOut(token common.Address, to common.Address, amount *big.Int) (*types.Transaction, error) {
-	return _PegProxy.Contract.CrossOut(&_PegProxy.TransactOpts, token, to, amount)
+// Solidity: function crossOut(address token0, uint256 chainID, address to, uint256 amount) returns()
+func (_PegProxy *PegProxySession) CrossOut(token0 common.Address, chainID *big.Int, to common.Address, amount *big.Int) (*types.Transaction, error) {
+	return _PegProxy.Contract.CrossOut(&_PegProxy.TransactOpts, token0, chainID, to, amount)
 }
 
-// CrossOut is a paid mutator transaction binding the contract method 0xcc460c27.
+// CrossOut is a paid mutator transaction binding the contract method 0xdf7e600a.
 //
-// Solidity: function crossOut(address token, address to, uint256 amount) returns()
-func (_PegProxy *PegProxyTransactorSession) CrossOut(token common.Address, to common.Address, amount *big.Int) (*types.Transaction, error) {
-	return _PegProxy.Contract.CrossOut(&_PegProxy.TransactOpts, token, to, amount)
+// Solidity: function crossOut(address token0, uint256 chainID, address to, uint256 amount) returns()
+func (_PegProxy *PegProxyTransactorSession) CrossOut(token0 common.Address, chainID *big.Int, to common.Address, amount *big.Int) (*types.Transaction, error) {
+	return _PegProxy.Contract.CrossOut(&_PegProxy.TransactOpts, token0, chainID, to, amount)
 }
 
 // GrantRole is a paid mutator transaction binding the contract method 0x2f2ff15d.
@@ -4800,46 +4864,46 @@ func (_PegProxy *PegProxyTransactorSession) GrantRole(role [32]byte, account com
 	return _PegProxy.Contract.GrantRole(&_PegProxy.TransactOpts, role, account)
 }
 
-// RemoveSupportToken is a paid mutator transaction binding the contract method 0xe2769cfa.
+// RemoveSupportToken is a paid mutator transaction binding the contract method 0xf8f8d5c0.
 //
-// Solidity: function removeSupportToken(address ethTokenAddr) returns()
-func (_PegProxy *PegProxyTransactor) RemoveSupportToken(opts *bind.TransactOpts, ethTokenAddr common.Address) (*types.Transaction, error) {
-	return _PegProxy.contract.Transact(opts, "removeSupportToken", ethTokenAddr)
+// Solidity: function removeSupportToken(address token0, uint256 chainID) returns()
+func (_PegProxy *PegProxyTransactor) RemoveSupportToken(opts *bind.TransactOpts, token0 common.Address, chainID *big.Int) (*types.Transaction, error) {
+	return _PegProxy.contract.Transact(opts, "removeSupportToken", token0, chainID)
 }
 
-// RemoveSupportToken is a paid mutator transaction binding the contract method 0xe2769cfa.
+// RemoveSupportToken is a paid mutator transaction binding the contract method 0xf8f8d5c0.
 //
-// Solidity: function removeSupportToken(address ethTokenAddr) returns()
-func (_PegProxy *PegProxySession) RemoveSupportToken(ethTokenAddr common.Address) (*types.Transaction, error) {
-	return _PegProxy.Contract.RemoveSupportToken(&_PegProxy.TransactOpts, ethTokenAddr)
+// Solidity: function removeSupportToken(address token0, uint256 chainID) returns()
+func (_PegProxy *PegProxySession) RemoveSupportToken(token0 common.Address, chainID *big.Int) (*types.Transaction, error) {
+	return _PegProxy.Contract.RemoveSupportToken(&_PegProxy.TransactOpts, token0, chainID)
 }
 
-// RemoveSupportToken is a paid mutator transaction binding the contract method 0xe2769cfa.
+// RemoveSupportToken is a paid mutator transaction binding the contract method 0xf8f8d5c0.
 //
-// Solidity: function removeSupportToken(address ethTokenAddr) returns()
-func (_PegProxy *PegProxyTransactorSession) RemoveSupportToken(ethTokenAddr common.Address) (*types.Transaction, error) {
-	return _PegProxy.Contract.RemoveSupportToken(&_PegProxy.TransactOpts, ethTokenAddr)
+// Solidity: function removeSupportToken(address token0, uint256 chainID) returns()
+func (_PegProxy *PegProxyTransactorSession) RemoveSupportToken(token0 common.Address, chainID *big.Int) (*types.Transaction, error) {
+	return _PegProxy.Contract.RemoveSupportToken(&_PegProxy.TransactOpts, token0, chainID)
 }
 
-// RemoveSupportTokens is a paid mutator transaction binding the contract method 0x0daff621.
+// RemoveSupportTokens is a paid mutator transaction binding the contract method 0x03507ba5.
 //
-// Solidity: function removeSupportTokens(address[] ethTokenAddrs) returns()
-func (_PegProxy *PegProxyTransactor) RemoveSupportTokens(opts *bind.TransactOpts, ethTokenAddrs []common.Address) (*types.Transaction, error) {
-	return _PegProxy.contract.Transact(opts, "removeSupportTokens", ethTokenAddrs)
+// Solidity: function removeSupportTokens(address[] token0s, uint256[] chainIDs) returns()
+func (_PegProxy *PegProxyTransactor) RemoveSupportTokens(opts *bind.TransactOpts, token0s []common.Address, chainIDs []*big.Int) (*types.Transaction, error) {
+	return _PegProxy.contract.Transact(opts, "removeSupportTokens", token0s, chainIDs)
 }
 
-// RemoveSupportTokens is a paid mutator transaction binding the contract method 0x0daff621.
+// RemoveSupportTokens is a paid mutator transaction binding the contract method 0x03507ba5.
 //
-// Solidity: function removeSupportTokens(address[] ethTokenAddrs) returns()
-func (_PegProxy *PegProxySession) RemoveSupportTokens(ethTokenAddrs []common.Address) (*types.Transaction, error) {
-	return _PegProxy.Contract.RemoveSupportTokens(&_PegProxy.TransactOpts, ethTokenAddrs)
+// Solidity: function removeSupportTokens(address[] token0s, uint256[] chainIDs) returns()
+func (_PegProxy *PegProxySession) RemoveSupportTokens(token0s []common.Address, chainIDs []*big.Int) (*types.Transaction, error) {
+	return _PegProxy.Contract.RemoveSupportTokens(&_PegProxy.TransactOpts, token0s, chainIDs)
 }
 
-// RemoveSupportTokens is a paid mutator transaction binding the contract method 0x0daff621.
+// RemoveSupportTokens is a paid mutator transaction binding the contract method 0x03507ba5.
 //
-// Solidity: function removeSupportTokens(address[] ethTokenAddrs) returns()
-func (_PegProxy *PegProxyTransactorSession) RemoveSupportTokens(ethTokenAddrs []common.Address) (*types.Transaction, error) {
-	return _PegProxy.Contract.RemoveSupportTokens(&_PegProxy.TransactOpts, ethTokenAddrs)
+// Solidity: function removeSupportTokens(address[] token0s, uint256[] chainIDs) returns()
+func (_PegProxy *PegProxyTransactorSession) RemoveSupportTokens(token0s []common.Address, chainIDs []*big.Int) (*types.Transaction, error) {
+	return _PegProxy.Contract.RemoveSupportTokens(&_PegProxy.TransactOpts, token0s, chainIDs)
 }
 
 // RenounceRole is a paid mutator transaction binding the contract method 0x36568abe.
@@ -4884,25 +4948,25 @@ func (_PegProxy *PegProxyTransactorSession) RevokeRole(role [32]byte, account co
 	return _PegProxy.Contract.RevokeRole(&_PegProxy.TransactOpts, role, account)
 }
 
-// Rollback is a paid mutator transaction binding the contract method 0x9afd9d78.
+// Rollback is a paid mutator transaction binding the contract method 0x81660f5d.
 //
-// Solidity: function rollback() returns()
-func (_PegProxy *PegProxyTransactor) Rollback(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _PegProxy.contract.Transact(opts, "rollback")
+// Solidity: function rollback(address token0, uint256 chainID, address from, uint256 amount, string txid) returns()
+func (_PegProxy *PegProxyTransactor) Rollback(opts *bind.TransactOpts, token0 common.Address, chainID *big.Int, from common.Address, amount *big.Int, txid string) (*types.Transaction, error) {
+	return _PegProxy.contract.Transact(opts, "rollback", token0, chainID, from, amount, txid)
 }
 
-// Rollback is a paid mutator transaction binding the contract method 0x9afd9d78.
+// Rollback is a paid mutator transaction binding the contract method 0x81660f5d.
 //
-// Solidity: function rollback() returns()
-func (_PegProxy *PegProxySession) Rollback() (*types.Transaction, error) {
-	return _PegProxy.Contract.Rollback(&_PegProxy.TransactOpts)
+// Solidity: function rollback(address token0, uint256 chainID, address from, uint256 amount, string txid) returns()
+func (_PegProxy *PegProxySession) Rollback(token0 common.Address, chainID *big.Int, from common.Address, amount *big.Int, txid string) (*types.Transaction, error) {
+	return _PegProxy.Contract.Rollback(&_PegProxy.TransactOpts, token0, chainID, from, amount, txid)
 }
 
-// Rollback is a paid mutator transaction binding the contract method 0x9afd9d78.
+// Rollback is a paid mutator transaction binding the contract method 0x81660f5d.
 //
-// Solidity: function rollback() returns()
-func (_PegProxy *PegProxyTransactorSession) Rollback() (*types.Transaction, error) {
-	return _PegProxy.Contract.Rollback(&_PegProxy.TransactOpts)
+// Solidity: function rollback(address token0, uint256 chainID, address from, uint256 amount, string txid) returns()
+func (_PegProxy *PegProxyTransactorSession) Rollback(token0 common.Address, chainID *big.Int, from common.Address, amount *big.Int, txid string) (*types.Transaction, error) {
+	return _PegProxy.Contract.Rollback(&_PegProxy.TransactOpts, token0, chainID, from, amount, txid)
 }
 
 // SetPegSwap is a paid mutator transaction binding the contract method 0x14681c84.
@@ -4947,25 +5011,25 @@ func (_PegProxy *PegProxyTransactorSession) SetThreshold(token common.Address, _
 	return _PegProxy.Contract.SetThreshold(&_PegProxy.TransactOpts, token, _threshold)
 }
 
-// Unlock is a paid mutator transaction binding the contract method 0x8ccc356c.
+// Unlock is a paid mutator transaction binding the contract method 0x715ec45c.
 //
-// Solidity: function unlock(address token, address from, address to, uint256 amount, string txid) returns()
-func (_PegProxy *PegProxyTransactor) Unlock(opts *bind.TransactOpts, token common.Address, from common.Address, to common.Address, amount *big.Int, txid string) (*types.Transaction, error) {
-	return _PegProxy.contract.Transact(opts, "unlock", token, from, to, amount, txid)
+// Solidity: function unlock(address token0, uint256 chainID, address from, address to, uint256 amount, string txid) returns()
+func (_PegProxy *PegProxyTransactor) Unlock(opts *bind.TransactOpts, token0 common.Address, chainID *big.Int, from common.Address, to common.Address, amount *big.Int, txid string) (*types.Transaction, error) {
+	return _PegProxy.contract.Transact(opts, "unlock", token0, chainID, from, to, amount, txid)
 }
 
-// Unlock is a paid mutator transaction binding the contract method 0x8ccc356c.
+// Unlock is a paid mutator transaction binding the contract method 0x715ec45c.
 //
-// Solidity: function unlock(address token, address from, address to, uint256 amount, string txid) returns()
-func (_PegProxy *PegProxySession) Unlock(token common.Address, from common.Address, to common.Address, amount *big.Int, txid string) (*types.Transaction, error) {
-	return _PegProxy.Contract.Unlock(&_PegProxy.TransactOpts, token, from, to, amount, txid)
+// Solidity: function unlock(address token0, uint256 chainID, address from, address to, uint256 amount, string txid) returns()
+func (_PegProxy *PegProxySession) Unlock(token0 common.Address, chainID *big.Int, from common.Address, to common.Address, amount *big.Int, txid string) (*types.Transaction, error) {
+	return _PegProxy.Contract.Unlock(&_PegProxy.TransactOpts, token0, chainID, from, to, amount, txid)
 }
 
-// Unlock is a paid mutator transaction binding the contract method 0x8ccc356c.
+// Unlock is a paid mutator transaction binding the contract method 0x715ec45c.
 //
-// Solidity: function unlock(address token, address from, address to, uint256 amount, string txid) returns()
-func (_PegProxy *PegProxyTransactorSession) Unlock(token common.Address, from common.Address, to common.Address, amount *big.Int, txid string) (*types.Transaction, error) {
-	return _PegProxy.Contract.Unlock(&_PegProxy.TransactOpts, token, from, to, amount, txid)
+// Solidity: function unlock(address token0, uint256 chainID, address from, address to, uint256 amount, string txid) returns()
+func (_PegProxy *PegProxyTransactorSession) Unlock(token0 common.Address, chainID *big.Int, from common.Address, to common.Address, amount *big.Int, txid string) (*types.Transaction, error) {
+	return _PegProxy.Contract.Unlock(&_PegProxy.TransactOpts, token0, chainID, from, to, amount, txid)
 }
 
 // PegProxyCrossBurnIterator is returned from FilterCrossBurn and is used to iterate over the raw logs and unpacked data for CrossBurn events raised by the PegProxy contract.
@@ -5037,17 +5101,19 @@ func (it *PegProxyCrossBurnIterator) Close() error {
 
 // PegProxyCrossBurn represents a CrossBurn event raised by the PegProxy contract.
 type PegProxyCrossBurn struct {
-	SrcToken  common.Address
-	DestToken common.Address
-	From      common.Address
-	To        common.Address
-	Amount    *big.Int
-	Raw       types.Log // Blockchain specific contextual infos
+	Token0   common.Address
+	Token1   common.Address
+	ChainID0 *big.Int
+	ChainID1 *big.Int
+	From     common.Address
+	To       common.Address
+	Amount   *big.Int
+	Raw      types.Log // Blockchain specific contextual infos
 }
 
-// FilterCrossBurn is a free log retrieval operation binding the contract event 0x63db45e521861dc5b6514d863ebf6814df6c1079c65b0d1b49a59ac5c5d4aebc.
+// FilterCrossBurn is a free log retrieval operation binding the contract event 0x79aee25f54411be6ea1ab53c9d3cc3e245c301d481091deda6343da926932c0c.
 //
-// Solidity: event CrossBurn(address srcToken, address destToken, address from, address to, uint256 amount)
+// Solidity: event CrossBurn(address token0, address token1, uint256 chainID0, uint256 chainID1, address from, address to, uint256 amount)
 func (_PegProxy *PegProxyFilterer) FilterCrossBurn(opts *bind.FilterOpts) (*PegProxyCrossBurnIterator, error) {
 
 	logs, sub, err := _PegProxy.contract.FilterLogs(opts, "CrossBurn")
@@ -5057,9 +5123,9 @@ func (_PegProxy *PegProxyFilterer) FilterCrossBurn(opts *bind.FilterOpts) (*PegP
 	return &PegProxyCrossBurnIterator{contract: _PegProxy.contract, event: "CrossBurn", logs: logs, sub: sub}, nil
 }
 
-// WatchCrossBurn is a free log subscription operation binding the contract event 0x63db45e521861dc5b6514d863ebf6814df6c1079c65b0d1b49a59ac5c5d4aebc.
+// WatchCrossBurn is a free log subscription operation binding the contract event 0x79aee25f54411be6ea1ab53c9d3cc3e245c301d481091deda6343da926932c0c.
 //
-// Solidity: event CrossBurn(address srcToken, address destToken, address from, address to, uint256 amount)
+// Solidity: event CrossBurn(address token0, address token1, uint256 chainID0, uint256 chainID1, address from, address to, uint256 amount)
 func (_PegProxy *PegProxyFilterer) WatchCrossBurn(opts *bind.WatchOpts, sink chan<- *PegProxyCrossBurn) (event.Subscription, error) {
 
 	logs, sub, err := _PegProxy.contract.WatchLogs(opts, "CrossBurn")
@@ -5094,9 +5160,9 @@ func (_PegProxy *PegProxyFilterer) WatchCrossBurn(opts *bind.WatchOpts, sink cha
 	}), nil
 }
 
-// ParseCrossBurn is a log parse operation binding the contract event 0x63db45e521861dc5b6514d863ebf6814df6c1079c65b0d1b49a59ac5c5d4aebc.
+// ParseCrossBurn is a log parse operation binding the contract event 0x79aee25f54411be6ea1ab53c9d3cc3e245c301d481091deda6343da926932c0c.
 //
-// Solidity: event CrossBurn(address srcToken, address destToken, address from, address to, uint256 amount)
+// Solidity: event CrossBurn(address token0, address token1, uint256 chainID0, uint256 chainID1, address from, address to, uint256 amount)
 func (_PegProxy *PegProxyFilterer) ParseCrossBurn(log types.Log) (*PegProxyCrossBurn, error) {
 	event := new(PegProxyCrossBurn)
 	if err := _PegProxy.contract.UnpackLog(event, "CrossBurn", log); err != nil {
@@ -5175,17 +5241,19 @@ func (it *PegProxyLockIterator) Close() error {
 
 // PegProxyLock represents a Lock event raised by the PegProxy contract.
 type PegProxyLock struct {
-	SrcToken  common.Address
-	DestToken common.Address
-	From      common.Address
-	To        common.Address
-	Amount    *big.Int
-	Raw       types.Log // Blockchain specific contextual infos
+	Token0   common.Address
+	Token1   common.Address
+	ChainID0 *big.Int
+	ChainID1 *big.Int
+	From     common.Address
+	To       common.Address
+	Amount   *big.Int
+	Raw      types.Log // Blockchain specific contextual infos
 }
 
-// FilterLock is a free log retrieval operation binding the contract event 0x4e9dc37847123badcca2493e1da785f59908e20645214cf795e6914bfdbaada2.
+// FilterLock is a free log retrieval operation binding the contract event 0x7cb5e2d54d5587c3a3448631884061009b0e2c30e37922a4dd4aed50e11dd7f3.
 //
-// Solidity: event Lock(address srcToken, address destToken, address from, address to, uint256 amount)
+// Solidity: event Lock(address token0, address token1, uint256 chainID0, uint256 chainID1, address from, address to, uint256 amount)
 func (_PegProxy *PegProxyFilterer) FilterLock(opts *bind.FilterOpts) (*PegProxyLockIterator, error) {
 
 	logs, sub, err := _PegProxy.contract.FilterLogs(opts, "Lock")
@@ -5195,9 +5263,9 @@ func (_PegProxy *PegProxyFilterer) FilterLock(opts *bind.FilterOpts) (*PegProxyL
 	return &PegProxyLockIterator{contract: _PegProxy.contract, event: "Lock", logs: logs, sub: sub}, nil
 }
 
-// WatchLock is a free log subscription operation binding the contract event 0x4e9dc37847123badcca2493e1da785f59908e20645214cf795e6914bfdbaada2.
+// WatchLock is a free log subscription operation binding the contract event 0x7cb5e2d54d5587c3a3448631884061009b0e2c30e37922a4dd4aed50e11dd7f3.
 //
-// Solidity: event Lock(address srcToken, address destToken, address from, address to, uint256 amount)
+// Solidity: event Lock(address token0, address token1, uint256 chainID0, uint256 chainID1, address from, address to, uint256 amount)
 func (_PegProxy *PegProxyFilterer) WatchLock(opts *bind.WatchOpts, sink chan<- *PegProxyLock) (event.Subscription, error) {
 
 	logs, sub, err := _PegProxy.contract.WatchLogs(opts, "Lock")
@@ -5232,9 +5300,9 @@ func (_PegProxy *PegProxyFilterer) WatchLock(opts *bind.WatchOpts, sink chan<- *
 	}), nil
 }
 
-// ParseLock is a log parse operation binding the contract event 0x4e9dc37847123badcca2493e1da785f59908e20645214cf795e6914bfdbaada2.
+// ParseLock is a log parse operation binding the contract event 0x7cb5e2d54d5587c3a3448631884061009b0e2c30e37922a4dd4aed50e11dd7f3.
 //
-// Solidity: event Lock(address srcToken, address destToken, address from, address to, uint256 amount)
+// Solidity: event Lock(address token0, address token1, uint256 chainID0, uint256 chainID1, address from, address to, uint256 amount)
 func (_PegProxy *PegProxyFilterer) ParseLock(log types.Log) (*PegProxyLock, error) {
 	event := new(PegProxyLock)
 	if err := _PegProxy.contract.UnpackLog(event, "Lock", log); err != nil {
@@ -5939,18 +6007,20 @@ func (it *PegProxyRollbackIterator) Close() error {
 
 // PegProxyRollback represents a Rollback event raised by the PegProxy contract.
 type PegProxyRollback struct {
-	SrcToken  common.Address
-	DestToken common.Address
-	From      common.Address
-	To        common.Address
-	Amount    *big.Int
-	Txid      string
-	Raw       types.Log // Blockchain specific contextual infos
+	Token0   common.Address
+	Token1   common.Address
+	ChainID0 *big.Int
+	ChainID1 *big.Int
+	From     common.Address
+	To       common.Address
+	Amount   *big.Int
+	Txid     string
+	Raw      types.Log // Blockchain specific contextual infos
 }
 
-// FilterRollback is a free log retrieval operation binding the contract event 0x980f4e66ea09f75134fb6712bf117b17783ef25fb7ac5af70a55a4523ccb02c6.
+// FilterRollback is a free log retrieval operation binding the contract event 0x56a316ee63540abb5f8fd44be7a6eb2016a90fc9bb3a34ffe13948a44c49a616.
 //
-// Solidity: event Rollback(address srcToken, address destToken, address from, address to, uint256 amount, string txid)
+// Solidity: event Rollback(address token0, address token1, uint256 chainID0, uint256 chainID1, address from, address to, uint256 amount, string txid)
 func (_PegProxy *PegProxyFilterer) FilterRollback(opts *bind.FilterOpts) (*PegProxyRollbackIterator, error) {
 
 	logs, sub, err := _PegProxy.contract.FilterLogs(opts, "Rollback")
@@ -5960,9 +6030,9 @@ func (_PegProxy *PegProxyFilterer) FilterRollback(opts *bind.FilterOpts) (*PegPr
 	return &PegProxyRollbackIterator{contract: _PegProxy.contract, event: "Rollback", logs: logs, sub: sub}, nil
 }
 
-// WatchRollback is a free log subscription operation binding the contract event 0x980f4e66ea09f75134fb6712bf117b17783ef25fb7ac5af70a55a4523ccb02c6.
+// WatchRollback is a free log subscription operation binding the contract event 0x56a316ee63540abb5f8fd44be7a6eb2016a90fc9bb3a34ffe13948a44c49a616.
 //
-// Solidity: event Rollback(address srcToken, address destToken, address from, address to, uint256 amount, string txid)
+// Solidity: event Rollback(address token0, address token1, uint256 chainID0, uint256 chainID1, address from, address to, uint256 amount, string txid)
 func (_PegProxy *PegProxyFilterer) WatchRollback(opts *bind.WatchOpts, sink chan<- *PegProxyRollback) (event.Subscription, error) {
 
 	logs, sub, err := _PegProxy.contract.WatchLogs(opts, "Rollback")
@@ -5997,12 +6067,149 @@ func (_PegProxy *PegProxyFilterer) WatchRollback(opts *bind.WatchOpts, sink chan
 	}), nil
 }
 
-// ParseRollback is a log parse operation binding the contract event 0x980f4e66ea09f75134fb6712bf117b17783ef25fb7ac5af70a55a4523ccb02c6.
+// ParseRollback is a log parse operation binding the contract event 0x56a316ee63540abb5f8fd44be7a6eb2016a90fc9bb3a34ffe13948a44c49a616.
 //
-// Solidity: event Rollback(address srcToken, address destToken, address from, address to, uint256 amount, string txid)
+// Solidity: event Rollback(address token0, address token1, uint256 chainID0, uint256 chainID1, address from, address to, uint256 amount, string txid)
 func (_PegProxy *PegProxyFilterer) ParseRollback(log types.Log) (*PegProxyRollback, error) {
 	event := new(PegProxyRollback)
 	if err := _PegProxy.contract.UnpackLog(event, "Rollback", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// PegProxyRollbackedIterator is returned from FilterRollbacked and is used to iterate over the raw logs and unpacked data for Rollbacked events raised by the PegProxy contract.
+type PegProxyRollbackedIterator struct {
+	Event *PegProxyRollbacked // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *PegProxyRollbackedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(PegProxyRollbacked)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(PegProxyRollbacked)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *PegProxyRollbackedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *PegProxyRollbackedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// PegProxyRollbacked represents a Rollbacked event raised by the PegProxy contract.
+type PegProxyRollbacked struct {
+	Token0 common.Address
+	From   common.Address
+	Amount *big.Int
+	Txid   string
+	Raw    types.Log // Blockchain specific contextual infos
+}
+
+// FilterRollbacked is a free log retrieval operation binding the contract event 0x9420db1a0c5e4f45cc0dac05f17e8eb893645981e3c01e8d14120353a487d9e9.
+//
+// Solidity: event Rollbacked(address token0, address from, uint256 amount, string txid)
+func (_PegProxy *PegProxyFilterer) FilterRollbacked(opts *bind.FilterOpts) (*PegProxyRollbackedIterator, error) {
+
+	logs, sub, err := _PegProxy.contract.FilterLogs(opts, "Rollbacked")
+	if err != nil {
+		return nil, err
+	}
+	return &PegProxyRollbackedIterator{contract: _PegProxy.contract, event: "Rollbacked", logs: logs, sub: sub}, nil
+}
+
+// WatchRollbacked is a free log subscription operation binding the contract event 0x9420db1a0c5e4f45cc0dac05f17e8eb893645981e3c01e8d14120353a487d9e9.
+//
+// Solidity: event Rollbacked(address token0, address from, uint256 amount, string txid)
+func (_PegProxy *PegProxyFilterer) WatchRollbacked(opts *bind.WatchOpts, sink chan<- *PegProxyRollbacked) (event.Subscription, error) {
+
+	logs, sub, err := _PegProxy.contract.WatchLogs(opts, "Rollbacked")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(PegProxyRollbacked)
+				if err := _PegProxy.contract.UnpackLog(event, "Rollbacked", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseRollbacked is a log parse operation binding the contract event 0x9420db1a0c5e4f45cc0dac05f17e8eb893645981e3c01e8d14120353a487d9e9.
+//
+// Solidity: event Rollbacked(address token0, address from, uint256 amount, string txid)
+func (_PegProxy *PegProxyFilterer) ParseRollbacked(log types.Log) (*PegProxyRollbacked, error) {
+	event := new(PegProxyRollbacked)
+	if err := _PegProxy.contract.UnpackLog(event, "Rollbacked", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
@@ -6214,18 +6421,20 @@ func (it *PegProxyUnlockIterator) Close() error {
 
 // PegProxyUnlock represents a Unlock event raised by the PegProxy contract.
 type PegProxyUnlock struct {
-	SrcToken  common.Address
-	DestToken common.Address
-	From      common.Address
-	To        common.Address
-	Amount    *big.Int
-	Txid      string
-	Raw       types.Log // Blockchain specific contextual infos
+	Token0   common.Address
+	Token1   common.Address
+	ChianID0 *big.Int
+	ChainID1 *big.Int
+	From     common.Address
+	To       common.Address
+	Amount   *big.Int
+	Txid     string
+	Raw      types.Log // Blockchain specific contextual infos
 }
 
-// FilterUnlock is a free log retrieval operation binding the contract event 0x5800596ed55e41c52e6e763640e29ff0d4c09c47408a512c4fb0974a452c1f0c.
+// FilterUnlock is a free log retrieval operation binding the contract event 0xe8a9cddb11d86358ad5c2fdd6359f0a6f41de0d399033319becf1364409dacbc.
 //
-// Solidity: event Unlock(address srcToken, address destToken, address from, address to, uint256 amount, string txid)
+// Solidity: event Unlock(address token0, address token1, uint256 chianID0, uint256 chainID1, address from, address to, uint256 amount, string txid)
 func (_PegProxy *PegProxyFilterer) FilterUnlock(opts *bind.FilterOpts) (*PegProxyUnlockIterator, error) {
 
 	logs, sub, err := _PegProxy.contract.FilterLogs(opts, "Unlock")
@@ -6235,9 +6444,9 @@ func (_PegProxy *PegProxyFilterer) FilterUnlock(opts *bind.FilterOpts) (*PegProx
 	return &PegProxyUnlockIterator{contract: _PegProxy.contract, event: "Unlock", logs: logs, sub: sub}, nil
 }
 
-// WatchUnlock is a free log subscription operation binding the contract event 0x5800596ed55e41c52e6e763640e29ff0d4c09c47408a512c4fb0974a452c1f0c.
+// WatchUnlock is a free log subscription operation binding the contract event 0xe8a9cddb11d86358ad5c2fdd6359f0a6f41de0d399033319becf1364409dacbc.
 //
-// Solidity: event Unlock(address srcToken, address destToken, address from, address to, uint256 amount, string txid)
+// Solidity: event Unlock(address token0, address token1, uint256 chianID0, uint256 chainID1, address from, address to, uint256 amount, string txid)
 func (_PegProxy *PegProxyFilterer) WatchUnlock(opts *bind.WatchOpts, sink chan<- *PegProxyUnlock) (event.Subscription, error) {
 
 	logs, sub, err := _PegProxy.contract.WatchLogs(opts, "Unlock")
@@ -6272,9 +6481,9 @@ func (_PegProxy *PegProxyFilterer) WatchUnlock(opts *bind.WatchOpts, sink chan<-
 	}), nil
 }
 
-// ParseUnlock is a log parse operation binding the contract event 0x5800596ed55e41c52e6e763640e29ff0d4c09c47408a512c4fb0974a452c1f0c.
+// ParseUnlock is a log parse operation binding the contract event 0xe8a9cddb11d86358ad5c2fdd6359f0a6f41de0d399033319becf1364409dacbc.
 //
-// Solidity: event Unlock(address srcToken, address destToken, address from, address to, uint256 amount, string txid)
+// Solidity: event Unlock(address token0, address token1, uint256 chianID0, uint256 chainID1, address from, address to, uint256 amount, string txid)
 func (_PegProxy *PegProxyFilterer) ParseUnlock(log types.Log) (*PegProxyUnlock, error) {
 	event := new(PegProxyUnlock)
 	if err := _PegProxy.contract.UnpackLog(event, "Unlock", log); err != nil {
@@ -6293,7 +6502,7 @@ var ProposalVoteFuncSigs = map[string]string{
 }
 
 // ProposalVoteBin is the compiled bytecode used for deploying new contracts.
-var ProposalVoteBin = "0x608060405234801561001057600080fd5b5060be8061001f6000396000f3fe6080604052348015600f57600080fd5b506004361060285760003560e01c8063c86ec2bf14602d575b600080fd5b604a6038366004605c565b60006020819052908152604090205481565b60405190815260200160405180910390f35b600060208284031215606c578081fd5b81356001600160a01b03811681146081578182fd5b939250505056fea26469706673582212207cdb9397ea4a1f412e6562f1c7390bd0231957f5060d7e6699beec4ee854aaf164736f6c63430008040033"
+var ProposalVoteBin = "0x608060405234801561001057600080fd5b5060c08061001f6000396000f3fe6080604052348015600f57600080fd5b506004361060285760003560e01c8063c86ec2bf14602d575b600080fd5b604a6038366004605c565b60006020819052908152604090205481565b60405190815260200160405180910390f35b600060208284031215606d57600080fd5b81356001600160a01b0381168114608357600080fd5b939250505056fea26469706673582212207af9834de0fc0b414767ed8936cf26bfe761d8b3d944f63b893a2f648b4d303964736f6c63430008060033"
 
 // DeployProposalVote deploys a new Ethereum contract, binding an instance of ProposalVote to it.
 func DeployProposalVote(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *ProposalVote, error) {
@@ -6762,7 +6971,7 @@ func (_ProposalVote *ProposalVoteFilterer) ParseThresholdChanged(log types.Log) 
 const SafeERC20ABI = "[]"
 
 // SafeERC20Bin is the compiled bytecode used for deploying new contracts.
-var SafeERC20Bin = "0x60566037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea26469706673582212200dcff97d37d034e2be647a64767ba16d072fd3b3cd727bde85a907c06787edac64736f6c63430008040033"
+var SafeERC20Bin = "0x60566037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea264697066735822122055fa8208e8b21e4c72ba3a91ad089f930671d66f99929c852d11b469a9adda8564736f6c63430008060033"
 
 // DeploySafeERC20 deploys a new Ethereum contract, binding an instance of SafeERC20 to it.
 func DeploySafeERC20(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *SafeERC20, error) {
@@ -6924,7 +7133,7 @@ func (_SafeERC20 *SafeERC20TransactorRaw) Transact(opts *bind.TransactOpts, meth
 const SafeMathABI = "[]"
 
 // SafeMathBin is the compiled bytecode used for deploying new contracts.
-var SafeMathBin = "0x60566037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea2646970667358221220012f461ceaba4a7b15bc839167ed35db1d4a502110e9037ec45cc1e145fd470c64736f6c63430008040033"
+var SafeMathBin = "0x60566037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea26469706673582212208da88692ed83ac46012b971866b3c59838d2a0d8122ca62aadc7c8931e6988b364736f6c63430008060033"
 
 // DeploySafeMath deploys a new Ethereum contract, binding an instance of SafeMath to it.
 func DeploySafeMath(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *SafeMath, error) {
@@ -7086,7 +7295,7 @@ func (_SafeMath *SafeMathTransactorRaw) Transact(opts *bind.TransactOpts, method
 const StringsABI = "[]"
 
 // StringsBin is the compiled bytecode used for deploying new contracts.
-var StringsBin = "0x60566037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea2646970667358221220c5ad858e14dd8c94c5e81a4182e02733e761e97b7f5421a4451328a8e087734864736f6c63430008040033"
+var StringsBin = "0x60566037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea2646970667358221220d0e31d39e0d93ba7cd570b9263a0dd623343ad23eee8a52371994f6b6e667df264736f6c63430008060033"
 
 // DeployStrings deploys a new Ethereum contract, binding an instance of Strings to it.
 func DeployStrings(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *Strings, error) {
