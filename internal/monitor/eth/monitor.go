@@ -666,6 +666,16 @@ func (m *Monitor) loadHeightFromStorage() {
 
 	}
 
+	// load block height
+	r := m.storage.Get(rHeightKey())
+	if r == nil {
+		m.rHeight = header.Number.Uint64() - m.minConfirms
+		m.persistRHeight(m.rHeight)
+	} else {
+		m.rHeight = binary.LittleEndian.Uint64(r)
+
+	}
+
 	if m.config.Eth.LockHeight != 0 {
 		m.lHeight = m.config.Eth.LockHeight
 	}
@@ -674,9 +684,14 @@ func (m *Monitor) loadHeightFromStorage() {
 		m.cHeight = m.config.Eth.CrossBurnHeight
 	}
 
+	if m.config.Eth.RollbackHeight != 0 {
+		m.rHeight = m.config.Eth.RollbackHeight
+	}
+
 	m.logger.WithFields(logrus.Fields{
-		"lock_height":  m.lHeight,
-		"cross_height": m.cHeight,
+		"lock_height":     m.lHeight,
+		"cross_height":    m.cHeight,
+		"rollback_height": m.rHeight,
 	}).Info("Subscribe")
 }
 

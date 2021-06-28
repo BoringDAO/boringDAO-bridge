@@ -689,8 +689,9 @@ func (m *Monitor) loadHeightFromStorage() {
 	}
 
 	m.logger.WithFields(logrus.Fields{
-		"lock_height":  m.lHeight,
-		"cross_height": m.cHeight,
+		"lock_height":     m.lHeight,
+		"cross_height":    m.cHeight,
+		"rollback_height": m.rHeight,
 	}).Info("Subscribe")
 }
 

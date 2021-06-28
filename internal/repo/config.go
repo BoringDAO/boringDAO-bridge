@@ -48,9 +48,9 @@ type Eth struct {
 	MinConfirms       uint64   `toml:"minConfirms" json:"minConfirms"`
 	PrivKey           string   `toml:"privKey" json:"privKey"`
 	GasLimit          uint64   `toml:"gasLimit" json:"gasLimit"`
-	LockHeight        uint64   `toml:"lHeight" json:"lHeight"`
-	CrossBurnHeight   uint64   `toml:"cHeight" json:"cHeight"`
-	RollbackHeight    uint64   `toml:"rHeight" json:"rHeight"`
+	LockHeight        uint64   `mapstructure:"lHeight" json:"lHeight"`
+	CrossBurnHeight   uint64   `mapstructure:"cHeight" json:"cHeight"`
+	RollbackHeight    uint64   `mapstructure:"rHeight" json:"rHeight"`
 	PegBridgeContract string   `toml:"pegBridgeContract" json:"pegBridgeContract"`
 }
 
@@ -59,10 +59,10 @@ type Bsc struct {
 	MinConfirms       uint64   `toml:"minConfirms" json:"minConfirms"`
 	PrivKey           string   `toml:"privKey" json:"privKey"`
 	GasLimit          uint64   `toml:"gasLimit" json:"gasLimit"`
-	LockHeight        uint64   `toml:"lHeight" json:"lHeight"`
-	CrossBurnHeight   uint64   `toml:"cHeight" json:"cHeight"`
+	LockHeight        uint64   `mapstructure:"lHeight" json:"lHeight"`
+	CrossBurnHeight   uint64   `mapstructure:"cHeight" json:"cHeight"`
 	PegBridgeContract string   `toml:"pegBridgeContract" json:"pegBridgeContract"`
-	RollbackHeight    uint64   `toml:"rHeight" json:"rHeight"`
+	RollbackHeight    uint64   `mapstructure:"rHeight" json:"rHeight"`
 }
 
 func (c *Config) Bytes() ([]byte, error) {
