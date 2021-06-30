@@ -594,7 +594,7 @@ func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
 		}
 		lock, err := m.bscWrapper.pegProxy.ParseLock(*log)
 		if err != nil {
-			return nil, err
+			continue
 		}
 		return &Coco{
 			Token0:      lock.Token0,
@@ -623,7 +623,7 @@ func (m *Monitor) GetCrossBurnLog(txId string) (*Coco, error) {
 		}
 		crossBurn, err := m.bscWrapper.pegProxy.ParseCrossBurn(*log)
 		if err != nil {
-			return nil, err
+			continue
 		}
 		return &Coco{
 			Token0:      crossBurn.Token0,
@@ -652,7 +652,7 @@ func (m *Monitor) GetRollback(txId string) (*Coco, error) {
 		}
 		rollback, err := m.bscWrapper.pegProxy.ParseRollback(*log)
 		if err != nil {
-			return nil, err
+			continue
 		}
 		return &Coco{
 			Token0:      rollback.Token0,
