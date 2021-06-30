@@ -295,7 +295,7 @@ func (m *Monitor) handleRollback(lock *mnt.PegProxyRollback, isHistory bool) {
 		return
 	}
 	coco := &Coco{
-		Typ:         Lock,
+		Typ:         Rollback,
 		IsHistory:   isHistory,
 		Token0:      lock.Token0,
 		Token1:      lock.Token1,
