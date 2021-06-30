@@ -407,6 +407,8 @@ func (m *Monitor) confirmEvent(event types.Log, typ int) bool {
 			log, err = m.GetLockLog(event.TxHash.String())
 		case CrossBurn:
 			log, err = m.GetCrossBurnLog(event.TxHash.String())
+		case Rollback:
+			log, err = m.GetRollback(event.TxHash.String())
 		}
 		if err != nil {
 			m.logger.WithFields(logrus.Fields{
@@ -606,6 +608,35 @@ func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
 		}, nil
 	}
 	return nil, fmt.Errorf("not found Lock log in tx:%s", txId)
+}
+
+func (m *Monitor) GetRollback(txId string) (*Coco, error) {
+	receipt := m.ethWrapper.TransactionReceipt(context.TODO(), common.HexToHash(txId))
+	for _, log := range receipt.Logs {
+		if !strings.EqualFold(log.Address.String(), m.config.Eth.PegBridgeContract) {
+			continue
+		}
+
+		if log.Removed {
+			continue
+		}
+		rollback, err := m.ethWrapper.pegProxy.ParseRollback(*log)
+		if err != nil {
+			return nil, err
+		}
+		return &Coco{
+			Token0:      rollback.Token0,
+			Token1:      rollback.Token1,
+			ChainID0:    rollback.ChainID0,
+			ChainID1:    rollback.ChainID1,
+			From:        rollback.From,
+			To:          rollback.To,
+			Amount:      rollback.Amount,
+			TxId:        log.TxHash.String(),
+			BlockHeight: receipt.BlockNumber.Uint64(),
+		}, nil
+	}
+	return nil, fmt.Errorf("not found rollback log in tx:%s", txId)
 }
 
 func (m *Monitor) GetCrossBurnLog(txId string) (*Coco, error) {
