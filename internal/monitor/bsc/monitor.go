@@ -239,7 +239,7 @@ func (m *Monitor) handleLock(lock *mnt.PegProxyLock, isHistory bool) {
 		return
 	}
 
-	if m.storage.Has(TxKey(lock.Raw.TxHash.String())) {
+	if m.storage.Has(TxKey(lock.Raw.TxHash.String(), Lock)) {
 		return
 	}
 	coco := &Coco{
@@ -283,7 +283,7 @@ func (m *Monitor) handleLock(lock *mnt.PegProxyLock, isHistory bool) {
 
 	m.logger.WithField("tx", lock.Raw.TxHash.String()).Info("confirmEvent")
 	m.cocoC <- coco
-	m.persistLBlockHeight(lock.Raw.TxHash.String(), lock.Raw.BlockNumber)
+	m.persistLBlockHeight(lock.Raw.TxHash.String(), lock.Raw.BlockNumber, coco)
 }
 
 func (m *Monitor) handleRollback(lock *mnt.PegProxyRollback, isHistory bool) {
@@ -291,7 +291,7 @@ func (m *Monitor) handleRollback(lock *mnt.PegProxyRollback, isHistory bool) {
 		return
 	}
 
-	if m.storage.Has(TxKey(lock.Raw.TxHash.String())) {
+	if m.storage.Has(TxKey(lock.Raw.TxHash.String(), Rollback)) {
 		return
 	}
 	coco := &Coco{
@@ -335,7 +335,7 @@ func (m *Monitor) handleRollback(lock *mnt.PegProxyRollback, isHistory bool) {
 
 	m.logger.WithField("tx", lock.Raw.TxHash.String()).Info("confirmEvent")
 	m.cocoC <- coco
-	m.persistRBlockHeight(lock.Raw.TxHash.String(), lock.Raw.BlockNumber)
+	m.persistRBlockHeight(lock.Raw.TxHash.String(), lock.Raw.BlockNumber, coco)
 }
 
 func (m *Monitor) handleCrossBurn(crossBurn *mnt.PegProxyCrossBurn, isHistory bool) {
@@ -343,7 +343,7 @@ func (m *Monitor) handleCrossBurn(crossBurn *mnt.PegProxyCrossBurn, isHistory bo
 		return
 	}
 
-	if m.storage.Has(TxKey(crossBurn.Raw.TxHash.String())) {
+	if m.storage.Has(TxKey(crossBurn.Raw.TxHash.String(), CrossBurn)) {
 		return
 	}
 	coco := &Coco{
@@ -387,7 +387,7 @@ func (m *Monitor) handleCrossBurn(crossBurn *mnt.PegProxyCrossBurn, isHistory bo
 
 	m.logger.WithField("tx", crossBurn.Raw.TxHash.String()).Info("confirmEvent")
 	m.cocoC <- coco
-	m.persistCBlockHeight(crossBurn.Raw.TxHash.String(), crossBurn.Raw.BlockNumber)
+	m.persistCBlockHeight(crossBurn.Raw.TxHash.String(), crossBurn.Raw.BlockNumber, coco)
 }
 
 func (m *Monitor) confirmEvent(event types.Log, typ int) bool {
@@ -738,38 +738,38 @@ func cHeightKey() []byte {
 	return []byte(fmt.Sprintf("cHeight"))
 }
 
-func (m *Monitor) persistLBlockHeight(txId string, height uint64) {
+func (m *Monitor) persistLBlockHeight(txId string, height uint64, coco *Coco) {
 	m.persistLHeight(height)
 	for {
-		if m.storage.Has(TxKey(txId)) {
+		if m.storage.Has(TxKey(txId, coco.Typ)) {
 			return
 		}
 		time.Sleep(500 * time.Millisecond)
 	}
 }
 
-func (m *Monitor) persistRBlockHeight(txId string, height uint64) {
+func (m *Monitor) persistRBlockHeight(txId string, height uint64, coco *Coco) {
 	m.persistRHeight(height)
 	for {
-		if m.storage.Has(TxKey(txId)) {
+		if m.storage.Has(TxKey(txId, coco.Typ)) {
 			return
 		}
 		time.Sleep(500 * time.Millisecond)
 	}
 }
 
-func (m *Monitor) persistCBlockHeight(txId string, height uint64) {
+func (m *Monitor) persistCBlockHeight(txId string, height uint64, coco *Coco) {
 	m.persistCHeight(height)
 	for {
-		if m.storage.Has(TxKey(txId)) {
+		if m.storage.Has(TxKey(txId, coco.Typ)) {
 			return
 		}
 		time.Sleep(500 * time.Millisecond)
 	}
 }
 
-func (m *Monitor) HasTx(txId string) bool {
-	return m.storage.Has(TxKey(txId))
+func (m *Monitor) HasTx(txId string, coco *Coco) bool {
+	return m.storage.Has(TxKey(txId, coco.Typ))
 }
 
 func (m *Monitor) persistLHeight(height uint64) {
@@ -802,8 +802,8 @@ func (m *Monitor) persistCHeight(height uint64) {
 	}).Info("Persist CrossBurn Block Height")
 }
 
-func TxKey(hash string) []byte {
-	return []byte(fmt.Sprintf("eth-tx-%s", hash))
+func TxKey(hash string, typ int) []byte {
+	return []byte(fmt.Sprintf("eth-%d-%s", typ, hash))
 }
 
 func (m *Monitor) PutTxID(txId string, coco *Coco) {
@@ -811,5 +811,5 @@ func (m *Monitor) PutTxID(txId string, coco *Coco) {
 	if err != nil {
 		m.logger.Error(err)
 	}
-	m.storage.Put(TxKey(txId), data)
+	m.storage.Put(TxKey(txId, coco.Typ), data)
 }

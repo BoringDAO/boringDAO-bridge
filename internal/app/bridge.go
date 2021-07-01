@@ -92,7 +92,7 @@ func (b *Bridge) listenEthCocoC() {
 				defer b.mux.Unlock()
 				b.logger.Infof("========> start handle bsc transaction...")
 				defer b.logger.Infof("========> end handle bsc transaction...")
-				if b.ethMnt.HasTx(coco.TxId) {
+				if b.ethMnt.HasTx(coco.TxId, coco) {
 					b.logger.WithField("tx", coco.TxId).Error("has handled the interchain event")
 					return
 				}
@@ -129,7 +129,7 @@ func (b *Bridge) listenBscCocoC() {
 				defer b.mux.Unlock()
 				b.logger.Infof("========> start handle eth transaction...")
 				defer b.logger.Infof("========> end handle eth transaction...")
-				if b.bscMnt.HasTx(coco.TxId) {
+				if b.bscMnt.HasTx(coco.TxId, coco) {
 					b.logger.WithField("tx", coco.TxId).Error("has handled the interchain event")
 					return
 				}
