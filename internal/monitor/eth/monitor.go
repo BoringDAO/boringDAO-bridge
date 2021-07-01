@@ -118,6 +118,7 @@ func (m *Monitor) Start() error {
 	m.loadHeightFromStorage()
 	go m.listenLockEvent()
 	go m.listenCrossBurnEvent()
+	go m.listenRollback()
 	return nil
 }
 
