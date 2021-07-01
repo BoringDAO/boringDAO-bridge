@@ -99,9 +99,9 @@ func (b *Bridge) listenEthCocoC() {
 				var err error
 				switch coco.Typ {
 				case eth.Lock:
-					err = b.bscMnt.CrossIn(coco.TxId, coco.Token1, coco.From, coco.To, coco.ChainID0, coco.Amount)
+					err = b.bscMnt.CrossIn(coco.TxId+"#LOCK", coco.Token1, coco.From, coco.To, coco.ChainID0, coco.Amount)
 				case eth.CrossBurn:
-					err = b.bscMnt.Unlock(coco.TxId, coco.Token1, coco.From, coco.To, coco.ChainID0, coco.Amount)
+					err = b.bscMnt.Unlock(coco.TxId+"#CrossBurn", coco.Token1, coco.From, coco.To, coco.ChainID0, coco.Amount)
 				case eth.Rollback:
 					err = b.bscMnt.Rollback(coco.TxId, coco.Token1, coco.From, coco.To, coco.ChainID0, coco.Amount)
 				}
@@ -137,9 +137,9 @@ func (b *Bridge) listenBscCocoC() {
 				var err error
 				switch coco.Typ {
 				case bsc.Lock:
-					err = b.ethMnt.CrossIn(coco.TxId, coco.Token1, coco.From, coco.To, coco.ChainID0, coco.Amount)
+					err = b.ethMnt.CrossIn(coco.TxId+"#LOCK", coco.Token1, coco.From, coco.To, coco.ChainID0, coco.Amount)
 				case bsc.CrossBurn:
-					err = b.ethMnt.Unlock(coco.TxId, coco.Token1, coco.From, coco.To, coco.ChainID0, coco.Amount)
+					err = b.ethMnt.Unlock(coco.TxId+"#CrossBurn", coco.Token1, coco.From, coco.To, coco.ChainID0, coco.Amount)
 				case bsc.Rollback:
 					err = b.ethMnt.Rollback(coco.TxId, coco.Token1, coco.From, coco.To, coco.ChainID0, coco.Amount)
 				}
