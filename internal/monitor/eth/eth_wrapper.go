@@ -8,6 +8,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ethereum/go-ethereum/rpc"
+
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/rlp"
+
 	"github.com/Rican7/retry"
 	"github.com/Rican7/retry/strategy"
 	mnt "github.com/boringdao/bridge/internal/monitor"
@@ -26,6 +31,7 @@ type EthWrapper struct {
 	addrIdx   int
 	eth       *repo.Eth
 	ethClient *ethclient.Client
+	rpcClient *rpc.Client
 	pegProxy  *mnt.PegProxy
 	session   *mnt.PegProxySession
 	logger    logrus.FieldLogger
@@ -36,10 +42,11 @@ func NewEthWrapper(config *repo.Eth, logger logrus.FieldLogger) (*EthWrapper, er
 		return nil, fmt.Errorf("addrs for bsc session wrapper is empty")
 	}
 
-	etherCli, err := ethclient.Dial(config.Addrs[0])
+	rpcClient, err := rpc.DialContext(context.Background(), config.Addrs[0])
 	if err != nil {
-		return nil, fmt.Errorf("dial eth node: %w", err)
+		return nil, err
 	}
+	etherCli := ethclient.NewClient(rpcClient)
 
 	pegProxy, err := mnt.NewPegProxy(common.HexToAddress(config.PegBridgeContract), etherCli)
 	if err != nil {
@@ -77,6 +84,7 @@ func NewEthWrapper(config *repo.Eth, logger logrus.FieldLogger) (*EthWrapper, er
 	return &EthWrapper{
 		addrIdx:   0,
 		eth:       config,
+		rpcClient: rpcClient,
 		ethClient: etherCli,
 		pegProxy:  pegProxy,
 		session:   session,
@@ -262,9 +270,10 @@ func (lw *EthWrapper) CrossIn(token, from, to common.Address, chainID, amount *b
 		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
 		lw.session.TransactOpts.GasPrice = gasPrice.BigInt()
 
-		tx, err = lw.session.CrossIn(token, chainID, from, to, amount, txid)
+		var newHash common.Hash
+		tx, newHash, err = lw.crossIn(token, from, to, chainID, amount, txid)
 		if tx != nil {
-			hash = tx.Hash()
+			hash = newHash
 		}
 		if err != nil {
 			lw.logger.Warnf("CrossIn: %s", err.Error())
@@ -284,7 +293,7 @@ func (lw *EthWrapper) CrossIn(token, from, to common.Address, chainID, amount *b
 }
 
 func (lw *EthWrapper) Rollback(token common.Address, from common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
-	var result *types.Transaction
+	var tx *types.Transaction
 	var err error
 	var hash common.Hash
 
@@ -292,10 +301,10 @@ func (lw *EthWrapper) Rollback(token common.Address, from common.Address, chainI
 		price := lw.SuggestGasPrice(context.TODO())
 		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
 		lw.session.TransactOpts.GasPrice = gasPrice.BigInt()
-
-		result, err = lw.session.Rollback(token, chainID, from, amount, txid)
-		if result != nil {
-			hash = result.Hash()
+		var newHash common.Hash
+		tx, newHash, err = lw.rollback(token, from, chainID, amount, txid)
+		if tx != nil {
+			hash = newHash
 		}
 		if err != nil {
 			lw.logger.Warnf("Rollback: %s", err.Error())
@@ -310,7 +319,7 @@ func (lw *EthWrapper) Rollback(token common.Address, from common.Address, chainI
 		lw.logger.Panic(err)
 	}
 
-	return result, hash
+	return tx, hash
 }
 
 func (lw *EthWrapper) Unlock(token common.Address, from common.Address, to common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
@@ -322,10 +331,10 @@ func (lw *EthWrapper) Unlock(token common.Address, from common.Address, to commo
 		price := lw.SuggestGasPrice(context.TODO())
 		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
 		lw.session.TransactOpts.GasPrice = gasPrice.BigInt()
-
-		tx, err = lw.session.Unlock(token, chainID, from, to, amount, txid)
+		var newHash common.Hash
+		tx, newHash, err = lw.unlock(token, from, to, chainID, amount, txid)
 		if tx != nil {
-			hash = tx.Hash()
+			hash = newHash
 		}
 		if err != nil {
 			lw.logger.Warnf("Unlock: %s", err.Error())
@@ -342,6 +351,132 @@ func (lw *EthWrapper) Unlock(token common.Address, from common.Address, to commo
 	}
 
 	return tx, hash
+}
+
+func (bw *EthWrapper) unlock(token, from, to common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash, error) {
+	parsed, err := abi.JSON(strings.NewReader(mnt.PegProxyABI))
+	if err != nil {
+		return nil, common.Hash{}, err
+	}
+	input, err := parsed.Pack("unlock", token, chainID, from, to, amount, txid)
+	if err != nil {
+		return nil, common.Hash{}, err
+	}
+
+	opts := bw.session.TransactOpts
+	value := opts.Value
+	if value == nil {
+		value = new(big.Int)
+	}
+	var nonce uint64
+	if opts.Nonce == nil {
+		nonce, err = bw.ethClient.PendingNonceAt(ensureContext(opts.Context), opts.From)
+		if err != nil {
+			return nil, common.Hash{}, fmt.Errorf("failed to retrieve account nonce: %v", err)
+		}
+	} else {
+		nonce = opts.Nonce.Uint64()
+	}
+
+	// Create the transaction, sign it and schedule it for execution
+	rawTx := types.NewTransaction(nonce, common.HexToAddress(bw.eth.PegBridgeContract), value, opts.GasLimit, opts.GasPrice, input)
+	signedTx, err := opts.Signer(opts.From, rawTx)
+	if err != nil {
+		return nil, common.Hash{}, err
+	}
+	data, err := rlp.EncodeToBytes(signedTx)
+	if err != nil {
+		return nil, common.Hash{}, err
+	}
+
+	var txHash common.Hash
+	err = bw.rpcClient.CallContext(ensureContext(opts.Context), &txHash, "eth_sendRawTransaction", hexutil.Encode(data))
+
+	return signedTx, txHash, err
+}
+
+func (bw *EthWrapper) crossIn(token common.Address, from common.Address, to common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash, error) {
+	parsed, err := abi.JSON(strings.NewReader(mnt.PegProxyABI))
+	if err != nil {
+		return nil, common.Hash{}, err
+	}
+	input, err := parsed.Pack("crossIn", token, chainID, from, to, amount, txid)
+	if err != nil {
+		return nil, common.Hash{}, err
+	}
+
+	opts := bw.session.TransactOpts
+	value := opts.Value
+	if value == nil {
+		value = new(big.Int)
+	}
+	var nonce uint64
+	if opts.Nonce == nil {
+		nonce, err = bw.ethClient.PendingNonceAt(ensureContext(opts.Context), opts.From)
+		if err != nil {
+			return nil, common.Hash{}, fmt.Errorf("failed to retrieve account nonce: %v", err)
+		}
+	} else {
+		nonce = opts.Nonce.Uint64()
+	}
+
+	// Create the transaction, sign it and schedule it for execution
+	rawTx := types.NewTransaction(nonce, common.HexToAddress(bw.eth.PegBridgeContract), value, opts.GasLimit, opts.GasPrice, input)
+	signedTx, err := opts.Signer(opts.From, rawTx)
+	if err != nil {
+		return nil, common.Hash{}, err
+	}
+	data, err := rlp.EncodeToBytes(signedTx)
+	if err != nil {
+		return nil, common.Hash{}, err
+	}
+
+	var txHash common.Hash
+	err = bw.rpcClient.CallContext(ensureContext(opts.Context), &txHash, "eth_sendRawTransaction", hexutil.Encode(data))
+
+	return signedTx, txHash, err
+}
+
+func (bw *EthWrapper) rollback(token common.Address, from common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash, error) {
+	parsed, err := abi.JSON(strings.NewReader(mnt.PegProxyABI))
+	if err != nil {
+		return nil, common.Hash{}, err
+	}
+	input, err := parsed.Pack("rollback", token, chainID, from, amount, txid)
+	if err != nil {
+		return nil, common.Hash{}, err
+	}
+
+	opts := bw.session.TransactOpts
+	value := opts.Value
+	if value == nil {
+		value = new(big.Int)
+	}
+	var nonce uint64
+	if opts.Nonce == nil {
+		nonce, err = bw.ethClient.PendingNonceAt(ensureContext(opts.Context), opts.From)
+		if err != nil {
+			return nil, common.Hash{}, fmt.Errorf("failed to retrieve account nonce: %v", err)
+		}
+	} else {
+		nonce = opts.Nonce.Uint64()
+	}
+
+	// Create the transaction, sign it and schedule it for execution
+	rawTx := types.NewTransaction(nonce, common.HexToAddress(bw.eth.PegBridgeContract), value, opts.GasLimit, opts.GasPrice, input)
+	signedTx, err := opts.Signer(opts.From, rawTx)
+	if err != nil {
+		return nil, common.Hash{}, err
+	}
+	data, err := rlp.EncodeToBytes(signedTx)
+	if err != nil {
+		return nil, common.Hash{}, err
+	}
+
+	var txHash common.Hash
+	err = bw.rpcClient.CallContext(ensureContext(opts.Context), &txHash, "eth_sendRawTransaction", hexutil.Encode(data))
+
+	return signedTx, txHash, err
 }
 
 func (lw *EthWrapper) TransactionReceiptsLimitedRetry(ctx context.Context, txHashes []common.Hash) (*types.Receipt, error) {
@@ -393,7 +528,7 @@ func (lw *EthWrapper) TransactionReceipt(ctx context.Context, txHash common.Hash
 
 func (lw *EthWrapper) switchToNextAddr() {
 	var err error
-
+	var rpcClient *rpc.Client
 	for i := 0; i < len(lw.eth.Addrs); i++ {
 		lw.addrIdx++
 		if lw.addrIdx == len(lw.eth.Addrs) {
@@ -402,10 +537,11 @@ func (lw *EthWrapper) switchToNextAddr() {
 
 		lw.logger.Warnf("try to switch to %s", lw.eth.Addrs[lw.addrIdx])
 
-		lw.ethClient, err = ethclient.Dial(lw.eth.Addrs[lw.addrIdx])
+		rpcClient, err = rpc.DialContext(context.Background(), lw.eth.Addrs[lw.addrIdx])
 		if err != nil {
 			continue
 		}
+		lw.ethClient = ethclient.NewClient(rpcClient)
 
 		lw.pegProxy, err = mnt.NewPegProxy(common.HexToAddress(lw.eth.PegBridgeContract), lw.ethClient)
 		if err != nil {
@@ -434,4 +570,13 @@ func (lw *EthWrapper) isNetworkError(err error) bool {
 	return regexp.MustCompile("Post .* EOF").MatchString(err.Error()) ||
 		strings.Contains(err.Error(), "connection reset by peer") ||
 		strings.Contains(err.Error(), "TLS handshake timeout")
+}
+
+// ensureContext is a helper method to ensure a context is not nil, even if the
+// user specified it as such.
+func ensureContext(ctx context.Context) context.Context {
+	if ctx == nil {
+		return context.TODO()
+	}
+	return ctx
 }

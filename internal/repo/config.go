@@ -45,6 +45,7 @@ type LogModule struct {
 
 type Eth struct {
 	Addrs             []string `toml:"addrs" json:"addrs"`
+	IsOkex            bool     `toml:"isOkex" json:"isOkex"`
 	MinConfirms       uint64   `toml:"minConfirms" json:"minConfirms"`
 	PrivKey           string   `toml:"privKey" json:"privKey"`
 	GasLimit          uint64   `toml:"gasLimit" json:"gasLimit"`
