@@ -453,10 +453,10 @@ func (m *Monitor) Unlock(txId string, token common.Address, from common.Address,
 		if m.ethWrapper.session.TransactOpts.GasPrice == nil ||
 			gasPrice.BigInt().Cmp(m.ethWrapper.session.TransactOpts.GasPrice) == 1 {
 			m.ethWrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
-
-			transaction, _ = m.ethWrapper.Unlock(token, from, recipient, chainID, amount, txId)
+			var hash common.Hash
+			transaction, hash = m.ethWrapper.Unlock(token, from, recipient, chainID, amount, txId)
 			m.ethWrapper.session.TransactOpts.Nonce = big.NewInt(int64(transaction.Nonce()))
-			hashes = append(hashes, transaction.Hash())
+			hashes = append(hashes, hash)
 
 			m.logger.Infof("send UnlockBor tx %s with gasPrice %s and nonce %d",
 				transaction.Hash().String(), gasPrice.String(), transaction.Nonce())
@@ -507,10 +507,10 @@ func (m *Monitor) Rollback(txId string, token common.Address, from common.Addres
 		if m.ethWrapper.session.TransactOpts.GasPrice == nil ||
 			gasPrice.BigInt().Cmp(m.ethWrapper.session.TransactOpts.GasPrice) == 1 {
 			m.ethWrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
-
-			transaction, _ = m.ethWrapper.Rollback(token, from, chainID, amount, txId)
+			var hash common.Hash
+			transaction, hash = m.ethWrapper.Rollback(token, from, chainID, amount, txId)
 			m.ethWrapper.session.TransactOpts.Nonce = big.NewInt(int64(transaction.Nonce()))
-			hashes = append(hashes, transaction.Hash())
+			hashes = append(hashes, hash)
 
 			m.logger.Infof("send Rollback tx %s with gasPrice %s and nonce %d",
 				transaction.Hash().String(), gasPrice.String(), transaction.Nonce())
@@ -561,9 +561,10 @@ func (m *Monitor) CrossIn(txId string, token common.Address, from common.Address
 			gasPrice.BigInt().Cmp(m.ethWrapper.session.TransactOpts.GasPrice) == 1 {
 			m.ethWrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
 
-			transaction, _ = m.ethWrapper.CrossIn(token, from, recipient, chainID, amount, txId)
+			var hash common.Hash
+			transaction, hash = m.ethWrapper.CrossIn(token, from, recipient, chainID, amount, txId)
 			m.ethWrapper.session.TransactOpts.Nonce = big.NewInt(int64(transaction.Nonce()))
-			hashes = append(hashes, transaction.Hash())
+			hashes = append(hashes, hash)
 
 			m.logger.Infof("send UnlockBor tx %s with gasPrice %s and nonce %d",
 				transaction.Hash().String(), gasPrice.String(), transaction.Nonce())
