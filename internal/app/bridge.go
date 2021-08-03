@@ -74,6 +74,8 @@ func (b *Bridge) Start() error {
 
 	go b.listenBscCocoC()
 
+	b.printLogo()
+
 	return nil
 }
 
@@ -103,7 +105,7 @@ func (b *Bridge) listenEthCocoC() {
 				case eth.CrossBurn:
 					err = b.bscMnt.Unlock(coco.TxId+"#CrossBurn", coco.Token1, coco.From, coco.To, coco.ChainID0, coco.Amount)
 				case eth.Rollback:
-					err = b.bscMnt.Rollback(coco.TxId, coco.Token1, coco.From, coco.To, coco.ChainID0, coco.Amount)
+					err = b.bscMnt.Rollback(coco.TxId+"#Rollback", coco.Token1, coco.From, coco.To, coco.ChainID0, coco.Amount)
 				}
 				if err != nil {
 					b.logger.Panic(err)
@@ -141,7 +143,7 @@ func (b *Bridge) listenBscCocoC() {
 				case bsc.CrossBurn:
 					err = b.ethMnt.Unlock(coco.TxId+"#CrossBurn", coco.Token1, coco.From, coco.To, coco.ChainID0, coco.Amount)
 				case bsc.Rollback:
-					err = b.ethMnt.Rollback(coco.TxId, coco.Token1, coco.From, coco.To, coco.ChainID0, coco.Amount)
+					err = b.ethMnt.Rollback(coco.TxId+"#Rollback", coco.Token1, coco.From, coco.To, coco.ChainID0, coco.Amount)
 				}
 				if err != nil {
 					b.logger.Panic(err)

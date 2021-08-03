@@ -235,7 +235,7 @@ func (m *Monitor) HandleCocoC() chan *Coco {
 }
 
 func (m *Monitor) handleRollback(lock *mnt.PegProxyRollback, isHistory bool) {
-	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Bsc.PegBridgeContract) {
+	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Eth.PegBridgeContract) {
 		return
 	}
 
@@ -425,7 +425,7 @@ func (m *Monitor) confirmEvent(event types.Log, typ int) bool {
 func (m *Monitor) Unlock(txId string, token common.Address, from common.Address, recipient common.Address, chainID, amount *big.Int) error {
 	unlocked := m.ethWrapper.TxUnlocked(txId)
 	if unlocked {
-		m.logger.Infof("find txUnlocked Chain %d txId:%s", txId)
+		m.logger.Infof("find txUnlocked Chain %d txId:%s", chainID.Uint64(), txId)
 		return nil
 	}
 
@@ -459,7 +459,7 @@ func (m *Monitor) Unlock(txId string, token common.Address, from common.Address,
 			hashes = append(hashes, hash)
 
 			m.logger.Infof("send UnlockBor tx %s with gasPrice %s and nonce %d",
-				transaction.Hash().String(), gasPrice.String(), transaction.Nonce())
+				hash, gasPrice.String(), transaction.Nonce())
 		}
 		receipt, err = m.ethWrapper.TransactionReceiptsLimitedRetry(context.TODO(), hashes)
 		if err == nil {
@@ -478,7 +478,7 @@ func (m *Monitor) Unlock(txId string, token common.Address, from common.Address,
 func (m *Monitor) Rollback(txId string, token common.Address, from common.Address, recipient common.Address, chainID, amount *big.Int) error {
 	unlocked := m.ethWrapper.TxUnlocked(txId)
 	if unlocked {
-		m.logger.Infof("find Rollback Chain %d txId:%s", txId)
+		m.logger.Infof("find Rollback Chain %d txId:%s", chainID.Uint64(), txId)
 		return nil
 	}
 
@@ -513,7 +513,7 @@ func (m *Monitor) Rollback(txId string, token common.Address, from common.Addres
 			hashes = append(hashes, hash)
 
 			m.logger.Infof("send Rollback tx %s with gasPrice %s and nonce %d",
-				transaction.Hash().String(), gasPrice.String(), transaction.Nonce())
+				hash, gasPrice.String(), transaction.Nonce())
 		}
 		receipt, err = m.ethWrapper.TransactionReceiptsLimitedRetry(context.TODO(), hashes)
 		if err == nil {
@@ -542,7 +542,7 @@ func (m *Monitor) CrossIn(txId string, token common.Address, from common.Address
 		"sender":    from.String(),
 		"recipient": recipient.String(),
 		"amount":    amount.String(),
-	}).Info("will unlock")
+	}).Info("will crossIn")
 
 	var (
 		transaction *types.Transaction
@@ -566,8 +566,8 @@ func (m *Monitor) CrossIn(txId string, token common.Address, from common.Address
 			m.ethWrapper.session.TransactOpts.Nonce = big.NewInt(int64(transaction.Nonce()))
 			hashes = append(hashes, hash)
 
-			m.logger.Infof("send UnlockBor tx %s with gasPrice %s and nonce %d",
-				transaction.Hash().String(), gasPrice.String(), transaction.Nonce())
+			m.logger.Infof("send CrossIn tx %s with gasPrice %s and nonce %d",
+				hash, gasPrice.String(), transaction.Nonce())
 		}
 		receipt, err = m.ethWrapper.TransactionReceiptsLimitedRetry(context.TODO(), hashes)
 		if err == nil {

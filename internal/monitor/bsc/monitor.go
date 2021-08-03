@@ -281,7 +281,6 @@ func (m *Monitor) handleLock(lock *mnt.PegProxyLock, isHistory bool) {
 		return
 	}
 
-	m.logger.WithField("tx", lock.Raw.TxHash.String()).Info("confirmEvent")
 	m.cocoC <- coco
 	m.persistLBlockHeight(lock.Raw.TxHash.String(), lock.Raw.BlockNumber, coco)
 }
@@ -333,7 +332,6 @@ func (m *Monitor) handleRollback(lock *mnt.PegProxyRollback, isHistory bool) {
 		return
 	}
 
-	m.logger.WithField("tx", lock.Raw.TxHash.String()).Info("confirmEvent")
 	m.cocoC <- coco
 	m.persistRBlockHeight(lock.Raw.TxHash.String(), lock.Raw.BlockNumber, coco)
 }
@@ -385,7 +383,6 @@ func (m *Monitor) handleCrossBurn(crossBurn *mnt.PegProxyCrossBurn, isHistory bo
 		return
 	}
 
-	m.logger.WithField("tx", crossBurn.Raw.TxHash.String()).Info("confirmEvent")
 	m.cocoC <- coco
 	m.persistCBlockHeight(crossBurn.Raw.TxHash.String(), crossBurn.Raw.BlockNumber, coco)
 }
@@ -425,7 +422,7 @@ func (m *Monitor) confirmEvent(event types.Log, typ int) bool {
 func (m *Monitor) Unlock(txId string, token common.Address, from common.Address, recipient common.Address, chainID, amount *big.Int) error {
 	unlocked := m.bscWrapper.TxUnlocked(txId)
 	if unlocked {
-		m.logger.Infof("find txUnlocked Chain %d txId:%s", txId)
+		m.logger.Infof("find txUnlocked Chain %d txId:%s", chainID.Uint64(), txId)
 		return nil
 	}
 
@@ -488,7 +485,7 @@ func (m *Monitor) CrossIn(txId string, token common.Address, from common.Address
 		"sender":    from.String(),
 		"recipient": recipient.String(),
 		"amount":    amount.String(),
-	}).Info("will unlock")
+	}).Info("will crossIn")
 
 	var (
 		transaction *types.Transaction
@@ -531,7 +528,7 @@ func (m *Monitor) CrossIn(txId string, token common.Address, from common.Address
 func (m *Monitor) Rollback(txId string, token common.Address, from common.Address, recipient common.Address, chainID, amount *big.Int) error {
 	unlocked := m.bscWrapper.TxRollbacked(txId)
 	if unlocked {
-		m.logger.Infof("find TxRollbacked Chain %d txId:%s", txId)
+		m.logger.Infof("find TxRollbacked Chain %d txId:%s", chainID.Uint64(), txId)
 		return nil
 	}
 
