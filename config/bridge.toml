@@ -1,23 +1,24 @@
 title = "Bridge configuration file"
 
 
-[eth]
+[matic]
   addrs = [
-    "https://kovan.infura.io/v3/3e8a2d2286964b62bc6b1d67c379badd",
-    "https://eth-kovan.alchemyapi.io/v2/K36BtEv6HiX4gn-b_XEB-l1mjqtm7FEI"
+    "https://rpc-mumbai.matic.today",
+    "https://matic-mumbai.chainstacklabs.com",
+    "https://rpc-mumbai.maticvigil.com",
+    "https://matic-testnet-archive-rpc.bwarelabs.com"
   ]
   minConfirms = 5 # min confirms
   gasLimit = 1500000 # gas Limit
-  pegBridgeContract = "0x63651c56cb3F5f0Fd4Ac6734E9B3F8B51aB49B70" # crosslock contract address
+  twoWayContract = "0x63651c56cb3F5f0Fd4Ac6734E9B3F8B51aB49B70" # crosslock contract address
 
 [bsc]
   addrs = [
-    "https://data-seed-prebsc-1-s1.binance.org:8545", # rpc host
-    "https://data-seed-prebsc-1-s2.binance.org:8545", # rpc host
+    "https://data-seed-prebsc-1-s1.binance.org:8545" # rpc host
   ]
   minConfirms = 5 # min confirms
   gasLimit = 1500000 # gas Limit
-  pegBridgeContract = "0x4b8832f9E22928f2De2DF6Fc1313F3eB079024Ad" # borbsc contract address
+  twoWayContract = "0x5f58Baf0c11227e75732813724bFC39e8Dbd59CD" # borbsc contract address
 
 [log]
   level = "info"
@@ -25,6 +26,6 @@ title = "Bridge configuration file"
   filename = "bridge.log"
 [log.module]
   bsc = "info"
-  eth = "info"
+  matic = "info"
   app = "info"
 

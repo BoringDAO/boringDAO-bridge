@@ -105,7 +105,7 @@ func New(config *repo.Config, logger logrus.FieldLogger) (*Monitor, error) {
 		bscWrapper:   bscWrapper,
 		address:      address,
 		pegProxyAbi:  pegProxyAbi,
-		pegProxyAddr: common.HexToAddress(config.Bsc.PegBridgeContract),
+		pegProxyAddr: common.HexToAddress(config.Bsc.TwoWayContract),
 		minConfirms:  uint64(minConfirms),
 		cocoC:        make(chan *Coco),
 		logger:       logger,
@@ -235,7 +235,7 @@ func (m *Monitor) HandleCocoC() chan *Coco {
 }
 
 func (m *Monitor) handleLock(lock *mnt.PegProxyLock, isHistory bool) {
-	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Bsc.PegBridgeContract) {
+	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Bsc.TwoWayContract) {
 		return
 	}
 
@@ -286,7 +286,7 @@ func (m *Monitor) handleLock(lock *mnt.PegProxyLock, isHistory bool) {
 }
 
 func (m *Monitor) handleRollback(lock *mnt.PegProxyRollback, isHistory bool) {
-	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Bsc.PegBridgeContract) {
+	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Bsc.TwoWayContract) {
 		return
 	}
 
@@ -337,7 +337,7 @@ func (m *Monitor) handleRollback(lock *mnt.PegProxyRollback, isHistory bool) {
 }
 
 func (m *Monitor) handleCrossBurn(crossBurn *mnt.PegProxyCrossBurn, isHistory bool) {
-	if !strings.EqualFold(crossBurn.Raw.Address.String(), m.config.Bsc.PegBridgeContract) {
+	if !strings.EqualFold(crossBurn.Raw.Address.String(), m.config.Bsc.TwoWayContract) {
 		return
 	}
 
@@ -582,7 +582,7 @@ func (m *Monitor) Rollback(txId string, token common.Address, from common.Addres
 func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
 	receipt := m.bscWrapper.TransactionReceipt(context.TODO(), common.HexToHash(txId))
 	for _, log := range receipt.Logs {
-		if !strings.EqualFold(log.Address.String(), m.config.Bsc.PegBridgeContract) {
+		if !strings.EqualFold(log.Address.String(), m.config.Bsc.TwoWayContract) {
 			continue
 		}
 
@@ -611,7 +611,7 @@ func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
 func (m *Monitor) GetCrossBurnLog(txId string) (*Coco, error) {
 	receipt := m.bscWrapper.TransactionReceipt(context.TODO(), common.HexToHash(txId))
 	for _, log := range receipt.Logs {
-		if !strings.EqualFold(log.Address.String(), m.config.Bsc.PegBridgeContract) {
+		if !strings.EqualFold(log.Address.String(), m.config.Bsc.TwoWayContract) {
 			continue
 		}
 
@@ -640,7 +640,7 @@ func (m *Monitor) GetCrossBurnLog(txId string) (*Coco, error) {
 func (m *Monitor) GetRollback(txId string) (*Coco, error) {
 	receipt := m.bscWrapper.TransactionReceipt(context.TODO(), common.HexToHash(txId))
 	for _, log := range receipt.Logs {
-		if !strings.EqualFold(log.Address.String(), m.config.Bsc.PegBridgeContract) {
+		if !strings.EqualFold(log.Address.String(), m.config.Bsc.TwoWayContract) {
 			continue
 		}
 

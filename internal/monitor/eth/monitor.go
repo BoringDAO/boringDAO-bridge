@@ -1,4 +1,4 @@
-package eth
+package matic
 
 import (
 	"bytes"
@@ -11,7 +11,6 @@ import (
 	"time"
 
 	mnt "github.com/boringdao/bridge/internal/monitor"
-
 	"github.com/boringdao/bridge/internal/repo"
 	"github.com/boringdao/bridge/pkg/kit/hexutil"
 	"github.com/boringdao/bridge/pkg/storage"
@@ -44,18 +43,18 @@ type Coco struct {
 }
 
 type Monitor struct {
-	lHeight      uint64
-	cHeight      uint64
-	rHeight      uint64
-	pegProxyAbi  abi.ABI
-	ethWrapper   *EthWrapper
-	cocoC        chan *Coco
-	logger       logrus.FieldLogger
-	storage      storage.Storage
-	config       *repo.Config
-	minConfirms  uint64
-	pegProxyAddr common.Address
-	address      common.Address
+	lHeight     uint64
+	cHeight     uint64
+	rHeight     uint64
+	twoWayAbi   abi.ABI
+	ethWrapper  *MaticWrapper
+	cocoC       chan *Coco
+	logger      logrus.FieldLogger
+	storage     storage.Storage
+	config      *repo.Config
+	minConfirms uint64
+	twoWayAddr  common.Address
+	address     common.Address
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -68,23 +67,16 @@ func New(config *repo.Config, logger logrus.FieldLogger) (*Monitor, error) {
 		return nil, err
 	}
 
-	privKey, err := crypto.ToECDSA(hexutil.Decode(config.Eth.PrivKey))
+	privKey, err := crypto.ToECDSA(hexutil.Decode(config.Matic.PrivKey))
 	if err != nil {
 		return nil, err
 	}
 
 	address := crypto.PubkeyToAddress(privKey.PublicKey)
 
-	auth := bind.NewKeyedTransactor(privKey)
-	if config.Eth.GasLimit < 800000 {
-		auth.GasLimit = 1500000
-	} else {
-		auth.GasLimit = config.Eth.GasLimit
-	}
-
 	minConfirms := 0
-	if config.Eth.MinConfirms > 0 {
-		minConfirms = int(config.Eth.MinConfirms)
+	if config.Matic.MinConfirms > 0 {
+		minConfirms = int(config.Matic.MinConfirms)
 	}
 
 	pegProxyAbi, err := abi.JSON(bytes.NewReader([]byte(mnt.PegProxyABI)))
@@ -92,7 +84,7 @@ func New(config *repo.Config, logger logrus.FieldLogger) (*Monitor, error) {
 		return nil, fmt.Errorf("abi unmarshal: %s", err.Error())
 	}
 
-	ethWrapper, err := NewEthWrapper(&config.Eth, logger)
+	ethWrapper, err := NewMaticWrapper(&config.Matic, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -100,17 +92,17 @@ func New(config *repo.Config, logger logrus.FieldLogger) (*Monitor, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &Monitor{
-		config:       config,
-		storage:      ethStorage,
-		address:      address,
-		ethWrapper:   ethWrapper,
-		pegProxyAbi:  pegProxyAbi,
-		pegProxyAddr: common.HexToAddress(config.Eth.PegBridgeContract),
-		minConfirms:  uint64(minConfirms),
-		cocoC:        make(chan *Coco),
-		logger:       logger,
-		ctx:          ctx,
-		cancel:       cancel,
+		config:      config,
+		storage:     ethStorage,
+		address:     address,
+		ethWrapper:  ethWrapper,
+		twoWayAbi:   pegProxyAbi,
+		twoWayAddr:  common.HexToAddress(config.Matic.TwoWayContract),
+		minConfirms: uint64(minConfirms),
+		cocoC:       make(chan *Coco),
+		logger:      logger,
+		ctx:         ctx,
+		cancel:      cancel,
 	}, nil
 }
 
@@ -235,7 +227,7 @@ func (m *Monitor) HandleCocoC() chan *Coco {
 }
 
 func (m *Monitor) handleRollback(lock *mnt.PegProxyRollback, isHistory bool) {
-	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Eth.PegBridgeContract) {
+	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Matic.TwoWayContract) {
 		return
 	}
 
@@ -287,7 +279,7 @@ func (m *Monitor) handleRollback(lock *mnt.PegProxyRollback, isHistory bool) {
 }
 
 func (m *Monitor) handleLock(lock *mnt.PegProxyLock, isHistory bool) {
-	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Eth.PegBridgeContract) {
+	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Matic.TwoWayContract) {
 		return
 	}
 
@@ -339,7 +331,7 @@ func (m *Monitor) handleLock(lock *mnt.PegProxyLock, isHistory bool) {
 }
 
 func (m *Monitor) handleCrossBurn(crossBurn *mnt.PegProxyCrossBurn, isHistory bool) {
-	if !strings.EqualFold(crossBurn.Raw.Address.String(), m.config.Eth.PegBridgeContract) {
+	if !strings.EqualFold(crossBurn.Raw.Address.String(), m.config.Matic.TwoWayContract) {
 		return
 	}
 
@@ -586,7 +578,7 @@ func (m *Monitor) CrossIn(txId string, token common.Address, from common.Address
 func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
 	receipt := m.ethWrapper.TransactionReceipt(context.TODO(), common.HexToHash(txId))
 	for _, log := range receipt.Logs {
-		if !strings.EqualFold(log.Address.String(), m.config.Eth.PegBridgeContract) {
+		if !strings.EqualFold(log.Address.String(), m.config.Matic.TwoWayContract) {
 			continue
 		}
 
@@ -615,7 +607,7 @@ func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
 func (m *Monitor) GetRollback(txId string) (*Coco, error) {
 	receipt := m.ethWrapper.TransactionReceipt(context.TODO(), common.HexToHash(txId))
 	for _, log := range receipt.Logs {
-		if !strings.EqualFold(log.Address.String(), m.config.Eth.PegBridgeContract) {
+		if !strings.EqualFold(log.Address.String(), m.config.Matic.TwoWayContract) {
 			continue
 		}
 
@@ -644,7 +636,7 @@ func (m *Monitor) GetRollback(txId string) (*Coco, error) {
 func (m *Monitor) GetCrossBurnLog(txId string) (*Coco, error) {
 	receipt := m.ethWrapper.TransactionReceipt(context.TODO(), common.HexToHash(txId))
 	for _, log := range receipt.Logs {
-		if !strings.EqualFold(log.Address.String(), m.config.Eth.PegBridgeContract) {
+		if !strings.EqualFold(log.Address.String(), m.config.Matic.TwoWayContract) {
 			continue
 		}
 
@@ -709,16 +701,16 @@ func (m *Monitor) loadHeightFromStorage() {
 
 	}
 
-	if m.config.Eth.LockHeight != 0 {
-		m.lHeight = m.config.Eth.LockHeight
+	if m.config.Matic.LockHeight != 0 {
+		m.lHeight = m.config.Matic.LockHeight
 	}
 
-	if m.config.Eth.CrossBurnHeight != 0 {
-		m.cHeight = m.config.Eth.CrossBurnHeight
+	if m.config.Matic.CrossBurnHeight != 0 {
+		m.cHeight = m.config.Matic.CrossBurnHeight
 	}
 
-	if m.config.Eth.RollbackHeight != 0 {
-		m.rHeight = m.config.Eth.RollbackHeight
+	if m.config.Matic.RollbackHeight != 0 {
+		m.rHeight = m.config.Matic.RollbackHeight
 	}
 
 	m.logger.WithFields(logrus.Fields{

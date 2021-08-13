@@ -41,7 +41,7 @@ func NewBscWrapper(config *repo.Bsc, logger logrus.FieldLogger) (*BscWrapper, er
 		return nil, fmt.Errorf("dial bsc node: %w", err)
 	}
 
-	pegProxy, err := mnt.NewPegProxy(common.HexToAddress(config.PegBridgeContract), etherCli)
+	pegProxy, err := mnt.NewPegProxy(common.HexToAddress(config.TwoWayContract), etherCli)
 	if err != nil {
 		return nil, fmt.Errorf("failed to instantiate a cross contract: %w", err)
 	}
@@ -395,7 +395,7 @@ func (bw *BscWrapper) switchToNextAddr() {
 			continue
 		}
 
-		bw.pegProxy, err = mnt.NewPegProxy(common.HexToAddress(bw.bsc.PegBridgeContract), bw.ethClient)
+		bw.pegProxy, err = mnt.NewPegProxy(common.HexToAddress(bw.bsc.TwoWayContract), bw.ethClient)
 		if err != nil {
 			continue
 		}

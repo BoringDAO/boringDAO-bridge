@@ -59,7 +59,7 @@ func start(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	repo.Config.Eth.PrivKey = ethKey
+	repo.Config.Matic.PrivKey = ethKey
 	repo.Config.Bsc.PrivKey = ethKey
 
 	bridge, err := app.New(repo)

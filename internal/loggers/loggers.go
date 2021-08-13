@@ -7,9 +7,9 @@ import (
 )
 
 const (
-	APP = "app"
-	BSC = "bsc"
-	ETH = "eth"
+	APP   = "app"
+	BSC   = "bsc"
+	MATIC = "matic"
 )
 
 var w *loggerWrapper
@@ -24,8 +24,8 @@ func Initialize(config *repo.Config) {
 	m[APP].Logger.SetLevel(log.ParseLevel(config.Log.Module.APP))
 	m[BSC] = log.NewWithModule(BSC)
 	m[BSC].Logger.SetLevel(log.ParseLevel(config.Log.Module.BSC))
-	m[ETH] = log.NewWithModule(ETH)
-	m[ETH].Logger.SetLevel(log.ParseLevel(config.Log.Module.ETH))
+	m[MATIC] = log.NewWithModule(MATIC)
+	m[MATIC].Logger.SetLevel(log.ParseLevel(config.Log.Module.MATIC))
 
 	w = &loggerWrapper{loggers: m}
 }

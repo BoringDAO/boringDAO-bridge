@@ -24,7 +24,7 @@ const (
 type Config struct {
 	RepoRoot string `json:"repo_root"`
 	Title    string `json:"title"`
-	Eth      `json:"eth"`
+	Matic    `json:"matic"`
 	Bsc      `json:"bsc"`
 	Log      `json:"log"`
 }
@@ -38,31 +38,31 @@ type Log struct {
 }
 
 type LogModule struct {
-	BSC string `toml:"bsc" json:"bsc"`
-	ETH string `toml:"eth" json:"eth"`
-	APP string `toml:"app" json:"app"`
+	BSC   string `toml:"bsc" json:"bsc"`
+	MATIC string `toml:"matic" json:"matic"`
+	APP   string `toml:"app" json:"app"`
 }
 
-type Eth struct {
-	Addrs             []string `toml:"addrs" json:"addrs"`
-	MinConfirms       uint64   `toml:"minConfirms" json:"minConfirms"`
-	PrivKey           string   `toml:"privKey" json:"privKey"`
-	GasLimit          uint64   `toml:"gasLimit" json:"gasLimit"`
-	LockHeight        uint64   `mapstructure:"lHeight" json:"lHeight"`
-	CrossBurnHeight   uint64   `mapstructure:"cHeight" json:"cHeight"`
-	RollbackHeight    uint64   `mapstructure:"rHeight" json:"rHeight"`
-	PegBridgeContract string   `toml:"pegBridgeContract" json:"pegBridgeContract"`
+type Matic struct {
+	Addrs           []string `toml:"addrs" json:"addrs"`
+	MinConfirms     uint64   `toml:"minConfirms" json:"minConfirms"`
+	PrivKey         string   `toml:"privKey" json:"privKey"`
+	GasLimit        uint64   `toml:"gasLimit" json:"gasLimit"`
+	LockHeight      uint64   `mapstructure:"lHeight" json:"lHeight"`
+	CrossBurnHeight uint64   `mapstructure:"cHeight" json:"cHeight"`
+	RollbackHeight  uint64   `mapstructure:"rHeight" json:"rHeight"`
+	TwoWayContract  string   `toml:"twoWayContract" json:"twoWayContract"`
 }
 
 type Bsc struct {
-	Addrs             []string `toml:"addrs" json:"addrs"`
-	MinConfirms       uint64   `toml:"minConfirms" json:"minConfirms"`
-	PrivKey           string   `toml:"privKey" json:"privKey"`
-	GasLimit          uint64   `toml:"gasLimit" json:"gasLimit"`
-	LockHeight        uint64   `mapstructure:"lHeight" json:"lHeight"`
-	CrossBurnHeight   uint64   `mapstructure:"cHeight" json:"cHeight"`
-	PegBridgeContract string   `toml:"pegBridgeContract" json:"pegBridgeContract"`
-	RollbackHeight    uint64   `mapstructure:"rHeight" json:"rHeight"`
+	Addrs           []string `toml:"addrs" json:"addrs"`
+	MinConfirms     uint64   `toml:"minConfirms" json:"minConfirms"`
+	PrivKey         string   `toml:"privKey" json:"privKey"`
+	GasLimit        uint64   `toml:"gasLimit" json:"gasLimit"`
+	LockHeight      uint64   `mapstructure:"lHeight" json:"lHeight"`
+	CrossBurnHeight uint64   `mapstructure:"cHeight" json:"cHeight"`
+	TwoWayContract  string   `toml:"twoWayContract" json:"twoWayContract"`
+	RollbackHeight  uint64   `mapstructure:"rHeight" json:"rHeight"`
 }
 
 func (c *Config) Bytes() ([]byte, error) {
@@ -86,12 +86,9 @@ func DefaultConfig() (*Config, error) {
 			Dir:      "logs",
 			Filename: "bridge.log",
 			Module: LogModule{
-				APP: "info",
-				ETH: "info",
+				APP:   "info",
+				MATIC: "info",
 			},
-		},
-		Eth: Eth{
-			GasLimit: 1500000,
 		},
 	}, nil
 }

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/boringdao/bridge/internal/monitor/bsc"
-	"github.com/boringdao/bridge/internal/monitor/eth"
+	matic "github.com/boringdao/bridge/internal/monitor/eth"
 
 	"github.com/boringdao/bridge/internal/loggers"
 	"github.com/boringdao/bridge/internal/repo"
@@ -19,12 +19,12 @@ import (
 )
 
 type Bridge struct {
-	repo    *repo.Repo
-	ethMnt  *eth.Monitor
-	bscMnt  *bsc.Monitor
-	storage storage.Storage
-	logger  logrus.FieldLogger
-	mux     sync.Mutex
+	repo     *repo.Repo
+	maticMnt *matic.Monitor
+	bscMnt   *bsc.Monitor
+	storage  storage.Storage
+	logger   logrus.FieldLogger
+	mux      sync.Mutex
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -37,7 +37,7 @@ func New(repoRoot *repo.Repo) (*Bridge, error) {
 		return nil, err
 	}
 
-	ethMnt, err := eth.New(repoRoot.Config, loggers.Logger(loggers.ETH))
+	maticMnt, err := matic.New(repoRoot.Config, loggers.Logger(loggers.MATIC))
 	if err != nil {
 		return nil, err
 	}
@@ -49,18 +49,18 @@ func New(repoRoot *repo.Repo) (*Bridge, error) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Bridge{
-		repo:    repoRoot,
-		ethMnt:  ethMnt,
-		bscMnt:  bscMnt,
-		storage: boringStorage,
-		logger:  loggers.Logger(loggers.APP),
-		ctx:     ctx,
-		cancel:  cancel,
+		repo:     repoRoot,
+		maticMnt: maticMnt,
+		bscMnt:   bscMnt,
+		storage:  boringStorage,
+		logger:   loggers.Logger(loggers.APP),
+		ctx:      ctx,
+		cancel:   cancel,
 	}, nil
 }
 
 func (b *Bridge) Start() error {
-	err := b.ethMnt.Start()
+	err := b.maticMnt.Start()
 	if err != nil {
 		return err
 	}
@@ -85,7 +85,7 @@ func (b *Bridge) Stop() error {
 }
 
 func (b *Bridge) listenEthCocoC() {
-	cocoC := b.ethMnt.HandleCocoC()
+	cocoC := b.maticMnt.HandleCocoC()
 	for {
 		select {
 		case coco := <-cocoC:
@@ -94,23 +94,23 @@ func (b *Bridge) listenEthCocoC() {
 				defer b.mux.Unlock()
 				b.logger.Infof("========> start handle bsc transaction...")
 				defer b.logger.Infof("========> end handle bsc transaction...")
-				if b.ethMnt.HasTx(coco.TxId, coco) {
+				if b.maticMnt.HasTx(coco.TxId, coco) {
 					b.logger.WithField("tx", coco.TxId).Error("has handled the interchain event")
 					return
 				}
 				var err error
 				switch coco.Typ {
-				case eth.Lock:
+				case matic.Lock:
 					err = b.bscMnt.CrossIn(coco.TxId+"#LOCK", coco.Token1, coco.From, coco.To, coco.ChainID0, coco.Amount)
-				case eth.CrossBurn:
+				case matic.CrossBurn:
 					err = b.bscMnt.Unlock(coco.TxId+"#CrossBurn", coco.Token1, coco.From, coco.To, coco.ChainID0, coco.Amount)
-				case eth.Rollback:
+				case matic.Rollback:
 					err = b.bscMnt.Rollback(coco.TxId+"#Rollback", coco.Token1, coco.From, coco.To, coco.ChainID0, coco.Amount)
 				}
 				if err != nil {
 					b.logger.Panic(err)
 				}
-				b.ethMnt.PutTxID(coco.TxId, coco)
+				b.maticMnt.PutTxID(coco.TxId, coco)
 
 			}
 			handle()
@@ -139,11 +139,11 @@ func (b *Bridge) listenBscCocoC() {
 				var err error
 				switch coco.Typ {
 				case bsc.Lock:
-					err = b.ethMnt.CrossIn(coco.TxId+"#LOCK", coco.Token1, coco.From, coco.To, coco.ChainID0, coco.Amount)
+					err = b.maticMnt.CrossIn(coco.TxId+"#LOCK", coco.Token1, coco.From, coco.To, coco.ChainID0, coco.Amount)
 				case bsc.CrossBurn:
-					err = b.ethMnt.Unlock(coco.TxId+"#CrossBurn", coco.Token1, coco.From, coco.To, coco.ChainID0, coco.Amount)
+					err = b.maticMnt.Unlock(coco.TxId+"#CrossBurn", coco.Token1, coco.From, coco.To, coco.ChainID0, coco.Amount)
 				case bsc.Rollback:
-					err = b.ethMnt.Rollback(coco.TxId+"#Rollback", coco.Token1, coco.From, coco.To, coco.ChainID0, coco.Amount)
+					err = b.maticMnt.Rollback(coco.TxId+"#Rollback", coco.Token1, coco.From, coco.To, coco.ChainID0, coco.Amount)
 				}
 				if err != nil {
 					b.logger.Panic(err)
@@ -165,7 +165,7 @@ func (b *Bridge) printLogo() {
 		time.Sleep(100 * time.Millisecond)
 		fmt.Println()
 		fmt.Println("=======================================================")
-		fig := figure.NewFigure("Bridge", "slant", true)
+		fig := figure.NewColorFigure("Bridge", "slant", "red", true)
 		fig.Print()
 		fmt.Println()
 		fmt.Println("=======================================================")

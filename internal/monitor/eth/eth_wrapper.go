@@ -1,4 +1,4 @@
-package eth
+package matic
 
 import (
 	"context"
@@ -27,9 +27,9 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type EthWrapper struct {
+type MaticWrapper struct {
 	addrIdx   int
-	eth       *repo.Eth
+	eth       *repo.Matic
 	ethClient *ethclient.Client
 	rpcClient *rpc.Client
 	pegProxy  *mnt.PegProxy
@@ -37,7 +37,7 @@ type EthWrapper struct {
 	logger    logrus.FieldLogger
 }
 
-func NewEthWrapper(config *repo.Eth, logger logrus.FieldLogger) (*EthWrapper, error) {
+func NewMaticWrapper(config *repo.Matic, logger logrus.FieldLogger) (*MaticWrapper, error) {
 	if len(config.Addrs) == 0 {
 		return nil, fmt.Errorf("addrs for bsc session wrapper is empty")
 	}
@@ -48,7 +48,7 @@ func NewEthWrapper(config *repo.Eth, logger logrus.FieldLogger) (*EthWrapper, er
 	}
 	etherCli := ethclient.NewClient(rpcClient)
 
-	pegProxy, err := mnt.NewPegProxy(common.HexToAddress(config.PegBridgeContract), etherCli)
+	pegProxy, err := mnt.NewPegProxy(common.HexToAddress(config.TwoWayContract), etherCli)
 	if err != nil {
 		return nil, fmt.Errorf("failed to instantiate a PegBridgeContract contract: %w", err)
 	}
@@ -81,7 +81,7 @@ func NewEthWrapper(config *repo.Eth, logger logrus.FieldLogger) (*EthWrapper, er
 		TransactOpts: *auth,
 	}
 
-	return &EthWrapper{
+	return &MaticWrapper{
 		addrIdx:   0,
 		eth:       config,
 		rpcClient: rpcClient,
@@ -92,7 +92,7 @@ func NewEthWrapper(config *repo.Eth, logger logrus.FieldLogger) (*EthWrapper, er
 	}, nil
 }
 
-func (lw *EthWrapper) HeaderByNumber(ctx context.Context, number *big.Int) *types.Header {
+func (lw *MaticWrapper) HeaderByNumber(ctx context.Context, number *big.Int) *types.Header {
 	var header *types.Header
 	var err error
 
@@ -113,7 +113,7 @@ func (lw *EthWrapper) HeaderByNumber(ctx context.Context, number *big.Int) *type
 	return header
 }
 
-func (lw *EthWrapper) FilterCrossBurn(opts *bind.FilterOpts) *mnt.PegProxyCrossBurnIterator {
+func (lw *MaticWrapper) FilterCrossBurn(opts *bind.FilterOpts) *mnt.PegProxyCrossBurnIterator {
 	var iterator *mnt.PegProxyCrossBurnIterator
 	var err error
 
@@ -134,7 +134,7 @@ func (lw *EthWrapper) FilterCrossBurn(opts *bind.FilterOpts) *mnt.PegProxyCrossB
 	return iterator
 }
 
-func (lw *EthWrapper) FilterRollback(opts *bind.FilterOpts) *mnt.PegProxyRollbackIterator {
+func (lw *MaticWrapper) FilterRollback(opts *bind.FilterOpts) *mnt.PegProxyRollbackIterator {
 	var iterator *mnt.PegProxyRollbackIterator
 	var err error
 
@@ -155,7 +155,7 @@ func (lw *EthWrapper) FilterRollback(opts *bind.FilterOpts) *mnt.PegProxyRollbac
 	return iterator
 }
 
-func (lw *EthWrapper) FilterLock(opts *bind.FilterOpts) *mnt.PegProxyLockIterator {
+func (lw *MaticWrapper) FilterLock(opts *bind.FilterOpts) *mnt.PegProxyLockIterator {
 	var iterator *mnt.PegProxyLockIterator
 	var err error
 
@@ -176,7 +176,7 @@ func (lw *EthWrapper) FilterLock(opts *bind.FilterOpts) *mnt.PegProxyLockIterato
 	return iterator
 }
 
-func (lw *EthWrapper) TxUnlocked(txId string) bool {
+func (lw *MaticWrapper) TxUnlocked(txId string) bool {
 	var result bool
 	var err error
 
@@ -197,7 +197,7 @@ func (lw *EthWrapper) TxUnlocked(txId string) bool {
 	return result
 }
 
-func (lw *EthWrapper) TxRollbacked(txId string) bool {
+func (lw *MaticWrapper) TxRollbacked(txId string) bool {
 	var result bool
 	var err error
 
@@ -218,7 +218,7 @@ func (lw *EthWrapper) TxRollbacked(txId string) bool {
 	return result
 }
 
-func (lw *EthWrapper) TxMinted(txId string) bool {
+func (lw *MaticWrapper) TxMinted(txId string) bool {
 	var result bool
 	var err error
 
@@ -239,7 +239,7 @@ func (lw *EthWrapper) TxMinted(txId string) bool {
 	return result
 }
 
-func (lw *EthWrapper) SuggestGasPrice(ctx context.Context) *big.Int {
+func (lw *MaticWrapper) SuggestGasPrice(ctx context.Context) *big.Int {
 	var result *big.Int
 	var err error
 
@@ -260,7 +260,7 @@ func (lw *EthWrapper) SuggestGasPrice(ctx context.Context) *big.Int {
 	return result
 }
 
-func (lw *EthWrapper) CrossIn(token, from, to common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
+func (lw *MaticWrapper) CrossIn(token, from, to common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
 	var tx *types.Transaction
 	var err error
 	var hash common.Hash
@@ -292,7 +292,7 @@ func (lw *EthWrapper) CrossIn(token, from, to common.Address, chainID, amount *b
 	return tx, hash
 }
 
-func (lw *EthWrapper) Rollback(token common.Address, from common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
+func (lw *MaticWrapper) Rollback(token common.Address, from common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
 	var tx *types.Transaction
 	var err error
 	var hash common.Hash
@@ -322,7 +322,7 @@ func (lw *EthWrapper) Rollback(token common.Address, from common.Address, chainI
 	return tx, hash
 }
 
-func (lw *EthWrapper) Unlock(token common.Address, from common.Address, to common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
+func (lw *MaticWrapper) Unlock(token common.Address, from common.Address, to common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
 	var tx *types.Transaction
 	var err error
 	var hash common.Hash
@@ -353,7 +353,7 @@ func (lw *EthWrapper) Unlock(token common.Address, from common.Address, to commo
 	return tx, hash
 }
 
-func (bw *EthWrapper) unlock(token, from, to common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash, error) {
+func (bw *MaticWrapper) unlock(token, from, to common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash, error) {
 	parsed, err := abi.JSON(strings.NewReader(mnt.PegProxyABI))
 	if err != nil {
 		return nil, common.Hash{}, err
@@ -379,7 +379,7 @@ func (bw *EthWrapper) unlock(token, from, to common.Address, chainID, amount *bi
 	}
 
 	// Create the transaction, sign it and schedule it for execution
-	rawTx := types.NewTransaction(nonce, common.HexToAddress(bw.eth.PegBridgeContract), value, opts.GasLimit, opts.GasPrice, input)
+	rawTx := types.NewTransaction(nonce, common.HexToAddress(bw.eth.TwoWayContract), value, opts.GasLimit, opts.GasPrice, input)
 	signedTx, err := opts.Signer(opts.From, rawTx)
 	if err != nil {
 		return nil, common.Hash{}, err
@@ -395,7 +395,7 @@ func (bw *EthWrapper) unlock(token, from, to common.Address, chainID, amount *bi
 	return signedTx, txHash, err
 }
 
-func (bw *EthWrapper) crossIn(token common.Address, from common.Address, to common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash, error) {
+func (bw *MaticWrapper) crossIn(token common.Address, from common.Address, to common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash, error) {
 	parsed, err := abi.JSON(strings.NewReader(mnt.PegProxyABI))
 	if err != nil {
 		return nil, common.Hash{}, err
@@ -421,7 +421,7 @@ func (bw *EthWrapper) crossIn(token common.Address, from common.Address, to comm
 	}
 
 	// Create the transaction, sign it and schedule it for execution
-	rawTx := types.NewTransaction(nonce, common.HexToAddress(bw.eth.PegBridgeContract), value, opts.GasLimit, opts.GasPrice, input)
+	rawTx := types.NewTransaction(nonce, common.HexToAddress(bw.eth.TwoWayContract), value, opts.GasLimit, opts.GasPrice, input)
 	signedTx, err := opts.Signer(opts.From, rawTx)
 	if err != nil {
 		return nil, common.Hash{}, err
@@ -437,7 +437,7 @@ func (bw *EthWrapper) crossIn(token common.Address, from common.Address, to comm
 	return signedTx, txHash, err
 }
 
-func (bw *EthWrapper) rollback(token common.Address, from common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash, error) {
+func (bw *MaticWrapper) rollback(token common.Address, from common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash, error) {
 	parsed, err := abi.JSON(strings.NewReader(mnt.PegProxyABI))
 	if err != nil {
 		return nil, common.Hash{}, err
@@ -463,7 +463,7 @@ func (bw *EthWrapper) rollback(token common.Address, from common.Address, chainI
 	}
 
 	// Create the transaction, sign it and schedule it for execution
-	rawTx := types.NewTransaction(nonce, common.HexToAddress(bw.eth.PegBridgeContract), value, opts.GasLimit, opts.GasPrice, input)
+	rawTx := types.NewTransaction(nonce, common.HexToAddress(bw.eth.TwoWayContract), value, opts.GasLimit, opts.GasPrice, input)
 	signedTx, err := opts.Signer(opts.From, rawTx)
 	if err != nil {
 		return nil, common.Hash{}, err
@@ -479,7 +479,7 @@ func (bw *EthWrapper) rollback(token common.Address, from common.Address, chainI
 	return signedTx, txHash, err
 }
 
-func (lw *EthWrapper) TransactionReceiptsLimitedRetry(ctx context.Context, txHashes []common.Hash) (*types.Receipt, error) {
+func (lw *MaticWrapper) TransactionReceiptsLimitedRetry(ctx context.Context, txHashes []common.Hash) (*types.Receipt, error) {
 	var result *types.Receipt
 	var err error
 
@@ -505,7 +505,7 @@ func (lw *EthWrapper) TransactionReceiptsLimitedRetry(ctx context.Context, txHas
 	return result, err
 }
 
-func (lw *EthWrapper) TransactionReceipt(ctx context.Context, txHash common.Hash) *types.Receipt {
+func (lw *MaticWrapper) TransactionReceipt(ctx context.Context, txHash common.Hash) *types.Receipt {
 	var result *types.Receipt
 	var err error
 
@@ -526,7 +526,7 @@ func (lw *EthWrapper) TransactionReceipt(ctx context.Context, txHash common.Hash
 	return result
 }
 
-func (lw *EthWrapper) switchToNextAddr() {
+func (lw *MaticWrapper) switchToNextAddr() {
 	var err error
 	var rpcClient *rpc.Client
 	for i := 0; i < len(lw.eth.Addrs); i++ {
@@ -543,7 +543,7 @@ func (lw *EthWrapper) switchToNextAddr() {
 		}
 		lw.ethClient = ethclient.NewClient(rpcClient)
 
-		lw.pegProxy, err = mnt.NewPegProxy(common.HexToAddress(lw.eth.PegBridgeContract), lw.ethClient)
+		lw.pegProxy, err = mnt.NewPegProxy(common.HexToAddress(lw.eth.TwoWayContract), lw.ethClient)
 		if err != nil {
 			continue
 		}
@@ -558,11 +558,11 @@ func (lw *EthWrapper) switchToNextAddr() {
 	panic("all eth addrs are not valid")
 }
 
-func (lw *EthWrapper) Close() {
+func (lw *MaticWrapper) Close() {
 	lw.ethClient.Close()
 }
 
-func (lw *EthWrapper) isNetworkError(err error) bool {
+func (lw *MaticWrapper) isNetworkError(err error) bool {
 	if err == nil {
 		return false
 	}
