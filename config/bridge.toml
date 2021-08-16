@@ -1,31 +1,46 @@
 title = "Bridge configuration file"
 
 
-[matic]
+[[bridges]]
+  name = "matic"
   addrs = [
     "https://rpc-mumbai.matic.today",
     "https://matic-mumbai.chainstacklabs.com",
     "https://rpc-mumbai.maticvigil.com",
     "https://matic-testnet-archive-rpc.bwarelabs.com"
   ]
-  minConfirms = 5 # min confirms
+  chainID = 80001 # main 137, testnet 80001
+  minConfirms = 15 # min confirms
   gasLimit = 1500000 # gas Limit
-  twoWayContract = "0x63651c56cb3F5f0Fd4Ac6734E9B3F8B51aB49B70" # crosslock contract address
+  twoWayContract = "0x63651c56cb3F5f0Fd4Ac6734E9B3F8B51aB49B70"
 
-[bsc]
+[[bridges]]
+  name = "bsc"
   addrs = [
-    "https://data-seed-prebsc-1-s1.binance.org:8545" # rpc host
+    "https://data-seed-prebsc-2-s1.binance.org:8545" # rpc host
   ]
-  minConfirms = 5 # min confirms
+  chainID = 97
+  minConfirms = 15 # min confirms
   gasLimit = 1500000 # gas Limit
-  twoWayContract = "0x5f58Baf0c11227e75732813724bFC39e8Dbd59CD" # borbsc contract address
+  twoWayContract = "0x63651c56cb3F5f0Fd4Ac6734E9B3F8B51aB49B70"
+
+[[bridges]]
+  name = "okex"
+  addrs = [
+    "https://exchaintestrpc.okex.org" # rpc host
+  ]
+  chainID = 65
+  minConfirms = 15 # min confirms
+  gasLimit = 1500000 # gas Limit
+  twoWayContract = "0x63651c56cb3F5f0Fd4Ac6734E9B3F8B51aB49B70"
 
 [log]
   level = "info"
   dir = "logs"
   filename = "bridge.log"
 [log.module]
+  app = "info"
   bsc = "info"
+  okex = "info"
   matic = "info"
   app = "info"
-

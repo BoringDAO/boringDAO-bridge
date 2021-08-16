@@ -7,9 +7,7 @@ import (
 )
 
 const (
-	APP   = "app"
-	BSC   = "bsc"
-	MATIC = "matic"
+	APP = "app"
 )
 
 var w *loggerWrapper
@@ -20,16 +18,22 @@ type loggerWrapper struct {
 
 func Initialize(config *repo.Config) {
 	m := make(map[string]*logrus.Entry)
-	m[APP] = log.NewWithModule(APP)
-	m[APP].Logger.SetLevel(log.ParseLevel(config.Log.Module.APP))
-	m[BSC] = log.NewWithModule(BSC)
-	m[BSC].Logger.SetLevel(log.ParseLevel(config.Log.Module.BSC))
-	m[MATIC] = log.NewWithModule(MATIC)
-	m[MATIC].Logger.SetLevel(log.ParseLevel(config.Log.Module.MATIC))
+
+	for mod, level := range config.Log.Module {
+		m[mod] = log.NewWithModule(mod)
+		m[mod].Logger.SetLevel(log.ParseLevel(level))
+	}
 
 	w = &loggerWrapper{loggers: m}
 }
 
 func Logger(name string) logrus.FieldLogger {
-	return w.loggers[name]
+	logger, ok := w.loggers[name]
+	if !ok {
+		logger = log.NewWithModule(name)
+		logger.Logger.SetLevel(logrus.InfoLevel)
+		w.loggers[name] = logger
+	}
+
+	return logger
 }

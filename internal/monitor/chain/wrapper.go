@@ -1,4 +1,4 @@
-package matic
+package chain
 
 import (
 	"context"
@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	mnt "github.com/boringdao/bridge/internal/monitor/contracts"
+
 	"github.com/ethereum/go-ethereum/rpc"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -15,7 +17,6 @@ import (
 
 	"github.com/Rican7/retry"
 	"github.com/Rican7/retry/strategy"
-	mnt "github.com/boringdao/bridge/internal/monitor"
 	"github.com/boringdao/bridge/internal/repo"
 	"github.com/boringdao/bridge/pkg/kit/hexutil"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -27,9 +28,9 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type MaticWrapper struct {
+type Wrapper struct {
 	addrIdx   int
-	eth       *repo.Matic
+	config    *repo.BridgeConfig
 	ethClient *ethclient.Client
 	rpcClient *rpc.Client
 	pegProxy  *mnt.PegProxy
@@ -37,9 +38,9 @@ type MaticWrapper struct {
 	logger    logrus.FieldLogger
 }
 
-func NewMaticWrapper(config *repo.Matic, logger logrus.FieldLogger) (*MaticWrapper, error) {
+func NewWrapper(config *repo.BridgeConfig, logger logrus.FieldLogger) (*Wrapper, error) {
 	if len(config.Addrs) == 0 {
-		return nil, fmt.Errorf("addrs for bsc session wrapper is empty")
+		return nil, fmt.Errorf("addrs for %s session wrapper is empty", config.Name)
 	}
 
 	rpcClient, err := rpc.DialContext(context.Background(), config.Addrs[0])
@@ -50,7 +51,7 @@ func NewMaticWrapper(config *repo.Matic, logger logrus.FieldLogger) (*MaticWrapp
 
 	pegProxy, err := mnt.NewPegProxy(common.HexToAddress(config.TwoWayContract), etherCli)
 	if err != nil {
-		return nil, fmt.Errorf("failed to instantiate a PegBridgeContract contract: %w", err)
+		return nil, fmt.Errorf("failed to instantiate a TwoWayContract contract: %w", err)
 	}
 
 	privKey, err := crypto.ToECDSA(hexutil.Decode(config.PrivKey))
@@ -61,6 +62,10 @@ func NewMaticWrapper(config *repo.Matic, logger logrus.FieldLogger) (*MaticWrapp
 	chainID, err := etherCli.ChainID(context.Background())
 	if err != nil {
 		return nil, err
+	}
+
+	if chainID.Uint64() != config.ChainID {
+		return nil, fmt.Errorf("%s blockchain chainID is %d but config is %d", config.Name, chainID.Uint64(), config.ChainID)
 	}
 
 	auth, err := bind.NewKeyedTransactorWithChainID(privKey, chainID)
@@ -81,9 +86,9 @@ func NewMaticWrapper(config *repo.Matic, logger logrus.FieldLogger) (*MaticWrapp
 		TransactOpts: *auth,
 	}
 
-	return &MaticWrapper{
+	return &Wrapper{
 		addrIdx:   0,
-		eth:       config,
+		config:    config,
 		rpcClient: rpcClient,
 		ethClient: etherCli,
 		pegProxy:  pegProxy,
@@ -92,268 +97,268 @@ func NewMaticWrapper(config *repo.Matic, logger logrus.FieldLogger) (*MaticWrapp
 	}, nil
 }
 
-func (lw *MaticWrapper) HeaderByNumber(ctx context.Context, number *big.Int) *types.Header {
+func (w *Wrapper) HeaderByNumber(ctx context.Context, number *big.Int) *types.Header {
 	var header *types.Header
 	var err error
 
 	if err := retry.Retry(func(attempt uint) error {
-		header, err = lw.ethClient.HeaderByNumber(ctx, number)
+		header, err = w.ethClient.HeaderByNumber(ctx, number)
 		if err != nil {
-			lw.logger.Warnf("HeaderByNumber: %s", err.Error())
+			w.logger.Warnf("HeaderByNumber: %s", err.Error())
 
-			if lw.isNetworkError(err) {
-				lw.switchToNextAddr()
+			if w.isNetworkError(err) {
+				w.switchToNextAddr()
 			}
 		}
 		return err
 	}, strategy.Wait(10*time.Second)); err != nil {
-		lw.logger.Panic(err)
+		w.logger.Panic(err)
 	}
 
 	return header
 }
 
-func (lw *MaticWrapper) FilterCrossBurn(opts *bind.FilterOpts) *mnt.PegProxyCrossBurnIterator {
+func (w *Wrapper) FilterCrossBurn(opts *bind.FilterOpts) *mnt.PegProxyCrossBurnIterator {
 	var iterator *mnt.PegProxyCrossBurnIterator
 	var err error
 
 	if err := retry.Retry(func(attempt uint) error {
-		iterator, err = lw.pegProxy.FilterCrossBurn(opts)
+		iterator, err = w.pegProxy.FilterCrossBurn(opts)
 		if err != nil {
-			lw.logger.Warnf("FilterCrossBurn: %s", err.Error())
+			w.logger.Warnf("FilterCrossBurn: %s", err.Error())
 
-			if lw.isNetworkError(err) {
-				lw.switchToNextAddr()
+			if w.isNetworkError(err) {
+				w.switchToNextAddr()
 			}
 		}
 		return err
 	}, strategy.Wait(10*time.Second)); err != nil {
-		lw.logger.Panic(err)
+		w.logger.Panic(err)
 	}
 
 	return iterator
 }
 
-func (lw *MaticWrapper) FilterRollback(opts *bind.FilterOpts) *mnt.PegProxyRollbackIterator {
+func (w *Wrapper) FilterRollback(opts *bind.FilterOpts) *mnt.PegProxyRollbackIterator {
 	var iterator *mnt.PegProxyRollbackIterator
 	var err error
 
 	if err := retry.Retry(func(attempt uint) error {
-		iterator, err = lw.pegProxy.FilterRollback(opts)
+		iterator, err = w.pegProxy.FilterRollback(opts)
 		if err != nil {
-			lw.logger.Warnf("FilterRollback: %s", err.Error())
+			w.logger.Warnf("FilterRollback: %s", err.Error())
 
-			if lw.isNetworkError(err) {
-				lw.switchToNextAddr()
+			if w.isNetworkError(err) {
+				w.switchToNextAddr()
 			}
 		}
 		return err
 	}, strategy.Wait(10*time.Second)); err != nil {
-		lw.logger.Panic(err)
+		w.logger.Panic(err)
 	}
 
 	return iterator
 }
 
-func (lw *MaticWrapper) FilterLock(opts *bind.FilterOpts) *mnt.PegProxyLockIterator {
+func (w *Wrapper) FilterLock(opts *bind.FilterOpts) *mnt.PegProxyLockIterator {
 	var iterator *mnt.PegProxyLockIterator
 	var err error
 
 	if err := retry.Retry(func(attempt uint) error {
-		iterator, err = lw.pegProxy.FilterLock(opts)
+		iterator, err = w.pegProxy.FilterLock(opts)
 		if err != nil {
-			lw.logger.Warnf("FilterLock: %s", err.Error())
+			w.logger.Warnf("FilterLock: %s", err.Error())
 
-			if lw.isNetworkError(err) {
-				lw.switchToNextAddr()
+			if w.isNetworkError(err) {
+				w.switchToNextAddr()
 			}
 		}
 		return err
 	}, strategy.Wait(10*time.Second)); err != nil {
-		lw.logger.Panic(err)
+		w.logger.Panic(err)
 	}
 
 	return iterator
 }
 
-func (lw *MaticWrapper) TxUnlocked(txId string) bool {
+func (w *Wrapper) TxUnlocked(txId string) bool {
 	var result bool
 	var err error
 
 	if err := retry.Retry(func(attempt uint) error {
-		result, err = lw.session.TxUnlocked(txId)
+		result, err = w.session.TxUnlocked(txId)
 		if err != nil {
-			lw.logger.Warnf("TxUnlocked: %s", err.Error())
+			w.logger.Warnf("TxUnlocked: %s", err.Error())
 
-			if lw.isNetworkError(err) {
-				lw.switchToNextAddr()
+			if w.isNetworkError(err) {
+				w.switchToNextAddr()
 			}
 		}
 		return err
 	}, strategy.Wait(10*time.Second)); err != nil {
-		lw.logger.Panic(err)
+		w.logger.Panic(err)
 	}
 
 	return result
 }
 
-func (lw *MaticWrapper) TxRollbacked(txId string) bool {
+func (w *Wrapper) TxRollbacked(txId string) bool {
 	var result bool
 	var err error
 
 	if err := retry.Retry(func(attempt uint) error {
-		result, err = lw.session.TxRollbacked(txId)
+		result, err = w.session.TxRollbacked(txId)
 		if err != nil {
-			lw.logger.Warnf("TxRollbacked: %s", err.Error())
+			w.logger.Warnf("TxRollbacked: %s", err.Error())
 
-			if lw.isNetworkError(err) {
-				lw.switchToNextAddr()
+			if w.isNetworkError(err) {
+				w.switchToNextAddr()
 			}
 		}
 		return err
 	}, strategy.Wait(10*time.Second)); err != nil {
-		lw.logger.Panic(err)
+		w.logger.Panic(err)
 	}
 
 	return result
 }
 
-func (lw *MaticWrapper) TxMinted(txId string) bool {
+func (w *Wrapper) TxMinted(txId string) bool {
 	var result bool
 	var err error
 
 	if err := retry.Retry(func(attempt uint) error {
-		result, err = lw.session.TxMinted(txId)
+		result, err = w.session.TxMinted(txId)
 		if err != nil {
-			lw.logger.Warnf("TxMinted: %s", err.Error())
+			w.logger.Warnf("TxMinted: %s", err.Error())
 
-			if lw.isNetworkError(err) {
-				lw.switchToNextAddr()
+			if w.isNetworkError(err) {
+				w.switchToNextAddr()
 			}
 		}
 		return err
 	}, strategy.Wait(10*time.Second)); err != nil {
-		lw.logger.Panic(err)
+		w.logger.Panic(err)
 	}
 
 	return result
 }
 
-func (lw *MaticWrapper) SuggestGasPrice(ctx context.Context) *big.Int {
+func (w *Wrapper) SuggestGasPrice(ctx context.Context) *big.Int {
 	var result *big.Int
 	var err error
 
 	if err := retry.Retry(func(attempt uint) error {
-		result, err = lw.ethClient.SuggestGasPrice(ctx)
+		result, err = w.ethClient.SuggestGasPrice(ctx)
 		if err != nil {
-			lw.logger.Warnf("SuggestGasPrice: %s", err.Error())
+			w.logger.Warnf("SuggestGasPrice: %s", err.Error())
 
-			if lw.isNetworkError(err) {
-				lw.switchToNextAddr()
+			if w.isNetworkError(err) {
+				w.switchToNextAddr()
 			}
 		}
 		return err
 	}, strategy.Wait(10*time.Second)); err != nil {
-		lw.logger.Panic(err)
+		w.logger.Panic(err)
 	}
 
 	return result
 }
 
-func (lw *MaticWrapper) CrossIn(token, from, to common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
+func (w *Wrapper) CrossIn(token, from, to common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
 	var tx *types.Transaction
 	var err error
 	var hash common.Hash
 
 	if err := retry.Retry(func(attempt uint) error {
-		price := lw.SuggestGasPrice(context.TODO())
+		price := w.SuggestGasPrice(context.TODO())
 		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
-		lw.session.TransactOpts.GasPrice = gasPrice.BigInt()
+		w.session.TransactOpts.GasPrice = gasPrice.BigInt()
 
 		var newHash common.Hash
-		tx, newHash, err = lw.crossIn(token, from, to, chainID, amount, txid)
+		tx, newHash, err = w.crossIn(token, from, to, chainID, amount, txid)
 		if tx != nil {
 			hash = newHash
 		}
 		if err != nil {
-			lw.logger.Warnf("CrossIn: %s", err.Error())
+			w.logger.Warnf("CrossIn: %s", err.Error())
 
-			if lw.isNetworkError(err) {
-				lw.switchToNextAddr()
+			if w.isNetworkError(err) {
+				w.switchToNextAddr()
 				return err
 			}
 		}
 
 		return err
 	}, strategy.Wait(10*time.Second)); err != nil {
-		lw.logger.Panic(err)
+		w.logger.Panic(err)
 	}
 
 	return tx, hash
 }
 
-func (lw *MaticWrapper) Rollback(token common.Address, from common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
+func (w *Wrapper) Rollback(token common.Address, from common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
 	var tx *types.Transaction
 	var err error
 	var hash common.Hash
 
 	if err := retry.Retry(func(attempt uint) error {
-		price := lw.SuggestGasPrice(context.TODO())
+		price := w.SuggestGasPrice(context.TODO())
 		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
-		lw.session.TransactOpts.GasPrice = gasPrice.BigInt()
+		w.session.TransactOpts.GasPrice = gasPrice.BigInt()
 		var newHash common.Hash
-		tx, newHash, err = lw.rollback(token, from, chainID, amount, txid)
+		tx, newHash, err = w.rollback(token, from, chainID, amount, txid)
 		if tx != nil {
 			hash = newHash
 		}
 		if err != nil {
-			lw.logger.Warnf("Rollback: %s", err.Error())
+			w.logger.Warnf("Rollback: %s", err.Error())
 
-			if lw.isNetworkError(err) {
-				lw.switchToNextAddr()
+			if w.isNetworkError(err) {
+				w.switchToNextAddr()
 			}
 
 		}
 		return err
 	}, strategy.Wait(10*time.Second)); err != nil {
-		lw.logger.Panic(err)
+		w.logger.Panic(err)
 	}
 
 	return tx, hash
 }
 
-func (lw *MaticWrapper) Unlock(token common.Address, from common.Address, to common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
+func (w *Wrapper) Unlock(token common.Address, from common.Address, to common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
 	var tx *types.Transaction
 	var err error
 	var hash common.Hash
 
 	if err := retry.Retry(func(attempt uint) error {
-		price := lw.SuggestGasPrice(context.TODO())
+		price := w.SuggestGasPrice(context.TODO())
 		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
-		lw.session.TransactOpts.GasPrice = gasPrice.BigInt()
+		w.session.TransactOpts.GasPrice = gasPrice.BigInt()
 		var newHash common.Hash
-		tx, newHash, err = lw.unlock(token, from, to, chainID, amount, txid)
+		tx, newHash, err = w.unlock(token, from, to, chainID, amount, txid)
 		if tx != nil {
 			hash = newHash
 		}
 		if err != nil {
-			lw.logger.Warnf("Unlock: %s", err.Error())
+			w.logger.Warnf("Unlock: %s", err.Error())
 
-			if lw.isNetworkError(err) {
-				lw.switchToNextAddr()
+			if w.isNetworkError(err) {
+				w.switchToNextAddr()
 				return err
 			}
 		}
 
 		return err
 	}, strategy.Wait(10*time.Second)); err != nil {
-		lw.logger.Panic(err)
+		w.logger.Panic(err)
 	}
 
 	return tx, hash
 }
 
-func (bw *MaticWrapper) unlock(token, from, to common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash, error) {
+func (w *Wrapper) unlock(token, from, to common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash, error) {
 	parsed, err := abi.JSON(strings.NewReader(mnt.PegProxyABI))
 	if err != nil {
 		return nil, common.Hash{}, err
@@ -363,14 +368,14 @@ func (bw *MaticWrapper) unlock(token, from, to common.Address, chainID, amount *
 		return nil, common.Hash{}, err
 	}
 
-	opts := bw.session.TransactOpts
+	opts := w.session.TransactOpts
 	value := opts.Value
 	if value == nil {
 		value = new(big.Int)
 	}
 	var nonce uint64
 	if opts.Nonce == nil {
-		nonce, err = bw.ethClient.PendingNonceAt(ensureContext(opts.Context), opts.From)
+		nonce, err = w.ethClient.PendingNonceAt(ensureContext(opts.Context), opts.From)
 		if err != nil {
 			return nil, common.Hash{}, fmt.Errorf("failed to retrieve account nonce: %v", err)
 		}
@@ -379,7 +384,7 @@ func (bw *MaticWrapper) unlock(token, from, to common.Address, chainID, amount *
 	}
 
 	// Create the transaction, sign it and schedule it for execution
-	rawTx := types.NewTransaction(nonce, common.HexToAddress(bw.eth.TwoWayContract), value, opts.GasLimit, opts.GasPrice, input)
+	rawTx := types.NewTransaction(nonce, common.HexToAddress(w.config.TwoWayContract), value, opts.GasLimit, opts.GasPrice, input)
 	signedTx, err := opts.Signer(opts.From, rawTx)
 	if err != nil {
 		return nil, common.Hash{}, err
@@ -390,12 +395,12 @@ func (bw *MaticWrapper) unlock(token, from, to common.Address, chainID, amount *
 	}
 
 	var txHash common.Hash
-	err = bw.rpcClient.CallContext(ensureContext(opts.Context), &txHash, "eth_sendRawTransaction", hexutil.Encode(data))
+	err = w.rpcClient.CallContext(ensureContext(opts.Context), &txHash, "eth_sendRawTransaction", hexutil.Encode(data))
 
 	return signedTx, txHash, err
 }
 
-func (bw *MaticWrapper) crossIn(token common.Address, from common.Address, to common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash, error) {
+func (w *Wrapper) crossIn(token common.Address, from common.Address, to common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash, error) {
 	parsed, err := abi.JSON(strings.NewReader(mnt.PegProxyABI))
 	if err != nil {
 		return nil, common.Hash{}, err
@@ -405,14 +410,14 @@ func (bw *MaticWrapper) crossIn(token common.Address, from common.Address, to co
 		return nil, common.Hash{}, err
 	}
 
-	opts := bw.session.TransactOpts
+	opts := w.session.TransactOpts
 	value := opts.Value
 	if value == nil {
 		value = new(big.Int)
 	}
 	var nonce uint64
 	if opts.Nonce == nil {
-		nonce, err = bw.ethClient.PendingNonceAt(ensureContext(opts.Context), opts.From)
+		nonce, err = w.ethClient.PendingNonceAt(ensureContext(opts.Context), opts.From)
 		if err != nil {
 			return nil, common.Hash{}, fmt.Errorf("failed to retrieve account nonce: %v", err)
 		}
@@ -421,7 +426,7 @@ func (bw *MaticWrapper) crossIn(token common.Address, from common.Address, to co
 	}
 
 	// Create the transaction, sign it and schedule it for execution
-	rawTx := types.NewTransaction(nonce, common.HexToAddress(bw.eth.TwoWayContract), value, opts.GasLimit, opts.GasPrice, input)
+	rawTx := types.NewTransaction(nonce, common.HexToAddress(w.config.TwoWayContract), value, opts.GasLimit, opts.GasPrice, input)
 	signedTx, err := opts.Signer(opts.From, rawTx)
 	if err != nil {
 		return nil, common.Hash{}, err
@@ -432,12 +437,12 @@ func (bw *MaticWrapper) crossIn(token common.Address, from common.Address, to co
 	}
 
 	var txHash common.Hash
-	err = bw.rpcClient.CallContext(ensureContext(opts.Context), &txHash, "eth_sendRawTransaction", hexutil.Encode(data))
+	err = w.rpcClient.CallContext(ensureContext(opts.Context), &txHash, "eth_sendRawTransaction", hexutil.Encode(data))
 
 	return signedTx, txHash, err
 }
 
-func (bw *MaticWrapper) rollback(token common.Address, from common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash, error) {
+func (w *Wrapper) rollback(token common.Address, from common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash, error) {
 	parsed, err := abi.JSON(strings.NewReader(mnt.PegProxyABI))
 	if err != nil {
 		return nil, common.Hash{}, err
@@ -447,14 +452,14 @@ func (bw *MaticWrapper) rollback(token common.Address, from common.Address, chai
 		return nil, common.Hash{}, err
 	}
 
-	opts := bw.session.TransactOpts
+	opts := w.session.TransactOpts
 	value := opts.Value
 	if value == nil {
 		value = new(big.Int)
 	}
 	var nonce uint64
 	if opts.Nonce == nil {
-		nonce, err = bw.ethClient.PendingNonceAt(ensureContext(opts.Context), opts.From)
+		nonce, err = w.ethClient.PendingNonceAt(ensureContext(opts.Context), opts.From)
 		if err != nil {
 			return nil, common.Hash{}, fmt.Errorf("failed to retrieve account nonce: %v", err)
 		}
@@ -463,7 +468,7 @@ func (bw *MaticWrapper) rollback(token common.Address, from common.Address, chai
 	}
 
 	// Create the transaction, sign it and schedule it for execution
-	rawTx := types.NewTransaction(nonce, common.HexToAddress(bw.eth.TwoWayContract), value, opts.GasLimit, opts.GasPrice, input)
+	rawTx := types.NewTransaction(nonce, common.HexToAddress(w.config.TwoWayContract), value, opts.GasLimit, opts.GasPrice, input)
 	signedTx, err := opts.Signer(opts.From, rawTx)
 	if err != nil {
 		return nil, common.Hash{}, err
@@ -474,23 +479,23 @@ func (bw *MaticWrapper) rollback(token common.Address, from common.Address, chai
 	}
 
 	var txHash common.Hash
-	err = bw.rpcClient.CallContext(ensureContext(opts.Context), &txHash, "eth_sendRawTransaction", hexutil.Encode(data))
+	err = w.rpcClient.CallContext(ensureContext(opts.Context), &txHash, "eth_sendRawTransaction", hexutil.Encode(data))
 
 	return signedTx, txHash, err
 }
 
-func (lw *MaticWrapper) TransactionReceiptsLimitedRetry(ctx context.Context, txHashes []common.Hash) (*types.Receipt, error) {
+func (w *Wrapper) TransactionReceiptsLimitedRetry(ctx context.Context, txHashes []common.Hash) (*types.Receipt, error) {
 	var result *types.Receipt
 	var err error
 
 	if err := retry.Retry(func(attempt uint) error {
 		for _, txHash := range txHashes {
-			result, err = lw.ethClient.TransactionReceipt(ctx, txHash)
+			result, err = w.ethClient.TransactionReceipt(ctx, txHash)
 			if err != nil {
-				lw.logger.Warnf("TransactionReceipt: %s", err.Error())
+				w.logger.Warnf("TransactionReceipt: %s", err.Error())
 
-				if lw.isNetworkError(err) {
-					lw.switchToNextAddr()
+				if w.isNetworkError(err) {
+					w.switchToNextAddr()
 				}
 			}
 			if err == nil {
@@ -499,58 +504,58 @@ func (lw *MaticWrapper) TransactionReceiptsLimitedRetry(ctx context.Context, txH
 		}
 		return err
 	}, strategy.Wait(10*time.Second), strategy.Limit(30)); err != nil {
-		lw.logger.Warnf("retry TransactionReceipt: %s", err.Error())
+		w.logger.Warnf("retry TransactionReceipt: %s", err.Error())
 	}
 
 	return result, err
 }
 
-func (lw *MaticWrapper) TransactionReceipt(ctx context.Context, txHash common.Hash) *types.Receipt {
+func (w *Wrapper) TransactionReceipt(ctx context.Context, txHash common.Hash) *types.Receipt {
 	var result *types.Receipt
 	var err error
 
 	if err := retry.Retry(func(attempt uint) error {
-		result, err = lw.ethClient.TransactionReceipt(ctx, txHash)
+		result, err = w.ethClient.TransactionReceipt(ctx, txHash)
 		if err != nil {
-			lw.logger.Warnf("TransactionReceipt: %s", err.Error())
+			w.logger.Warnf("TransactionReceipt: %s", err.Error())
 
-			if lw.isNetworkError(err) {
-				lw.switchToNextAddr()
+			if w.isNetworkError(err) {
+				w.switchToNextAddr()
 			}
 		}
 		return err
 	}, strategy.Wait(10*time.Second)); err != nil {
-		lw.logger.Panic(err)
+		w.logger.Panic(err)
 	}
 
 	return result
 }
 
-func (lw *MaticWrapper) switchToNextAddr() {
+func (w *Wrapper) switchToNextAddr() {
 	var err error
 	var rpcClient *rpc.Client
-	for i := 0; i < len(lw.eth.Addrs); i++ {
-		lw.addrIdx++
-		if lw.addrIdx == len(lw.eth.Addrs) {
-			lw.addrIdx = 0
+	for i := 0; i < len(w.config.Addrs); i++ {
+		w.addrIdx++
+		if w.addrIdx == len(w.config.Addrs) {
+			w.addrIdx = 0
 		}
 
-		lw.logger.Warnf("try to switch to %s", lw.eth.Addrs[lw.addrIdx])
+		w.logger.Warnf("try to switch to %s", w.config.Addrs[w.addrIdx])
 
-		rpcClient, err = rpc.DialContext(context.Background(), lw.eth.Addrs[lw.addrIdx])
+		rpcClient, err = rpc.DialContext(context.Background(), w.config.Addrs[w.addrIdx])
 		if err != nil {
 			continue
 		}
-		lw.ethClient = ethclient.NewClient(rpcClient)
+		w.ethClient = ethclient.NewClient(rpcClient)
 
-		lw.pegProxy, err = mnt.NewPegProxy(common.HexToAddress(lw.eth.TwoWayContract), lw.ethClient)
+		w.pegProxy, err = mnt.NewPegProxy(common.HexToAddress(w.config.TwoWayContract), w.ethClient)
 		if err != nil {
 			continue
 		}
 
-		lw.session.Contract = lw.pegProxy
+		w.session.Contract = w.pegProxy
 
-		lw.logger.Infof("switch to %s successfully", lw.eth.Addrs[lw.addrIdx])
+		w.logger.Infof("switch to %s successfully", w.config.Addrs[w.addrIdx])
 
 		return
 	}
@@ -558,11 +563,11 @@ func (lw *MaticWrapper) switchToNextAddr() {
 	panic("all eth addrs are not valid")
 }
 
-func (lw *MaticWrapper) Close() {
-	lw.ethClient.Close()
+func (w *Wrapper) Close() {
+	w.ethClient.Close()
 }
 
-func (lw *MaticWrapper) isNetworkError(err error) bool {
+func (w *Wrapper) isNetworkError(err error) bool {
 	if err == nil {
 		return false
 	}

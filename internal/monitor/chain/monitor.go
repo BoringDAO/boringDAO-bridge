@@ -1,4 +1,4 @@
-package bsc
+package chain
 
 import (
 	"bytes"
@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	mnt "github.com/boringdao/bridge/internal/monitor"
-
+	"github.com/boringdao/bridge/internal/monitor"
+	mnt "github.com/boringdao/bridge/internal/monitor/contracts"
 	"github.com/boringdao/bridge/internal/repo"
 	"github.com/boringdao/bridge/pkg/kit/hexutil"
 	"github.com/boringdao/bridge/pkg/storage"
@@ -25,66 +25,41 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const Lock = 0
-const CrossBurn = 1
-const Rollback = 2
-
-type Coco struct {
-	Typ         int            `json:"typ"`
-	IsHistory   bool           `json:"isHistory"`
-	From        common.Address `json:"from"`
-	To          common.Address `json:"to"`
-	Amount      *big.Int       `json:"amount"`
-	TxId        string         `json:"tx_id"`
-	BlockHeight uint64         `json:"block_height"`
-	Token0      common.Address `json:"token0"`
-	Token1      common.Address `json:"token1"`
-	ChainID0    *big.Int       `json:"chain_id_0"`
-	ChainID1    *big.Int       `json:"chain_id_1"`
-}
-
 type Monitor struct {
-	lHeight      uint64
-	cHeight      uint64
-	rHeight      uint64
-	pegProxyAbi  abi.ABI
-	bscWrapper   *BscWrapper
-	cocoC        chan *Coco
-	logger       logrus.FieldLogger
-	storage      storage.Storage
-	config       *repo.Config
-	minConfirms  uint64
-	pegProxyAddr common.Address
-	address      common.Address
+	lHeight     uint64
+	cHeight     uint64
+	rHeight     uint64
+	twoWayAbi   abi.ABI
+	wrapper     *Wrapper
+	cocoC       chan *monitor.Coco
+	logger      logrus.FieldLogger
+	storage     storage.Storage
+	config      *repo.BridgeConfig
+	minConfirms uint64
+	twoWayAddr  common.Address
+	address     common.Address
 
 	ctx    context.Context
 	cancel context.CancelFunc
 }
 
-func New(config *repo.Config, logger logrus.FieldLogger) (*Monitor, error) {
-	storagePath := repo.GetStoragePath(config.RepoRoot, "bsc")
+func New(repoRoot string, config *repo.BridgeConfig, logger logrus.FieldLogger) (monitor.Mnt, error) {
+	storagePath := repo.GetStoragePath(repoRoot, fmt.Sprintf("%s_%d", config.Name, config.ChainID))
 	ethStorage, err := leveldb.New(storagePath)
 	if err != nil {
 		return nil, err
 	}
 
-	privKey, err := crypto.ToECDSA(hexutil.Decode(config.Bsc.PrivKey))
+	privKey, err := crypto.ToECDSA(hexutil.Decode(config.PrivKey))
 	if err != nil {
 		return nil, err
 	}
 
 	address := crypto.PubkeyToAddress(privKey.PublicKey)
 
-	auth := bind.NewKeyedTransactor(privKey)
-	if config.Bsc.GasLimit < 800000 {
-		auth.GasLimit = 1500000
-	} else {
-		auth.GasLimit = config.Bsc.GasLimit
-	}
-
 	minConfirms := 0
-	if config.Bsc.MinConfirms > 0 {
-		minConfirms = int(config.Bsc.MinConfirms)
+	if config.MinConfirms > 0 {
+		minConfirms = int(config.MinConfirms)
 	}
 
 	pegProxyAbi, err := abi.JSON(bytes.NewReader([]byte(mnt.PegProxyABI)))
@@ -92,7 +67,7 @@ func New(config *repo.Config, logger logrus.FieldLogger) (*Monitor, error) {
 		return nil, fmt.Errorf("abi unmarshal: %s", err.Error())
 	}
 
-	bscWrapper, err := NewBscWrapper(&config.Bsc, logger)
+	wrapper, err := NewWrapper(config, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -100,17 +75,17 @@ func New(config *repo.Config, logger logrus.FieldLogger) (*Monitor, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &Monitor{
-		config:       config,
-		storage:      ethStorage,
-		bscWrapper:   bscWrapper,
-		address:      address,
-		pegProxyAbi:  pegProxyAbi,
-		pegProxyAddr: common.HexToAddress(config.Bsc.TwoWayContract),
-		minConfirms:  uint64(minConfirms),
-		cocoC:        make(chan *Coco),
-		logger:       logger,
-		ctx:          ctx,
-		cancel:       cancel,
+		config:      config,
+		storage:     ethStorage,
+		address:     address,
+		wrapper:     wrapper,
+		twoWayAbi:   pegProxyAbi,
+		twoWayAddr:  common.HexToAddress(config.TwoWayContract),
+		minConfirms: uint64(minConfirms),
+		cocoC:       make(chan *monitor.Coco),
+		logger:      logger,
+		ctx:         ctx,
+		cancel:      cancel,
 	}, nil
 }
 
@@ -124,7 +99,7 @@ func (m *Monitor) Start() error {
 
 func (m *Monitor) Stop() error {
 	m.cancel()
-	m.bscWrapper.Close()
+	m.wrapper.Close()
 	return nil
 }
 
@@ -148,49 +123,15 @@ func (m *Monitor) listenLockEvent() {
 			if end >= start+2000 {
 				end = start + 2000
 			}
-			filter := m.bscWrapper.FilterLock(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
+			filter := m.wrapper.FilterLock(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
 			for filter.Next() {
-				m.handleLock(filter.Event, true)
+				m.handleLock(filter.Event)
 			}
 
 			m.logger.WithFields(logrus.Fields{"start": start, "end": end, "current": num}).Infof("CrossLockLockIterator")
 			start = end + 1
 		case <-m.ctx.Done():
 			m.logger.Info("CrossLockLockIterator done")
-			return
-		}
-	}
-}
-
-func (m *Monitor) listenRollback() {
-	ticker := time.NewTicker(60 * time.Second)
-	defer ticker.Stop()
-
-	start := m.rHeight
-
-	for {
-		select {
-		case <-ticker.C:
-			num, err := m.fetchBlockNum()
-			if err != nil {
-				continue
-			}
-			end := num - m.minConfirms
-			if num < m.minConfirms || end < start {
-				continue
-			}
-			if end >= start+2000 {
-				end = start + 2000
-			}
-			filter := m.bscWrapper.FilterRollback(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
-			for filter.Next() {
-				m.handleRollback(filter.Event, true)
-			}
-
-			m.logger.WithFields(logrus.Fields{"start": start, "end": end, "current": num}).Infof("RollbackIterator")
-			start = end + 1
-		case <-m.ctx.Done():
-			m.logger.Info("RollbackIterator done")
 			return
 		}
 	}
@@ -216,9 +157,9 @@ func (m *Monitor) listenCrossBurnEvent() {
 			if end >= start+2000 {
 				end = start + 2000
 			}
-			filter := m.bscWrapper.FilterCrossBurn(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
+			filter := m.wrapper.FilterCrossBurn(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
 			for filter.Next() {
-				m.handleCrossBurn(filter.Event, true)
+				m.handleCrossBurn(filter.Event)
 			}
 
 			m.logger.WithFields(logrus.Fields{"start": start, "end": end, "current": num}).Infof("CrossBurn")
@@ -230,72 +171,54 @@ func (m *Monitor) listenCrossBurnEvent() {
 	}
 }
 
-func (m *Monitor) HandleCocoC() chan *Coco {
+func (m *Monitor) listenRollback() {
+	ticker := time.NewTicker(60 * time.Second)
+	defer ticker.Stop()
+
+	start := m.rHeight
+
+	for {
+		select {
+		case <-ticker.C:
+			num, err := m.fetchBlockNum()
+			if err != nil {
+				continue
+			}
+			end := num - m.minConfirms
+			if num < m.minConfirms || end < start {
+				continue
+			}
+			if end >= start+2000 {
+				end = start + 2000
+			}
+			filter := m.wrapper.FilterRollback(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
+			for filter.Next() {
+				m.handleRollback(filter.Event)
+			}
+
+			m.logger.WithFields(logrus.Fields{"start": start, "end": end, "current": num}).Infof("bridge.RollbackIterator")
+			start = end + 1
+		case <-m.ctx.Done():
+			m.logger.Info("bridge.RollbackIterator done")
+			return
+		}
+	}
+}
+
+func (m *Monitor) HandleCocoC() chan *monitor.Coco {
 	return m.cocoC
 }
 
-func (m *Monitor) handleLock(lock *mnt.PegProxyLock, isHistory bool) {
-	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Bsc.TwoWayContract) {
+func (m *Monitor) handleRollback(lock *mnt.PegProxyRollback) {
+	if !strings.EqualFold(lock.Raw.Address.String(), m.config.TwoWayContract) {
 		return
 	}
 
-	if m.storage.Has(TxKey(lock.Raw.TxHash.String(), Lock)) {
+	if m.storage.Has(TxKey(lock.Raw.TxHash.String(), monitor.Rollback)) {
 		return
 	}
-	coco := &Coco{
-		Typ:         Lock,
-		IsHistory:   isHistory,
-		Token0:      lock.Token0,
-		Token1:      lock.Token1,
-		ChainID0:    lock.ChainID0,
-		ChainID1:    lock.ChainID1,
-		From:        lock.From,
-		To:          lock.To,
-		Amount:      lock.Amount,
-		TxId:        lock.Raw.TxHash.String(),
-		BlockHeight: lock.Raw.BlockNumber,
-	}
-
-	m.logger.WithFields(logrus.Fields{
-		"token0":       coco.Token0.String(),
-		"token1":       coco.Token1.String(),
-		"from":         coco.From.String(),
-		"to":           coco.To.String(),
-		"chain0":       coco.ChainID0.String(),
-		"chain1":       coco.ChainID1.String(),
-		"amount":       coco.Amount.String(),
-		"txId":         lock.Raw.TxHash.String(),
-		"block_height": lock.Raw.BlockNumber,
-		"removed":      lock.Raw.Removed,
-	}).Info("PegProxyLock")
-
-	if lock.Raw.Removed {
-		return
-	}
-
-	if !m.confirmEvent(lock.Raw, Lock) {
-		m.logger.WithFields(logrus.Fields{
-			"txId":         lock.Raw.TxHash.String(),
-			"block_height": lock.Raw.BlockNumber,
-		}).Info("PegProxyLock has not confirmed")
-		return
-	}
-
-	m.cocoC <- coco
-	m.persistLBlockHeight(lock.Raw.TxHash.String(), lock.Raw.BlockNumber, coco)
-}
-
-func (m *Monitor) handleRollback(lock *mnt.PegProxyRollback, isHistory bool) {
-	if !strings.EqualFold(lock.Raw.Address.String(), m.config.Bsc.TwoWayContract) {
-		return
-	}
-
-	if m.storage.Has(TxKey(lock.Raw.TxHash.String(), Rollback)) {
-		return
-	}
-	coco := &Coco{
-		Typ:         Rollback,
-		IsHistory:   isHistory,
+	coco := &monitor.Coco{
+		Typ:         monitor.Rollback,
 		Token0:      lock.Token0,
 		Token1:      lock.Token1,
 		ChainID0:    lock.ChainID0,
@@ -324,29 +247,80 @@ func (m *Monitor) handleRollback(lock *mnt.PegProxyRollback, isHistory bool) {
 		return
 	}
 
-	if !m.confirmEvent(lock.Raw, Rollback) {
+	if !m.confirmEvent(lock.Raw, monitor.Rollback) {
 		m.logger.WithFields(logrus.Fields{
 			"txId":         lock.Raw.TxHash.String(),
 			"block_height": lock.Raw.BlockNumber,
-		}).Info("PegProxyRollback has not confirmed")
+		}).Info("PegProxybridge.Rollback has not confirmed")
 		return
 	}
 
+	m.logger.WithField("tx", lock.Raw.TxHash.String()).Info("confirmEvent")
 	m.cocoC <- coco
 	m.persistRBlockHeight(lock.Raw.TxHash.String(), lock.Raw.BlockNumber, coco)
 }
 
-func (m *Monitor) handleCrossBurn(crossBurn *mnt.PegProxyCrossBurn, isHistory bool) {
-	if !strings.EqualFold(crossBurn.Raw.Address.String(), m.config.Bsc.TwoWayContract) {
+func (m *Monitor) handleLock(lock *mnt.PegProxyLock) {
+	if !strings.EqualFold(lock.Raw.Address.String(), m.config.TwoWayContract) {
 		return
 	}
 
-	if m.storage.Has(TxKey(crossBurn.Raw.TxHash.String(), CrossBurn)) {
+	if m.storage.Has(TxKey(lock.Raw.TxHash.String(), monitor.Lock)) {
 		return
 	}
-	coco := &Coco{
-		Typ:         CrossBurn,
-		IsHistory:   isHistory,
+	coco := &monitor.Coco{
+		Typ:         monitor.Lock,
+		Token0:      lock.Token0,
+		Token1:      lock.Token1,
+		ChainID0:    lock.ChainID0,
+		ChainID1:    lock.ChainID1,
+		From:        lock.From,
+		To:          lock.To,
+		Amount:      lock.Amount,
+		TxId:        lock.Raw.TxHash.String(),
+		BlockHeight: lock.Raw.BlockNumber,
+	}
+
+	m.logger.WithFields(logrus.Fields{
+		"token0":       coco.Token0.String(),
+		"token1":       coco.Token1.String(),
+		"from":         coco.From.String(),
+		"to":           coco.To.String(),
+		"chain0":       coco.ChainID0.String(),
+		"chain1":       coco.ChainID1.String(),
+		"amount":       coco.Amount.String(),
+		"txId":         lock.Raw.TxHash.String(),
+		"block_height": lock.Raw.BlockNumber,
+		"removed":      lock.Raw.Removed,
+	}).Info("PegProxyLock")
+
+	if lock.Raw.Removed {
+		return
+	}
+
+	if !m.confirmEvent(lock.Raw, monitor.Lock) {
+		m.logger.WithFields(logrus.Fields{
+			"txId":         lock.Raw.TxHash.String(),
+			"block_height": lock.Raw.BlockNumber,
+		}).Info("PegProxyLock has not confirmed")
+		return
+	}
+
+	m.logger.WithField("tx", lock.Raw.TxHash.String()).Info("confirmEvent")
+	m.cocoC <- coco
+	m.persistLBlockHeight(lock.Raw.TxHash.String(), lock.Raw.BlockNumber, coco)
+}
+
+func (m *Monitor) handleCrossBurn(crossBurn *mnt.PegProxyCrossBurn) {
+	if !strings.EqualFold(crossBurn.Raw.Address.String(), m.config.TwoWayContract) {
+		return
+	}
+
+	if m.storage.Has(TxKey(crossBurn.Raw.TxHash.String(), monitor.CrossBurn)) {
+		return
+	}
+	coco := &monitor.Coco{
+		Typ:         monitor.CrossBurn,
 		Token0:      crossBurn.Token0,
 		Token1:      crossBurn.Token1,
 		ChainID0:    crossBurn.ChainID0,
@@ -375,7 +349,7 @@ func (m *Monitor) handleCrossBurn(crossBurn *mnt.PegProxyCrossBurn, isHistory bo
 		return
 	}
 
-	if !m.confirmEvent(crossBurn.Raw, CrossBurn) {
+	if !m.confirmEvent(crossBurn.Raw, monitor.CrossBurn) {
 		m.logger.WithFields(logrus.Fields{
 			"txId":         crossBurn.Raw.TxHash.String(),
 			"block_height": crossBurn.Raw.BlockNumber,
@@ -383,6 +357,7 @@ func (m *Monitor) handleCrossBurn(crossBurn *mnt.PegProxyCrossBurn, isHistory bo
 		return
 	}
 
+	m.logger.WithField("tx", crossBurn.Raw.TxHash.String()).Info("confirmEvent")
 	m.cocoC <- coco
 	m.persistCBlockHeight(crossBurn.Raw.TxHash.String(), crossBurn.Raw.BlockNumber, coco)
 }
@@ -399,13 +374,13 @@ func (m *Monitor) confirmEvent(event types.Log, typ int) bool {
 			time.Sleep(15 * time.Second)
 			continue
 		}
-		var log *Coco
+		var log *monitor.Coco
 		switch typ {
-		case Lock:
+		case monitor.Lock:
 			log, err = m.GetLockLog(event.TxHash.String())
-		case CrossBurn:
+		case monitor.CrossBurn:
 			log, err = m.GetCrossBurnLog(event.TxHash.String())
-		case Rollback:
+		case monitor.Rollback:
 			log, err = m.GetRollback(event.TxHash.String())
 		}
 		if err != nil {
@@ -420,7 +395,7 @@ func (m *Monitor) confirmEvent(event types.Log, typ int) bool {
 }
 
 func (m *Monitor) Unlock(txId string, token common.Address, from common.Address, recipient common.Address, chainID, amount *big.Int) error {
-	unlocked := m.bscWrapper.TxUnlocked(txId)
+	unlocked := m.wrapper.TxUnlocked(txId)
 	if unlocked {
 		m.logger.Infof("find txUnlocked Chain %d txId:%s", chainID.Uint64(), txId)
 		return nil
@@ -441,24 +416,24 @@ func (m *Monitor) Unlock(txId string, token common.Address, from common.Address,
 		hashes      []common.Hash
 	)
 
-	m.bscWrapper.session.TransactOpts.Nonce = nil
-	m.bscWrapper.session.TransactOpts.GasPrice = nil
+	m.wrapper.session.TransactOpts.Nonce = nil
+	m.wrapper.session.TransactOpts.GasPrice = nil
 
 	for {
-		price := m.bscWrapper.SuggestGasPrice(context.TODO())
+		price := m.wrapper.SuggestGasPrice(context.TODO())
 		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
-		if m.bscWrapper.session.TransactOpts.GasPrice == nil ||
-			gasPrice.BigInt().Cmp(m.bscWrapper.session.TransactOpts.GasPrice) == 1 {
-			m.bscWrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
-
-			transaction = m.bscWrapper.Unlock(token, from, recipient, chainID, amount, txId)
-			m.bscWrapper.session.TransactOpts.Nonce = big.NewInt(int64(transaction.Nonce()))
-			hashes = append(hashes, transaction.Hash())
+		if m.wrapper.session.TransactOpts.GasPrice == nil ||
+			gasPrice.BigInt().Cmp(m.wrapper.session.TransactOpts.GasPrice) == 1 {
+			m.wrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
+			var hash common.Hash
+			transaction, hash = m.wrapper.Unlock(token, from, recipient, chainID, amount, txId)
+			m.wrapper.session.TransactOpts.Nonce = big.NewInt(int64(transaction.Nonce()))
+			hashes = append(hashes, hash)
 
 			m.logger.Infof("send UnlockBor tx %s with gasPrice %s and nonce %d",
-				transaction.Hash().String(), gasPrice.String(), transaction.Nonce())
+				hash, gasPrice.String(), transaction.Nonce())
 		}
-		receipt, err = m.bscWrapper.TransactionReceiptsLimitedRetry(context.TODO(), hashes)
+		receipt, err = m.wrapper.TransactionReceiptsLimitedRetry(context.TODO(), hashes)
 		if err == nil {
 			break
 		}
@@ -472,8 +447,62 @@ func (m *Monitor) Unlock(txId string, token common.Address, from common.Address,
 	return nil
 }
 
+func (m *Monitor) Rollback(txId string, token common.Address, from common.Address, recipient common.Address, chainID, amount *big.Int) error {
+	unlocked := m.wrapper.TxUnlocked(txId)
+	if unlocked {
+		m.logger.Infof("find bridge.Rollback Chain %d txId:%s", chainID.Uint64(), txId)
+		return nil
+	}
+
+	m.logger.WithFields(logrus.Fields{
+		"tx_id":     txId,
+		"token":     token.String(),
+		"sender":    from.String(),
+		"chainId":   chainID.String(),
+		"recipient": recipient.String(),
+		"amount":    amount.String(),
+	}).Info("will rollback")
+
+	var (
+		transaction *types.Transaction
+		receipt     *types.Receipt
+		err         error
+		hashes      []common.Hash
+	)
+
+	m.wrapper.session.TransactOpts.Nonce = nil
+	m.wrapper.session.TransactOpts.GasPrice = nil
+
+	for {
+		price := m.wrapper.SuggestGasPrice(context.TODO())
+		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
+		if m.wrapper.session.TransactOpts.GasPrice == nil ||
+			gasPrice.BigInt().Cmp(m.wrapper.session.TransactOpts.GasPrice) == 1 {
+			m.wrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
+			var hash common.Hash
+			transaction, hash = m.wrapper.Rollback(token, from, chainID, amount, txId)
+			m.wrapper.session.TransactOpts.Nonce = big.NewInt(int64(transaction.Nonce()))
+			hashes = append(hashes, hash)
+
+			m.logger.Infof("send bridge.Rollback tx %s with gasPrice %s and nonce %d",
+				hash, gasPrice.String(), transaction.Nonce())
+		}
+		receipt, err = m.wrapper.TransactionReceiptsLimitedRetry(context.TODO(), hashes)
+		if err == nil {
+			break
+		}
+	}
+
+	if receipt.Status == 1 {
+		m.logger.WithField("tx_hash", receipt.TxHash.String()).Info("rollback success")
+	} else {
+		return fmt.Errorf("rollback fail:%s", receipt.TxHash.String())
+	}
+	return nil
+}
+
 func (m *Monitor) CrossIn(txId string, token common.Address, from common.Address, recipient common.Address, chainID, amount *big.Int) error {
-	unlocked := m.bscWrapper.TxMinted(txId)
+	unlocked := m.wrapper.TxMinted(txId)
 	if unlocked {
 		m.logger.Infof("find TxMinted txId:%s", txId)
 		return nil
@@ -494,24 +523,25 @@ func (m *Monitor) CrossIn(txId string, token common.Address, from common.Address
 		hashes      []common.Hash
 	)
 
-	m.bscWrapper.session.TransactOpts.Nonce = nil
-	m.bscWrapper.session.TransactOpts.GasPrice = nil
+	m.wrapper.session.TransactOpts.Nonce = nil
+	m.wrapper.session.TransactOpts.GasPrice = nil
 
 	for {
-		price := m.bscWrapper.SuggestGasPrice(context.TODO())
+		price := m.wrapper.SuggestGasPrice(context.TODO())
 		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
-		if m.bscWrapper.session.TransactOpts.GasPrice == nil ||
-			gasPrice.BigInt().Cmp(m.bscWrapper.session.TransactOpts.GasPrice) == 1 {
-			m.bscWrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
+		if m.wrapper.session.TransactOpts.GasPrice == nil ||
+			gasPrice.BigInt().Cmp(m.wrapper.session.TransactOpts.GasPrice) == 1 {
+			m.wrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
 
-			transaction, _ = m.bscWrapper.CrossIn(token, from, recipient, chainID, amount, txId)
-			m.bscWrapper.session.TransactOpts.Nonce = big.NewInt(int64(transaction.Nonce()))
-			hashes = append(hashes, transaction.Hash())
+			var hash common.Hash
+			transaction, hash = m.wrapper.CrossIn(token, from, recipient, chainID, amount, txId)
+			m.wrapper.session.TransactOpts.Nonce = big.NewInt(int64(transaction.Nonce()))
+			hashes = append(hashes, hash)
 
-			m.logger.Infof("send UnlockBor tx %s with gasPrice %s and nonce %d",
-				transaction.Hash().String(), gasPrice.String(), transaction.Nonce())
+			m.logger.Infof("send CrossIn tx %s with gasPrice %s and nonce %d",
+				hash, gasPrice.String(), transaction.Nonce())
 		}
-		receipt, err = m.bscWrapper.TransactionReceiptsLimitedRetry(context.TODO(), hashes)
+		receipt, err = m.wrapper.TransactionReceiptsLimitedRetry(context.TODO(), hashes)
 		if err == nil {
 			break
 		}
@@ -525,75 +555,21 @@ func (m *Monitor) CrossIn(txId string, token common.Address, from common.Address
 	return nil
 }
 
-func (m *Monitor) Rollback(txId string, token common.Address, from common.Address, recipient common.Address, chainID, amount *big.Int) error {
-	unlocked := m.bscWrapper.TxRollbacked(txId)
-	if unlocked {
-		m.logger.Infof("find TxRollbacked Chain %d txId:%s", chainID.Uint64(), txId)
-		return nil
-	}
-
-	m.logger.WithFields(logrus.Fields{
-		"tx_id":     txId,
-		"token":     token.String(),
-		"from":      from.String(),
-		"chainId":   chainID.String(),
-		"recipient": recipient.String(),
-		"amount":    amount.String(),
-	}).Info("will rollback")
-
-	var (
-		transaction *types.Transaction
-		receipt     *types.Receipt
-		err         error
-		hashes      []common.Hash
-	)
-
-	m.bscWrapper.session.TransactOpts.Nonce = nil
-	m.bscWrapper.session.TransactOpts.GasPrice = nil
-
-	for {
-		price := m.bscWrapper.SuggestGasPrice(context.TODO())
-		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
-		if m.bscWrapper.session.TransactOpts.GasPrice == nil ||
-			gasPrice.BigInt().Cmp(m.bscWrapper.session.TransactOpts.GasPrice) == 1 {
-			m.bscWrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
-
-			transaction, _ = m.bscWrapper.Rollback(token, from, chainID, amount, txId)
-			m.bscWrapper.session.TransactOpts.Nonce = big.NewInt(int64(transaction.Nonce()))
-			hashes = append(hashes, transaction.Hash())
-
-			m.logger.Infof("send Rollback tx %s with gasPrice %s and nonce %d",
-				transaction.Hash().String(), gasPrice.String(), transaction.Nonce())
-		}
-		receipt, err = m.bscWrapper.TransactionReceiptsLimitedRetry(context.TODO(), hashes)
-		if err == nil {
-			break
-		}
-	}
-
-	if receipt.Status == 1 {
-		m.logger.WithField("tx_hash", receipt.TxHash.String()).Info("rollback success")
-	} else {
-		return fmt.Errorf("rollback fail:%s", receipt.TxHash.String())
-	}
-	return nil
-}
-
-func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
-	receipt := m.bscWrapper.TransactionReceipt(context.TODO(), common.HexToHash(txId))
+func (m *Monitor) GetLockLog(txId string) (*monitor.Coco, error) {
+	receipt := m.wrapper.TransactionReceipt(context.TODO(), common.HexToHash(txId))
 	for _, log := range receipt.Logs {
-		if !strings.EqualFold(log.Address.String(), m.config.Bsc.TwoWayContract) {
+		if !strings.EqualFold(log.Address.String(), m.config.TwoWayContract) {
 			continue
 		}
 
 		if log.Removed {
 			continue
 		}
-		lock, err := m.bscWrapper.pegProxy.ParseLock(*log)
+		lock, err := m.wrapper.pegProxy.ParseLock(*log)
 		if err != nil {
 			continue
 		}
-		return &Coco{
+		return &monitor.Coco{
 			Token0:      lock.Token0,
 			Token1:      lock.Token1,
 			ChainID0:    lock.ChainID0,
@@ -608,50 +584,21 @@ func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
 	return nil, fmt.Errorf("not found Lock log in tx:%s", txId)
 }
 
-func (m *Monitor) GetCrossBurnLog(txId string) (*Coco, error) {
-	receipt := m.bscWrapper.TransactionReceipt(context.TODO(), common.HexToHash(txId))
+func (m *Monitor) GetRollback(txId string) (*monitor.Coco, error) {
+	receipt := m.wrapper.TransactionReceipt(context.TODO(), common.HexToHash(txId))
 	for _, log := range receipt.Logs {
-		if !strings.EqualFold(log.Address.String(), m.config.Bsc.TwoWayContract) {
+		if !strings.EqualFold(log.Address.String(), m.config.TwoWayContract) {
 			continue
 		}
 
 		if log.Removed {
 			continue
 		}
-		crossBurn, err := m.bscWrapper.pegProxy.ParseCrossBurn(*log)
+		rollback, err := m.wrapper.pegProxy.ParseRollback(*log)
 		if err != nil {
 			continue
 		}
-		return &Coco{
-			Token0:      crossBurn.Token0,
-			Token1:      crossBurn.Token1,
-			ChainID0:    crossBurn.ChainID0,
-			ChainID1:    crossBurn.ChainID1,
-			From:        crossBurn.From,
-			To:          crossBurn.To,
-			Amount:      crossBurn.Amount,
-			TxId:        log.TxHash.String(),
-			BlockHeight: receipt.BlockNumber.Uint64(),
-		}, nil
-	}
-	return nil, fmt.Errorf("not found crossBurn log in tx:%s", txId)
-}
-
-func (m *Monitor) GetRollback(txId string) (*Coco, error) {
-	receipt := m.bscWrapper.TransactionReceipt(context.TODO(), common.HexToHash(txId))
-	for _, log := range receipt.Logs {
-		if !strings.EqualFold(log.Address.String(), m.config.Bsc.TwoWayContract) {
-			continue
-		}
-
-		if log.Removed {
-			continue
-		}
-		rollback, err := m.bscWrapper.pegProxy.ParseRollback(*log)
-		if err != nil {
-			continue
-		}
-		return &Coco{
+		return &monitor.Coco{
 			Token0:      rollback.Token0,
 			Token1:      rollback.Token1,
 			ChainID0:    rollback.ChainID0,
@@ -666,14 +613,47 @@ func (m *Monitor) GetRollback(txId string) (*Coco, error) {
 	return nil, fmt.Errorf("not found rollback log in tx:%s", txId)
 }
 
+func (m *Monitor) GetCrossBurnLog(txId string) (*monitor.Coco, error) {
+	receipt := m.wrapper.TransactionReceipt(context.TODO(), common.HexToHash(txId))
+	for _, log := range receipt.Logs {
+		if !strings.EqualFold(log.Address.String(), m.config.TwoWayContract) {
+			continue
+		}
+
+		if log.Removed {
+			continue
+		}
+		crossBurn, err := m.wrapper.pegProxy.ParseCrossBurn(*log)
+		if err != nil {
+			continue
+		}
+		return &monitor.Coco{
+			Token0:      crossBurn.Token0,
+			Token1:      crossBurn.Token1,
+			ChainID0:    crossBurn.ChainID0,
+			ChainID1:    crossBurn.ChainID1,
+			From:        crossBurn.From,
+			To:          crossBurn.To,
+			Amount:      crossBurn.Amount,
+			TxId:        log.TxHash.String(),
+			BlockHeight: receipt.BlockNumber.Uint64(),
+		}, nil
+	}
+	return nil, fmt.Errorf("not found crossBurn log in tx:%s", txId)
+}
+
+func (m *Monitor) Name() string {
+	return m.config.Name
+}
+
 func (m *Monitor) fetchBlockNum() (uint64, error) {
-	header := m.bscWrapper.HeaderByNumber(context.TODO(), nil)
+	header := m.wrapper.HeaderByNumber(context.TODO(), nil)
 	return header.Number.Uint64(), nil
 }
 
 func (m *Monitor) loadHeightFromStorage() {
 	var header *types.Header
-	header = m.bscWrapper.HeaderByNumber(context.TODO(), nil)
+	header = m.wrapper.HeaderByNumber(context.TODO(), nil)
 
 	// load block height
 	b := m.storage.Get(lHeightKey())
@@ -705,15 +685,16 @@ func (m *Monitor) loadHeightFromStorage() {
 
 	}
 
-	if m.config.Bsc.LockHeight != 0 {
-		m.lHeight = m.config.Bsc.LockHeight
+	if m.config.LockHeight != 0 {
+		m.lHeight = m.config.LockHeight
 	}
 
-	if m.config.Bsc.CrossBurnHeight != 0 {
-		m.cHeight = m.config.Bsc.CrossBurnHeight
+	if m.config.CrossBurnHeight != 0 {
+		m.cHeight = m.config.CrossBurnHeight
 	}
-	if m.config.Bsc.RollbackHeight != 0 {
-		m.rHeight = m.config.Bsc.RollbackHeight
+
+	if m.config.RollbackHeight != 0 {
+		m.rHeight = m.config.RollbackHeight
 	}
 
 	m.logger.WithFields(logrus.Fields{
@@ -727,15 +708,15 @@ func lHeightKey() []byte {
 	return []byte(fmt.Sprintf("lHeight"))
 }
 
-func rHeightKey() []byte {
-	return []byte(fmt.Sprintf("rHeight"))
-}
-
 func cHeightKey() []byte {
 	return []byte(fmt.Sprintf("cHeight"))
 }
 
-func (m *Monitor) persistLBlockHeight(txId string, height uint64, coco *Coco) {
+func rHeightKey() []byte {
+	return []byte(fmt.Sprintf("rHeight"))
+}
+
+func (m *Monitor) persistLBlockHeight(txId string, height uint64, coco *monitor.Coco) {
 	m.persistLHeight(height)
 	for {
 		if m.storage.Has(TxKey(txId, coco.Typ)) {
@@ -745,17 +726,7 @@ func (m *Monitor) persistLBlockHeight(txId string, height uint64, coco *Coco) {
 	}
 }
 
-func (m *Monitor) persistRBlockHeight(txId string, height uint64, coco *Coco) {
-	m.persistRHeight(height)
-	for {
-		if m.storage.Has(TxKey(txId, coco.Typ)) {
-			return
-		}
-		time.Sleep(500 * time.Millisecond)
-	}
-}
-
-func (m *Monitor) persistCBlockHeight(txId string, height uint64, coco *Coco) {
+func (m *Monitor) persistCBlockHeight(txId string, height uint64, coco *monitor.Coco) {
 	m.persistCHeight(height)
 	for {
 		if m.storage.Has(TxKey(txId, coco.Typ)) {
@@ -765,7 +736,17 @@ func (m *Monitor) persistCBlockHeight(txId string, height uint64, coco *Coco) {
 	}
 }
 
-func (m *Monitor) HasTx(txId string, coco *Coco) bool {
+func (m *Monitor) persistRBlockHeight(txId string, height uint64, coco *monitor.Coco) {
+	m.persistRHeight(height)
+	for {
+		if m.storage.Has(TxKey(txId, coco.Typ)) {
+			return
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+}
+
+func (m *Monitor) HasTx(txId string, coco *monitor.Coco) bool {
 	return m.storage.Has(TxKey(txId, coco.Typ))
 }
 
@@ -786,7 +767,7 @@ func (m *Monitor) persistRHeight(height uint64) {
 	m.rHeight = height
 	m.logger.WithFields(logrus.Fields{
 		"height": m.rHeight,
-	}).Info("Persist Rollback Block Height")
+	}).Info("Persist bridge.Rollback Block Height")
 }
 
 func (m *Monitor) persistCHeight(height uint64) {
@@ -800,10 +781,10 @@ func (m *Monitor) persistCHeight(height uint64) {
 }
 
 func TxKey(hash string, typ int) []byte {
-	return []byte(fmt.Sprintf("eth-%d-%s", typ, hash))
+	return []byte(fmt.Sprintf("tx-%d-%s", typ, hash))
 }
 
-func (m *Monitor) PutTxID(txId string, coco *Coco) {
+func (m *Monitor) PutTxID(txId string, coco *monitor.Coco) {
 	data, err := json.Marshal(&coco)
 	if err != nil {
 		m.logger.Error(err)

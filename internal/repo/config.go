@@ -22,29 +22,24 @@ const (
 )
 
 type Config struct {
-	RepoRoot string `json:"repo_root"`
-	Title    string `json:"title"`
-	Matic    `json:"matic"`
-	Bsc      `json:"bsc"`
+	RepoRoot string          `json:"repo_root"`
+	Title    string          `json:"title"`
+	Bridges  []*BridgeConfig `json:"bridges"`
 	Log      `json:"log"`
 }
 
 type Log struct {
-	Level        string    `toml:"level" json:"level"`
-	Dir          string    `toml:"dir" json:"dir"`
-	Filename     string    `toml:"filename" json:"filename"`
-	ReportCaller bool      `mapstructure:"report_caller" json:"report_caller"`
-	Module       LogModule `toml:"module" json:"module"`
+	Level        string            `toml:"level" json:"level"`
+	Dir          string            `toml:"dir" json:"dir"`
+	Filename     string            `toml:"filename" json:"filename"`
+	ReportCaller bool              `mapstructure:"report_caller" json:"report_caller"`
+	Module       map[string]string `toml:"module" json:"module"`
 }
 
-type LogModule struct {
-	BSC   string `toml:"bsc" json:"bsc"`
-	MATIC string `toml:"matic" json:"matic"`
-	APP   string `toml:"app" json:"app"`
-}
-
-type Matic struct {
+type BridgeConfig struct {
+	Name            string   `toml:"name" json:"name"`
 	Addrs           []string `toml:"addrs" json:"addrs"`
+	ChainID         uint64   `toml:"chainID" json:"chainID"`
 	MinConfirms     uint64   `toml:"minConfirms" json:"minConfirms"`
 	PrivKey         string   `toml:"privKey" json:"privKey"`
 	GasLimit        uint64   `toml:"gasLimit" json:"gasLimit"`
@@ -52,17 +47,6 @@ type Matic struct {
 	CrossBurnHeight uint64   `mapstructure:"cHeight" json:"cHeight"`
 	RollbackHeight  uint64   `mapstructure:"rHeight" json:"rHeight"`
 	TwoWayContract  string   `toml:"twoWayContract" json:"twoWayContract"`
-}
-
-type Bsc struct {
-	Addrs           []string `toml:"addrs" json:"addrs"`
-	MinConfirms     uint64   `toml:"minConfirms" json:"minConfirms"`
-	PrivKey         string   `toml:"privKey" json:"privKey"`
-	GasLimit        uint64   `toml:"gasLimit" json:"gasLimit"`
-	LockHeight      uint64   `mapstructure:"lHeight" json:"lHeight"`
-	CrossBurnHeight uint64   `mapstructure:"cHeight" json:"cHeight"`
-	TwoWayContract  string   `toml:"twoWayContract" json:"twoWayContract"`
-	RollbackHeight  uint64   `mapstructure:"rHeight" json:"rHeight"`
 }
 
 func (c *Config) Bytes() ([]byte, error) {
@@ -85,10 +69,7 @@ func DefaultConfig() (*Config, error) {
 			Level:    "info",
 			Dir:      "logs",
 			Filename: "bridge.log",
-			Module: LogModule{
-				APP:   "info",
-				MATIC: "info",
-			},
+			Module:   make(map[string]string),
 		},
 	}, nil
 }
