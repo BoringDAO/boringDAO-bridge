@@ -104,7 +104,7 @@ func (m *Monitor) Stop() error {
 }
 
 func (m *Monitor) listenLockEvent() {
-	ticker := time.NewTicker(60 * time.Second)
+	ticker := time.NewTicker(20 * time.Second)
 	defer ticker.Stop()
 
 	start := m.lHeight
@@ -120,8 +120,8 @@ func (m *Monitor) listenLockEvent() {
 			if num < m.minConfirms || end < start {
 				continue
 			}
-			if end >= start+2000 {
-				end = start + 2000
+			if end >= start+300 {
+				end = start + 300
 			}
 			filter := m.wrapper.FilterLock(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
 			for filter.Next() {
@@ -138,7 +138,7 @@ func (m *Monitor) listenLockEvent() {
 }
 
 func (m *Monitor) listenCrossBurnEvent() {
-	ticker := time.NewTicker(60 * time.Second)
+	ticker := time.NewTicker(20 * time.Second)
 	defer ticker.Stop()
 
 	start := m.cHeight
@@ -154,8 +154,8 @@ func (m *Monitor) listenCrossBurnEvent() {
 			if num < m.minConfirms || end < start {
 				continue
 			}
-			if end >= start+2000 {
-				end = start + 2000
+			if end >= start+300 {
+				end = start + 300
 			}
 			filter := m.wrapper.FilterCrossBurn(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
 			for filter.Next() {
@@ -172,7 +172,7 @@ func (m *Monitor) listenCrossBurnEvent() {
 }
 
 func (m *Monitor) listenRollback() {
-	ticker := time.NewTicker(60 * time.Second)
+	ticker := time.NewTicker(20 * time.Second)
 	defer ticker.Stop()
 
 	start := m.rHeight
@@ -188,8 +188,8 @@ func (m *Monitor) listenRollback() {
 			if num < m.minConfirms || end < start {
 				continue
 			}
-			if end >= start+2000 {
-				end = start + 2000
+			if end >= start+300 {
+				end = start + 300
 			}
 			filter := m.wrapper.FilterRollback(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
 			for filter.Next() {

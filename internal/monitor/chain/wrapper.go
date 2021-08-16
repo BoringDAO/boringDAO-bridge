@@ -492,7 +492,7 @@ func (w *Wrapper) TransactionReceiptsLimitedRetry(ctx context.Context, txHashes 
 		for _, txHash := range txHashes {
 			result, err = w.ethClient.TransactionReceipt(ctx, txHash)
 			if err != nil {
-				w.logger.Warnf("TransactionReceipt: %s", err.Error())
+				w.logger.Warnf("TransactionReceipt: %s, %s", err.Error(), txHash.String())
 
 				if w.isNetworkError(err) {
 					w.switchToNextAddr()

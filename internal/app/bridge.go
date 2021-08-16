@@ -49,7 +49,7 @@ func New(repoRoot *repo.Repo) (*Bridge, error) {
 		repo:    repoRoot,
 		mnts:    mnts,
 		storage: boringStorage,
-		cocoC:   make(chan *monitor.Coco),
+		cocoC:   make(chan *monitor.Coco, 1024),
 		logger:  loggers.Logger(loggers.APP),
 		ctx:     ctx,
 		cancel:  cancel,
@@ -64,8 +64,9 @@ func (b *Bridge) Start() error {
 		}
 		b.logger.Infof("mnt %s for chain ID %d has started", mnt.Name(), chainID)
 		go func() {
-			coco := <-mnt.HandleCocoC()
-			b.cocoC <- coco
+			for coco := range mnt.HandleCocoC() {
+				b.cocoC <- coco
+			}
 		}()
 	}
 
