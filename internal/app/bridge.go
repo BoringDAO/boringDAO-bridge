@@ -62,7 +62,7 @@ func (b *Bridge) Start() error {
 		if err := mnt.Start(); err != nil {
 			return err
 		}
-		b.logger.Infof("mnt  for chain ID %d has started", chainID)
+		b.logger.Infof("mnt %s for chain ID %d has started", mnt.Name(), chainID)
 		go func() {
 			coco := <-mnt.HandleCocoC()
 			b.cocoC <- coco
@@ -125,7 +125,7 @@ func (b *Bridge) printLogo() {
 		time.Sleep(100 * time.Millisecond)
 		fmt.Println()
 		fmt.Println("=======================================================")
-		fig := figure.NewColorFigure("Bridge", "slant", "red", true)
+		fig := figure.NewColorFigure("TwoWay", "slant", "red", true)
 		fig.Print()
 		fmt.Println()
 		fmt.Println("=======================================================")

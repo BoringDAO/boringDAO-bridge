@@ -196,10 +196,10 @@ func (m *Monitor) listenRollback() {
 				m.handleRollback(filter.Event)
 			}
 
-			m.logger.WithFields(logrus.Fields{"start": start, "end": end, "current": num}).Infof("bridge.RollbackIterator")
+			m.logger.WithFields(logrus.Fields{"start": start, "end": end, "current": num}).Infof("RollbackIterator")
 			start = end + 1
 		case <-m.ctx.Done():
-			m.logger.Info("bridge.RollbackIterator done")
+			m.logger.Info("RollbackIterator done")
 			return
 		}
 	}
@@ -767,7 +767,7 @@ func (m *Monitor) persistRHeight(height uint64) {
 	m.rHeight = height
 	m.logger.WithFields(logrus.Fields{
 		"height": m.rHeight,
-	}).Info("Persist bridge.Rollback Block Height")
+	}).Info("Persist Rollback Block Height")
 }
 
 func (m *Monitor) persistCHeight(height uint64) {
