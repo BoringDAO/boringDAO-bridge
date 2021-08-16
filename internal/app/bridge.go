@@ -91,8 +91,8 @@ func (b *Bridge) listenCocoC() {
 
 				mnt0 := b.mnts[coco.ChainID0.Uint64()]
 				mnt1 := b.mnts[coco.ChainID1.Uint64()]
-				b.logger.Infof("========> start handle %s transaction...", mnt0.Name())
-				defer b.logger.Infof("========> end handle %s transaction...", mnt0.Name())
+				b.logger.Infof("========> start handle %s to %s transaction...", mnt0.Name(), mnt1.Name())
+				defer b.logger.Infof("========> end handle %s to %s transaction...", mnt0.Name(), mnt1.Name())
 				if mnt0.HasTx(coco.TxId, coco) {
 					b.logger.WithField("tx", coco.TxId).Error("has handled the interchain event")
 					return
