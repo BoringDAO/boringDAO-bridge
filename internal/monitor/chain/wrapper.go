@@ -33,8 +33,8 @@ type Wrapper struct {
 	config    *repo.BridgeConfig
 	ethClient *ethclient.Client
 	rpcClient *rpc.Client
-	pegProxy  *mnt.PegProxy
-	session   *mnt.PegProxySession
+	twoWay    *mnt.TwoWay
+	session   *mnt.TwoWaySession
 	logger    logrus.FieldLogger
 }
 
@@ -49,7 +49,7 @@ func NewWrapper(config *repo.BridgeConfig, logger logrus.FieldLogger) (*Wrapper,
 	}
 	etherCli := ethclient.NewClient(rpcClient)
 
-	pegProxy, err := mnt.NewPegProxy(common.HexToAddress(config.TwoWayContract), etherCli)
+	twoWay, err := mnt.NewTwoWay(common.HexToAddress(config.TwoWayContract), etherCli)
 	if err != nil {
 		return nil, fmt.Errorf("failed to instantiate a TwoWayContract contract: %w", err)
 	}
@@ -78,8 +78,8 @@ func NewWrapper(config *repo.BridgeConfig, logger logrus.FieldLogger) (*Wrapper,
 		auth.GasLimit = config.GasLimit
 	}
 
-	session := &mnt.PegProxySession{
-		Contract: pegProxy,
+	session := &mnt.TwoWaySession{
+		Contract: twoWay,
 		CallOpts: bind.CallOpts{
 			Pending: false,
 		},
@@ -91,7 +91,7 @@ func NewWrapper(config *repo.BridgeConfig, logger logrus.FieldLogger) (*Wrapper,
 		config:    config,
 		rpcClient: rpcClient,
 		ethClient: etherCli,
-		pegProxy:  pegProxy,
+		twoWay:    twoWay,
 		session:   session,
 		logger:    logger,
 	}, nil
@@ -118,12 +118,12 @@ func (w *Wrapper) HeaderByNumber(ctx context.Context, number *big.Int) *types.He
 	return header
 }
 
-func (w *Wrapper) FilterCrossBurn(opts *bind.FilterOpts) *mnt.PegProxyCrossBurnIterator {
-	var iterator *mnt.PegProxyCrossBurnIterator
+func (w *Wrapper) FilterCrossBurn(opts *bind.FilterOpts) *mnt.TwoWayCrossBurnIterator {
+	var iterator *mnt.TwoWayCrossBurnIterator
 	var err error
 
 	if err := retry.Retry(func(attempt uint) error {
-		iterator, err = w.pegProxy.FilterCrossBurn(opts)
+		iterator, err = w.twoWay.FilterCrossBurn(opts)
 		if err != nil {
 			w.logger.Warnf("FilterCrossBurn: %s", err.Error())
 
@@ -139,12 +139,12 @@ func (w *Wrapper) FilterCrossBurn(opts *bind.FilterOpts) *mnt.PegProxyCrossBurnI
 	return iterator
 }
 
-func (w *Wrapper) FilterRollback(opts *bind.FilterOpts) *mnt.PegProxyRollbackIterator {
-	var iterator *mnt.PegProxyRollbackIterator
+func (w *Wrapper) FilterRollback(opts *bind.FilterOpts) *mnt.TwoWayRollbackIterator {
+	var iterator *mnt.TwoWayRollbackIterator
 	var err error
 
 	if err := retry.Retry(func(attempt uint) error {
-		iterator, err = w.pegProxy.FilterRollback(opts)
+		iterator, err = w.twoWay.FilterRollback(opts)
 		if err != nil {
 			w.logger.Warnf("FilterRollback: %s", err.Error())
 
@@ -160,12 +160,12 @@ func (w *Wrapper) FilterRollback(opts *bind.FilterOpts) *mnt.PegProxyRollbackIte
 	return iterator
 }
 
-func (w *Wrapper) FilterLock(opts *bind.FilterOpts) *mnt.PegProxyLockIterator {
-	var iterator *mnt.PegProxyLockIterator
+func (w *Wrapper) FilterLock(opts *bind.FilterOpts) *mnt.TwoWayLockIterator {
+	var iterator *mnt.TwoWayLockIterator
 	var err error
 
 	if err := retry.Retry(func(attempt uint) error {
-		iterator, err = w.pegProxy.FilterLock(opts)
+		iterator, err = w.twoWay.FilterLock(opts)
 		if err != nil {
 			w.logger.Warnf("FilterLock: %s", err.Error())
 
@@ -359,7 +359,7 @@ func (w *Wrapper) Unlock(token common.Address, from common.Address, to common.Ad
 }
 
 func (w *Wrapper) unlock(token, from, to common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash, error) {
-	parsed, err := abi.JSON(strings.NewReader(mnt.PegProxyABI))
+	parsed, err := abi.JSON(strings.NewReader(mnt.TwoWayABI))
 	if err != nil {
 		return nil, common.Hash{}, err
 	}
@@ -401,7 +401,7 @@ func (w *Wrapper) unlock(token, from, to common.Address, chainID, amount *big.In
 }
 
 func (w *Wrapper) crossIn(token common.Address, from common.Address, to common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash, error) {
-	parsed, err := abi.JSON(strings.NewReader(mnt.PegProxyABI))
+	parsed, err := abi.JSON(strings.NewReader(mnt.TwoWayABI))
 	if err != nil {
 		return nil, common.Hash{}, err
 	}
@@ -443,7 +443,7 @@ func (w *Wrapper) crossIn(token common.Address, from common.Address, to common.A
 }
 
 func (w *Wrapper) rollback(token common.Address, from common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash, error) {
-	parsed, err := abi.JSON(strings.NewReader(mnt.PegProxyABI))
+	parsed, err := abi.JSON(strings.NewReader(mnt.TwoWayABI))
 	if err != nil {
 		return nil, common.Hash{}, err
 	}
@@ -548,12 +548,12 @@ func (w *Wrapper) switchToNextAddr() {
 		}
 		w.ethClient = ethclient.NewClient(rpcClient)
 
-		w.pegProxy, err = mnt.NewPegProxy(common.HexToAddress(w.config.TwoWayContract), w.ethClient)
+		w.twoWay, err = mnt.NewTwoWay(common.HexToAddress(w.config.TwoWayContract), w.ethClient)
 		if err != nil {
 			continue
 		}
 
-		w.session.Contract = w.pegProxy
+		w.session.Contract = w.twoWay
 
 		w.logger.Infof("switch to %s successfully", w.config.Addrs[w.addrIdx])
 

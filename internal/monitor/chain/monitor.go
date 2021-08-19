@@ -62,7 +62,7 @@ func New(repoRoot string, config *repo.BridgeConfig, logger logrus.FieldLogger) 
 		minConfirms = int(config.MinConfirms)
 	}
 
-	pegProxyAbi, err := abi.JSON(bytes.NewReader([]byte(mnt.PegProxyABI)))
+	twoWayAbi, err := abi.JSON(bytes.NewReader([]byte(mnt.TwoWayABI)))
 	if err != nil {
 		return nil, fmt.Errorf("abi unmarshal: %s", err.Error())
 	}
@@ -79,7 +79,7 @@ func New(repoRoot string, config *repo.BridgeConfig, logger logrus.FieldLogger) 
 		storage:     ethStorage,
 		address:     address,
 		wrapper:     wrapper,
-		twoWayAbi:   pegProxyAbi,
+		twoWayAbi:   twoWayAbi,
 		twoWayAddr:  common.HexToAddress(config.TwoWayContract),
 		minConfirms: uint64(minConfirms),
 		cocoC:       make(chan *monitor.Coco),
@@ -209,25 +209,26 @@ func (m *Monitor) HandleCocoC() chan *monitor.Coco {
 	return m.cocoC
 }
 
-func (m *Monitor) handleRollback(lock *mnt.PegProxyRollback) {
-	if !strings.EqualFold(lock.Raw.Address.String(), m.config.TwoWayContract) {
+func (m *Monitor) handleRollback(rollback *mnt.TwoWayRollback) {
+	if !strings.EqualFold(rollback.Raw.Address.String(), m.config.TwoWayContract) {
 		return
 	}
 
-	if m.storage.Has(TxKey(lock.Raw.TxHash.String(), monitor.Rollback)) {
+	if m.storage.Has(TxKey(rollback.Raw.TxHash.String(), monitor.Rollback, rollback.Raw.Index)) {
 		return
 	}
 	coco := &monitor.Coco{
 		Typ:         monitor.Rollback,
-		Token0:      lock.Token0,
-		Token1:      lock.Token1,
-		ChainID0:    lock.ChainID0,
-		ChainID1:    lock.ChainID1,
-		From:        lock.From,
-		To:          lock.To,
-		Amount:      lock.Amount,
-		TxId:        lock.Raw.TxHash.String(),
-		BlockHeight: lock.Raw.BlockNumber,
+		Token0:      rollback.Token0,
+		Token1:      rollback.Token1,
+		ChainID0:    rollback.ChainID0,
+		ChainID1:    rollback.ChainID1,
+		From:        rollback.From,
+		To:          rollback.To,
+		Amount:      rollback.Amount,
+		Index:       rollback.Raw.Index,
+		TxId:        rollback.Raw.TxHash.String(),
+		BlockHeight: rollback.Raw.BlockNumber,
 	}
 
 	m.logger.WithFields(logrus.Fields{
@@ -238,34 +239,35 @@ func (m *Monitor) handleRollback(lock *mnt.PegProxyRollback) {
 		"chain0":       coco.ChainID0.String(),
 		"chain1":       coco.ChainID1.String(),
 		"amount":       coco.Amount.String(),
-		"txId":         lock.Raw.TxHash.String(),
-		"block_height": lock.Raw.BlockNumber,
-		"removed":      lock.Raw.Removed,
-	}).Info("PegProxyRollback")
+		"index":        coco.Index,
+		"txId":         rollback.Raw.TxHash.String(),
+		"block_height": rollback.Raw.BlockNumber,
+		"removed":      rollback.Raw.Removed,
+	}).Info("TwoWayRollback")
 
-	if lock.Raw.Removed {
+	if rollback.Raw.Removed {
 		return
 	}
 
-	if !m.confirmEvent(lock.Raw, monitor.Rollback) {
+	if !m.confirmEvent(rollback.Raw, monitor.Rollback) {
 		m.logger.WithFields(logrus.Fields{
-			"txId":         lock.Raw.TxHash.String(),
-			"block_height": lock.Raw.BlockNumber,
-		}).Info("PegProxybridge.Rollback has not confirmed")
+			"txId":         rollback.Raw.TxHash.String(),
+			"block_height": rollback.Raw.BlockNumber,
+		}).Info("TwoWay has not confirmed")
 		return
 	}
 
-	m.logger.WithField("tx", lock.Raw.TxHash.String()).Info("confirmEvent")
+	m.logger.WithField("tx", rollback.Raw.TxHash.String()).Info("confirmEvent")
 	m.cocoC <- coco
-	m.persistRBlockHeight(lock.Raw.TxHash.String(), lock.Raw.BlockNumber, coco)
+	m.persistRBlockHeight(rollback.Raw.TxHash.String(), rollback.Raw.BlockNumber, coco)
 }
 
-func (m *Monitor) handleLock(lock *mnt.PegProxyLock) {
+func (m *Monitor) handleLock(lock *mnt.TwoWayLock) {
 	if !strings.EqualFold(lock.Raw.Address.String(), m.config.TwoWayContract) {
 		return
 	}
 
-	if m.storage.Has(TxKey(lock.Raw.TxHash.String(), monitor.Lock)) {
+	if m.storage.Has(TxKey(lock.Raw.TxHash.String(), monitor.Lock, lock.Raw.Index)) {
 		return
 	}
 	coco := &monitor.Coco{
@@ -277,6 +279,7 @@ func (m *Monitor) handleLock(lock *mnt.PegProxyLock) {
 		From:        lock.From,
 		To:          lock.To,
 		Amount:      lock.Amount,
+		Index:       lock.Raw.Index,
 		TxId:        lock.Raw.TxHash.String(),
 		BlockHeight: lock.Raw.BlockNumber,
 	}
@@ -289,10 +292,11 @@ func (m *Monitor) handleLock(lock *mnt.PegProxyLock) {
 		"chain0":       coco.ChainID0.String(),
 		"chain1":       coco.ChainID1.String(),
 		"amount":       coco.Amount.String(),
+		"index":        coco.Index,
 		"txId":         lock.Raw.TxHash.String(),
 		"block_height": lock.Raw.BlockNumber,
 		"removed":      lock.Raw.Removed,
-	}).Info("PegProxyLock")
+	}).Info("TwoWayLock")
 
 	if lock.Raw.Removed {
 		return
@@ -302,7 +306,7 @@ func (m *Monitor) handleLock(lock *mnt.PegProxyLock) {
 		m.logger.WithFields(logrus.Fields{
 			"txId":         lock.Raw.TxHash.String(),
 			"block_height": lock.Raw.BlockNumber,
-		}).Info("PegProxyLock has not confirmed")
+		}).Info("TwoWayLock has not confirmed")
 		return
 	}
 
@@ -311,12 +315,12 @@ func (m *Monitor) handleLock(lock *mnt.PegProxyLock) {
 	m.persistLBlockHeight(lock.Raw.TxHash.String(), lock.Raw.BlockNumber, coco)
 }
 
-func (m *Monitor) handleCrossBurn(crossBurn *mnt.PegProxyCrossBurn) {
+func (m *Monitor) handleCrossBurn(crossBurn *mnt.TwoWayCrossBurn) {
 	if !strings.EqualFold(crossBurn.Raw.Address.String(), m.config.TwoWayContract) {
 		return
 	}
 
-	if m.storage.Has(TxKey(crossBurn.Raw.TxHash.String(), monitor.CrossBurn)) {
+	if m.storage.Has(TxKey(crossBurn.Raw.TxHash.String(), monitor.CrossBurn, crossBurn.Raw.Index)) {
 		return
 	}
 	coco := &monitor.Coco{
@@ -328,6 +332,7 @@ func (m *Monitor) handleCrossBurn(crossBurn *mnt.PegProxyCrossBurn) {
 		From:        crossBurn.From,
 		To:          crossBurn.To,
 		Amount:      crossBurn.Amount,
+		Index:       crossBurn.Raw.Index,
 		TxId:        crossBurn.Raw.TxHash.String(),
 		BlockHeight: crossBurn.Raw.BlockNumber,
 	}
@@ -340,10 +345,11 @@ func (m *Monitor) handleCrossBurn(crossBurn *mnt.PegProxyCrossBurn) {
 		"chain0":       coco.ChainID0.String(),
 		"chain1":       coco.ChainID1.String(),
 		"amount":       coco.Amount.String(),
+		"index":        coco.Index,
 		"txId":         crossBurn.Raw.TxHash.String(),
 		"block_height": crossBurn.Raw.BlockNumber,
 		"removed":      crossBurn.Raw.Removed,
-	}).Info("PegProxyCrossBurn")
+	}).Info("TwoWayCrossBurn")
 
 	if crossBurn.Raw.Removed {
 		return
@@ -353,7 +359,7 @@ func (m *Monitor) handleCrossBurn(crossBurn *mnt.PegProxyCrossBurn) {
 		m.logger.WithFields(logrus.Fields{
 			"txId":         crossBurn.Raw.TxHash.String(),
 			"block_height": crossBurn.Raw.BlockNumber,
-		}).Info("PegProxyCrossBurn has not confirmed")
+		}).Info("TwoWayCrossBurn has not confirmed")
 		return
 	}
 
@@ -565,7 +571,7 @@ func (m *Monitor) GetLockLog(txId string) (*monitor.Coco, error) {
 		if log.Removed {
 			continue
 		}
-		lock, err := m.wrapper.pegProxy.ParseLock(*log)
+		lock, err := m.wrapper.twoWay.ParseLock(*log)
 		if err != nil {
 			continue
 		}
@@ -594,7 +600,7 @@ func (m *Monitor) GetRollback(txId string) (*monitor.Coco, error) {
 		if log.Removed {
 			continue
 		}
-		rollback, err := m.wrapper.pegProxy.ParseRollback(*log)
+		rollback, err := m.wrapper.twoWay.ParseRollback(*log)
 		if err != nil {
 			continue
 		}
@@ -623,7 +629,7 @@ func (m *Monitor) GetCrossBurnLog(txId string) (*monitor.Coco, error) {
 		if log.Removed {
 			continue
 		}
-		crossBurn, err := m.wrapper.pegProxy.ParseCrossBurn(*log)
+		crossBurn, err := m.wrapper.twoWay.ParseCrossBurn(*log)
 		if err != nil {
 			continue
 		}
@@ -719,7 +725,7 @@ func rHeightKey() []byte {
 func (m *Monitor) persistLBlockHeight(txId string, height uint64, coco *monitor.Coco) {
 	m.persistLHeight(height)
 	for {
-		if m.storage.Has(TxKey(txId, coco.Typ)) {
+		if m.storage.Has(TxKey(txId, coco.Typ, coco.Index)) {
 			return
 		}
 		time.Sleep(500 * time.Millisecond)
@@ -729,7 +735,7 @@ func (m *Monitor) persistLBlockHeight(txId string, height uint64, coco *monitor.
 func (m *Monitor) persistCBlockHeight(txId string, height uint64, coco *monitor.Coco) {
 	m.persistCHeight(height)
 	for {
-		if m.storage.Has(TxKey(txId, coco.Typ)) {
+		if m.storage.Has(TxKey(txId, coco.Typ, coco.Index)) {
 			return
 		}
 		time.Sleep(500 * time.Millisecond)
@@ -739,7 +745,7 @@ func (m *Monitor) persistCBlockHeight(txId string, height uint64, coco *monitor.
 func (m *Monitor) persistRBlockHeight(txId string, height uint64, coco *monitor.Coco) {
 	m.persistRHeight(height)
 	for {
-		if m.storage.Has(TxKey(txId, coco.Typ)) {
+		if m.storage.Has(TxKey(txId, coco.Typ, coco.Index)) {
 			return
 		}
 		time.Sleep(500 * time.Millisecond)
@@ -747,7 +753,7 @@ func (m *Monitor) persistRBlockHeight(txId string, height uint64, coco *monitor.
 }
 
 func (m *Monitor) HasTx(txId string, coco *monitor.Coco) bool {
-	return m.storage.Has(TxKey(txId, coco.Typ))
+	return m.storage.Has(TxKey(txId, coco.Typ, coco.Index))
 }
 
 func (m *Monitor) persistLHeight(height uint64) {
@@ -780,7 +786,7 @@ func (m *Monitor) persistCHeight(height uint64) {
 	}).Info("Persist CrossBurn Block Height")
 }
 
-func TxKey(hash string, typ int) []byte {
+func TxKey(hash string, typ int, idx uint) []byte {
 	return []byte(fmt.Sprintf("tx-%d-%s", typ, hash))
 }
 
@@ -789,5 +795,5 @@ func (m *Monitor) PutTxID(txId string, coco *monitor.Coco) {
 	if err != nil {
 		m.logger.Error(err)
 	}
-	m.storage.Put(TxKey(txId, coco.Typ), data)
+	m.storage.Put(TxKey(txId, coco.Typ, coco.Index), data)
 }

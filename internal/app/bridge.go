@@ -101,11 +101,11 @@ func (b *Bridge) listenCocoC() {
 				var err error
 				switch coco.Typ {
 				case monitor.Lock:
-					err = mnt1.CrossIn(coco.TxId+"#LOCK", coco.Token1, coco.From, coco.To, coco.ChainID0, coco.Amount)
+					err = mnt1.CrossIn(fmt.Sprintf("%s#LOCK#%d", coco.TxId, coco.Index), coco.Token1, coco.From, coco.To, coco.ChainID0, coco.Amount)
 				case monitor.CrossBurn:
-					err = mnt1.Unlock(coco.TxId+"#CrossBurn", coco.Token1, coco.From, coco.To, coco.ChainID0, coco.Amount)
+					err = mnt1.Unlock(fmt.Sprintf("%s#CrossBurn#%d", coco.TxId, coco.Index), coco.Token1, coco.From, coco.To, coco.ChainID0, coco.Amount)
 				case monitor.Rollback:
-					err = mnt1.Rollback(coco.TxId+"#Rollback", coco.Token1, coco.From, coco.To, coco.ChainID0, coco.Amount)
+					err = mnt1.Rollback(fmt.Sprintf("%s#Rollback#%d", coco.TxId, coco.Index), coco.Token1, coco.From, coco.To, coco.ChainID0, coco.Amount)
 				}
 				if err != nil {
 					b.logger.Panic(err)
