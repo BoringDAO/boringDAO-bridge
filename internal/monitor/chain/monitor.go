@@ -787,7 +787,7 @@ func (m *Monitor) persistCHeight(height uint64) {
 }
 
 func TxKey(hash string, typ int, idx uint) []byte {
-	return []byte(fmt.Sprintf("tx-%d-%s", typ, hash))
+	return []byte(fmt.Sprintf("tx-%d-%s-%d", typ, hash, idx))
 }
 
 func (m *Monitor) PutTxID(txId string, coco *monitor.Coco) {
