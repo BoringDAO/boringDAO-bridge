@@ -40,4 +40,8 @@ type Mnt interface {
 	PutTxID(txId string, coco *Coco)
 
 	Name() string
+
+	MntLock()
+
+	MntUnlock()
 }

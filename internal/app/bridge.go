@@ -87,11 +87,11 @@ func (b *Bridge) listenCocoC() {
 		select {
 		case coco := <-b.cocoC:
 			handle := func() {
-				b.mux.Lock()
-				defer b.mux.Unlock()
-
 				mnt0 := b.mnts[coco.ChainID0.Uint64()]
 				mnt1 := b.mnts[coco.ChainID1.Uint64()]
+				mnt1.MntLock()
+				defer mnt1.MntUnlock()
+
 				b.logger.Infof("========> start handle %s to %s transaction...", mnt0.Name(), mnt1.Name())
 				defer b.logger.Infof("========> end handle %s to %s transaction...", mnt0.Name(), mnt1.Name())
 				if mnt0.HasTx(coco.TxId, coco) {
@@ -113,7 +113,7 @@ func (b *Bridge) listenCocoC() {
 				mnt0.PutTxID(coco.TxId, coco)
 
 			}
-			handle()
+			go handle()
 		case <-b.ctx.Done():
 			close(b.cocoC)
 			return

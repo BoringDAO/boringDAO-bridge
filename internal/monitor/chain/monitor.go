@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math/big"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/boringdao/bridge/internal/monitor"
@@ -38,9 +39,9 @@ type Monitor struct {
 	minConfirms uint64
 	twoWayAddr  common.Address
 	address     common.Address
-
-	ctx    context.Context
-	cancel context.CancelFunc
+	mut         sync.Mutex
+	ctx         context.Context
+	cancel      context.CancelFunc
 }
 
 func New(repoRoot string, config *repo.BridgeConfig, logger logrus.FieldLogger) (monitor.Mnt, error) {
@@ -796,4 +797,11 @@ func (m *Monitor) PutTxID(txId string, coco *monitor.Coco) {
 		m.logger.Error(err)
 	}
 	m.storage.Put(TxKey(txId, coco.Typ, coco.Index), data)
+}
+
+func (m *Monitor) MntLock() {
+	m.mut.Lock()
+}
+func (m *Monitor) MntUnlock() {
+	m.mut.Unlock()
 }
