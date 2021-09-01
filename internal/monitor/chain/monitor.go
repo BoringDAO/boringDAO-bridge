@@ -455,7 +455,7 @@ func (m *Monitor) Unlock(txId string, token common.Address, from common.Address,
 }
 
 func (m *Monitor) Rollback(txId string, token common.Address, from common.Address, recipient common.Address, chainID, amount *big.Int) error {
-	unlocked := m.wrapper.TxUnlocked(txId)
+	unlocked := m.wrapper.TxRollbacked(txId)
 	if unlocked {
 		m.logger.Infof("find bridge.Rollback Chain %d txId:%s", chainID.Uint64(), txId)
 		return nil
