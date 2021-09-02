@@ -708,6 +708,7 @@ func (m *Monitor) loadHeightFromStorage() {
 		"lock_height":     m.lHeight,
 		"cross_height":    m.cHeight,
 		"rollback_height": m.rHeight,
+		"address":         m.address.String(),
 	}).Info("Subscribe")
 }
 
