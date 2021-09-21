@@ -1,4 +1,4 @@
-package bridge
+package monitor
 
 import (
 	"context"
@@ -107,14 +107,14 @@ func (bw *BridgeWrapper) BlockNumber(ctx context.Context) uint64 {
 	return number
 }
 
-func (bw *BridgeWrapper) FilterCrossBurn(opts *bind.FilterOpts) *BridgeCrossBurnIterator {
-	var iterator *BridgeCrossBurnIterator
+func (bw *BridgeWrapper) FilterCrossOut(opts *bind.FilterOpts) *BridgeCrossOutIterator {
+	var iterator *BridgeCrossOutIterator
 	var err error
 
 	if err := retry.Retry(func(attempt uint) error {
-		iterator, err = bw.bridge.FilterCrossBurn(opts)
+		iterator, err = bw.bridge.FilterCrossOut(opts)
 		if err != nil {
-			bw.logger.Warnf("FilterCrossBurn: %s", err.Error())
+			bw.logger.Warnf("FilterCrossOut: %s", err.Error())
 
 			if bw.isNetworkError(err) {
 				bw.switchToNextAddr()
@@ -170,7 +170,7 @@ func (bw *BridgeWrapper) SuggestGasPrice(ctx context.Context) *big.Int {
 	return result
 }
 
-func (bw *BridgeWrapper) CrossMint(ethToken common.Address, from common.Address, to common.Address, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
+func (bw *BridgeWrapper) CrossIn(originTokenInfo BridgetokenInfo, originTokenUri string, from common.Address, to common.Address, txId string) (*types.Transaction, common.Hash) {
 	var tx *types.Transaction
 	var err error
 	var hash common.Hash
@@ -181,15 +181,15 @@ func (bw *BridgeWrapper) CrossMint(ethToken common.Address, from common.Address,
 		bw.session.TransactOpts.GasPrice = gasPrice.BigInt()
 
 		if bw.config.ChainID == 65 || bw.config.ChainID == 66 {
-			tx, hash, err = bw.okChainCrossMint(ethToken, from, to, amount, txid)
+			tx, hash, err = bw.okChainCrossIn(originTokenInfo, originTokenUri, from, to, txId)
 		} else {
-			tx, err = bw.session.CrossMint(ethToken, from, to, amount, txid)
+			tx, err = bw.session.CrossIn(originTokenInfo, originTokenUri, from, to, txId)
 			if tx != nil {
 				hash = tx.Hash()
 			}
 		}
 		if err != nil {
-			bw.logger.Warnf("CrossMint: %s", err.Error())
+			bw.logger.Warnf("CrossIn: %s", err.Error())
 
 			if bw.isNetworkError(err) {
 				bw.switchToNextAddr()
@@ -205,12 +205,12 @@ func (bw *BridgeWrapper) CrossMint(ethToken common.Address, from common.Address,
 	return tx, hash
 }
 
-func (bw *BridgeWrapper) okChainCrossMint(token0 common.Address, from common.Address, to common.Address, amount *big.Int, txid string) (*types.Transaction, common.Hash, error) {
+func (bw *BridgeWrapper) okChainCrossIn(originTokenInfo BridgetokenInfo, originTokenUri string, from common.Address, to common.Address, txid string) (*types.Transaction, common.Hash, error) {
 	parsed, err := abi.JSON(strings.NewReader(BridgeABI))
 	if err != nil {
 		return nil, common.Hash{}, err
 	}
-	input, err := parsed.Pack("crossMint", token0, from, to, amount, txid)
+	input, err := parsed.Pack("crossIn", originTokenInfo, originTokenUri, from, to, txid)
 	if err != nil {
 		return nil, common.Hash{}, err
 	}

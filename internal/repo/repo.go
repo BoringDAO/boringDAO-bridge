@@ -26,40 +26,30 @@ func Load(repoRoot string) (*Repo, error) {
 }
 
 func checkConfig(config *Config) error {
-	if config.Eth.CrossLockContract == "" {
-		return fmt.Errorf("eth cross lock contract is not configured")
-	}
-
-	if len(config.Eth.Addrs) == 0 {
-		return fmt.Errorf("eth addrs are not configured")
-	}
-
-	if config.Eth.MinConfirms < 15 {
-		fmt.Println("Warning: eth minconfirms should be at least 15, please change it if it's in prod environment")
+	if len(config.Nft.Tokens) == 0 {
+		return fmt.Errorf("supported original nft token is not configured")
 	}
 
 	for _, bConfig := range config.Bridges {
-		if bConfig.Name != "bsc" && bConfig.Name != "okex" && bConfig.Name != "avax" && bConfig.Name != "harmony" {
-			return fmt.Errorf("unknown blockchain %s, current only bsc, okex and avax are supported", bConfig.Name)
+		//if bConfig.Name != "bsc" && bConfig.Name != "okex" && bConfig.Name != "avax" && bConfig.Name != "harmony" {
+		//	return fmt.Errorf("unknown blockchain %s, current only bsc, okex and avax are supported", bConfig.Name)
+		//}
+
+		if bConfig.BridgeContract == "" {
+			return fmt.Errorf("%s bridge contract is not configured", bConfig.Name)
 		}
 
-		if len(bConfig.Tokens) != 0 {
-			if bConfig.BridgeContract == "" {
-				return fmt.Errorf("%s bridge contract is not configured", bConfig.Name)
-			}
+		if len(bConfig.Addrs) == 0 {
+			return fmt.Errorf("%s addrs are not configured", bConfig.Name)
+		}
 
-			if len(bConfig.Addrs) == 0 {
-				return fmt.Errorf("%s addrs are not configured", bConfig.Name)
-			}
-
-			if bConfig.Name == "bsc" && bConfig.MinConfirms < 15 {
-				fmt.Println("Warning: bsc minconfirms should be at least 15, please change it if it's in prod environment")
-			}
+		if bConfig.Name == "bsc" && bConfig.MinConfirms < 15 {
+			fmt.Println("Warning: bsc minconfirms should be at least 15, please change it if it's in prod environment")
 		}
 	}
 
-	fmt.Println("Eth configuration:")
-	prettyPrint(config.Eth)
+	fmt.Println("Nft configuration:")
+	prettyPrint(config.Nft)
 
 	for _, bConfig := range config.Bridges {
 		fmt.Println(fmt.Sprintf("%s configuration:", bConfig.Name))
