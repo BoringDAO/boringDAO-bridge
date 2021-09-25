@@ -122,8 +122,8 @@ func (m *Monitor) listenCrossOutEvent() {
 				continue
 			}
 
-			if end-start > 2000 {
-				end = start + 2000
+			if end-start > 300 {
+				end = start + 300
 			}
 
 			filter := m.bridgeWrapper.FilterCrossOut(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
@@ -152,13 +152,14 @@ func (m *Monitor) handleCrossInCocoC() {
 
 			if err := m.CrossIn(originTokenInfo, coco.OriginTokenUri, coco.From, coco.To, coco.TxId); err != nil {
 				m.logger.WithFields(logrus.Fields{
-					"From":          coco.From.String(),
-					"To":            coco.To.String(),
-					"OriginChainId": coco.OriginChainId.String(),
-					"OriginToken0":  coco.OriginToken0.String(),
-					"OriginTokenId": coco.OriginTokenId.String(),
-					"TxId":          coco.TxId,
-					"error":         err.Error(),
+					"From":           coco.From.String(),
+					"To":             coco.To.String(),
+					"OriginChainId":  coco.OriginChainId.String(),
+					"OriginToken0":   coco.OriginToken0.String(),
+					"OriginTokenId":  coco.OriginTokenId.String(),
+					"OriginTokenUri": coco.OriginTokenUri,
+					"TxId":           coco.TxId,
+					"error":          err.Error(),
 				}).Panic("CrossIn failed")
 			}
 
@@ -173,12 +174,12 @@ func (m *Monitor) handleCrossInCocoC() {
 
 func (m *Monitor) handleCross(crossOut *BridgeCrossOut, isHistory bool) {
 	if !strings.EqualFold(crossOut.Raw.Address.String(), m.config.BridgeContract) {
-		m.logger.Debugf("ignore log with contract address: %s", crossOut.Raw.Address.String())
+		m.logger.Warnf("ignore log with contract address: %s", crossOut.Raw.Address.String())
 		return
 	}
 
 	if !m.checkSupportedToken(crossOut.OriginToken0.String()) {
-		m.logger.Debugf("ignore log with unsupported original token: %s", crossOut.OriginToken0.String())
+		m.logger.Warnf("ignore log with unsupported original token: %s", crossOut.OriginToken0.String())
 		return
 	}
 
