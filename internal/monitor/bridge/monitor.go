@@ -115,8 +115,8 @@ func (m *Monitor) ListenCrossBurnEvent() {
 				continue
 			}
 
-			if end-start > 2000 {
-				end = start + 2000
+			if end-start > 300 {
+				end = start + 300
 			}
 
 			filter := m.bridgeWrapper.FilterCrossBurn(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
