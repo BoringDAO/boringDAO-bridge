@@ -2,28 +2,27 @@ package chain
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
 	"regexp"
 	"strings"
 	"time"
 
-	mnt "github.com/boringdao/bridge/internal/monitor/contracts"
-
-	"github.com/ethereum/go-ethereum/rpc"
-
-	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/rlp"
-
 	"github.com/Rican7/retry"
 	"github.com/Rican7/retry/strategy"
+	mnt "github.com/boringdao/bridge/internal/monitor/contracts"
 	"github.com/boringdao/bridge/internal/repo"
 	"github.com/boringdao/bridge/pkg/kit/hexutil"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rlp"
+	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 )
@@ -282,6 +281,11 @@ func (w *Wrapper) CrossIn(token, from, to common.Address, chainID, amount *big.I
 		}
 		if err != nil {
 			w.logger.Warnf("CrossIn: %s", err.Error())
+			if errors.Is(err, core.ErrNonceTooLow) {
+				tx = nil
+				hash = common.Hash{}
+				return nil
+			}
 
 			if w.isNetworkError(err) {
 				w.switchToNextAddr()
@@ -313,6 +317,11 @@ func (w *Wrapper) Rollback(token common.Address, from common.Address, chainID, a
 		}
 		if err != nil {
 			w.logger.Warnf("Rollback: %s", err.Error())
+			if errors.Is(err, core.ErrNonceTooLow) {
+				tx = nil
+				hash = common.Hash{}
+				return nil
+			}
 
 			if w.isNetworkError(err) {
 				w.switchToNextAddr()
@@ -343,6 +352,11 @@ func (w *Wrapper) Unlock(token common.Address, from common.Address, to common.Ad
 		}
 		if err != nil {
 			w.logger.Warnf("Unlock: %s", err.Error())
+			if errors.Is(err, core.ErrNonceTooLow) {
+				tx = nil
+				hash = common.Hash{}
+				return nil
+			}
 
 			if w.isNetworkError(err) {
 				w.switchToNextAddr()
