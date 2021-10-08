@@ -113,6 +113,7 @@ func (m *Monitor) listenLockEvent() {
 	for {
 		select {
 		case <-ticker.C:
+			hasEvent := false
 			num, err := m.fetchBlockNum()
 			if err != nil {
 				continue
@@ -127,10 +128,15 @@ func (m *Monitor) listenLockEvent() {
 			filter := m.wrapper.FilterLock(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
 			for filter.Next() {
 				m.handleLock(filter.Event)
+				hasEvent = true
 			}
 
 			m.logger.WithFields(logrus.Fields{"start": start, "end": end, "current": num}).Infof("CrossLockLockIterator")
 			start = end + 1
+
+			if !hasEvent {
+				m.persistLHeight(end)
+			}
 		case <-m.ctx.Done():
 			m.logger.Info("CrossLockLockIterator done")
 			return
@@ -147,6 +153,7 @@ func (m *Monitor) listenCrossBurnEvent() {
 	for {
 		select {
 		case <-ticker.C:
+			hasEvent := false
 			num, err := m.fetchBlockNum()
 			if err != nil {
 				continue
@@ -161,10 +168,15 @@ func (m *Monitor) listenCrossBurnEvent() {
 			filter := m.wrapper.FilterCrossBurn(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
 			for filter.Next() {
 				m.handleCrossBurn(filter.Event)
+				hasEvent = true
 			}
 
 			m.logger.WithFields(logrus.Fields{"start": start, "end": end, "current": num}).Infof("CrossBurn")
 			start = end + 1
+
+			if !hasEvent {
+				m.persistCHeight(end)
+			}
 		case <-m.ctx.Done():
 			m.logger.Info("CrossBurn done")
 			return
@@ -181,6 +193,7 @@ func (m *Monitor) listenRollback() {
 	for {
 		select {
 		case <-ticker.C:
+			hasEvent := false
 			num, err := m.fetchBlockNum()
 			if err != nil {
 				continue
@@ -195,10 +208,15 @@ func (m *Monitor) listenRollback() {
 			filter := m.wrapper.FilterRollback(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
 			for filter.Next() {
 				m.handleRollback(filter.Event)
+				hasEvent = true
 			}
 
 			m.logger.WithFields(logrus.Fields{"start": start, "end": end, "current": num}).Infof("RollbackIterator")
 			start = end + 1
+
+			if !hasEvent {
+				m.persistRHeight(end)
+			}
 		case <-m.ctx.Done():
 			m.logger.Info("RollbackIterator done")
 			return
