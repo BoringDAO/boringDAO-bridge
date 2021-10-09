@@ -452,11 +452,13 @@ func (m *Monitor) Unlock(txId string, token common.Address, from common.Address,
 			m.wrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
 			var hash common.Hash
 			transaction, hash = m.wrapper.Unlock(token, from, recipient, chainID, amount, txId)
-			m.wrapper.session.TransactOpts.Nonce = big.NewInt(int64(transaction.Nonce()))
-			hashes = append(hashes, hash)
+			if transaction != nil {
+				m.wrapper.session.TransactOpts.Nonce = big.NewInt(int64(transaction.Nonce()))
+				hashes = append(hashes, hash)
 
-			m.logger.Infof("send UnlockBor tx %s with gasPrice %s and nonce %d",
-				hash, gasPrice.String(), transaction.Nonce())
+				m.logger.Infof("send UnlockBor tx %s with gasPrice %s and nonce %d",
+					hash, gasPrice.String(), transaction.Nonce())
+			}
 		}
 		receipt, err = m.wrapper.TransactionReceiptsLimitedRetry(context.TODO(), hashes)
 		if err == nil {
@@ -506,11 +508,13 @@ func (m *Monitor) Rollback(txId string, token common.Address, from common.Addres
 			m.wrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
 			var hash common.Hash
 			transaction, hash = m.wrapper.Rollback(token, from, chainID, amount, txId)
-			m.wrapper.session.TransactOpts.Nonce = big.NewInt(int64(transaction.Nonce()))
-			hashes = append(hashes, hash)
+			if transaction != nil {
+				m.wrapper.session.TransactOpts.Nonce = big.NewInt(int64(transaction.Nonce()))
+				hashes = append(hashes, hash)
 
-			m.logger.Infof("send bridge.Rollback tx %s with gasPrice %s and nonce %d",
-				hash, gasPrice.String(), transaction.Nonce())
+				m.logger.Infof("send bridge.Rollback tx %s with gasPrice %s and nonce %d",
+					hash, gasPrice.String(), transaction.Nonce())
+			}
 		}
 		receipt, err = m.wrapper.TransactionReceiptsLimitedRetry(context.TODO(), hashes)
 		if err == nil {
@@ -560,11 +564,13 @@ func (m *Monitor) CrossIn(txId string, token common.Address, from common.Address
 
 			var hash common.Hash
 			transaction, hash = m.wrapper.CrossIn(token, from, recipient, chainID, amount, txId)
-			m.wrapper.session.TransactOpts.Nonce = big.NewInt(int64(transaction.Nonce()))
-			hashes = append(hashes, hash)
+			if transaction != nil {
+				m.wrapper.session.TransactOpts.Nonce = big.NewInt(int64(transaction.Nonce()))
+				hashes = append(hashes, hash)
 
-			m.logger.Infof("send CrossIn tx %s with gasPrice %s and nonce %d",
-				hash, gasPrice.String(), transaction.Nonce())
+				m.logger.Infof("send CrossIn tx %s with gasPrice %s and nonce %d",
+					hash, gasPrice.String(), transaction.Nonce())
+			}
 		}
 		receipt, err = m.wrapper.TransactionReceiptsLimitedRetry(context.TODO(), hashes)
 		if err == nil {
