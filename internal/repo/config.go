@@ -22,10 +22,10 @@ const (
 )
 
 type Config struct {
-	RepoRoot string `json:"repo_root"`
-	Title    string `json:"title"`
-	Eth      `json:"eth"`
-	Bridges  []*BridgeConfig `json:"bridges"`
+	RepoRoot string            `json:"repo_root"`
+	Title    string            `json:"title"`
+	Token    map[string]string `json:"token"`
+	Bridges  []*BridgeConfig   `json:"bridges"`
 	Log      `json:"log"`
 }
 
@@ -37,27 +37,19 @@ type Log struct {
 	Module       map[string]string `toml:"module" json:"module"`
 }
 
-type Eth struct {
-	Addrs             []string          `toml:"addrs" json:"addrs"`
-	MinConfirms       uint64            `toml:"minConfirms" json:"minConfirms"`
-	PrivKey           string            `toml:"privKey" json:"privKey"`
-	ChainID           uint64            `toml:"chainID" json:"chainID"`
-	GasLimit          uint64            `toml:"gasLimit" json:"gasLimit"`
-	Height            map[uint64]uint64 `toml:"height" json:"height"`
-	CrossLockContract string            `toml:"crossLockContract" json:"crossLockContract"`
-	Tokens            []string          `toml:"tokens" json:"tokens"`
+type Token struct {
+	Tokens map[string]string `toml:"tokens" json:"tokens"`
 }
 
 type BridgeConfig struct {
-	Name           string            `toml:"name" json:"name"`
-	Addrs          []string          `toml:"addrs" json:"addrs"`
-	ChainID        uint64            `toml:"chainID" json:"chainID"`
-	MinConfirms    uint64            `toml:"minConfirms" json:"minConfirms"`
-	PrivKey        string            `toml:"privKey" json:"privKey"`
-	GasLimit       uint64            `toml:"gasLimit" json:"gasLimit"`
-	Height         uint64            `toml:"height" json:"height"`
-	BridgeContract string            `toml:"bridgeContract" json:"bridgeContract"`
-	Tokens         map[string]string `toml:"tokens" json:"tokens"`
+	Name           string   `toml:"name" json:"name"`
+	Addrs          []string `toml:"addrs" json:"addrs"`
+	ChainID        uint64   `toml:"chainID" json:"chainID"`
+	MinConfirms    uint64   `toml:"minConfirms" json:"minConfirms"`
+	PrivKey        string   `toml:"privKey" json:"privKey"`
+	GasLimit       uint64   `toml:"gasLimit" json:"gasLimit"`
+	Height         uint64   `toml:"height" json:"height"`
+	BridgeContract string   `toml:"bridgeContract" json:"bridgeContract"`
 }
 
 func (c *Config) Bytes() ([]byte, error) {
@@ -81,9 +73,6 @@ func DefaultConfig() (*Config, error) {
 			Dir:      "logs",
 			Filename: "bridge.log",
 			Module:   make(map[string]string),
-		},
-		Eth: Eth{
-			GasLimit: 1500000,
 		},
 	}, nil
 }

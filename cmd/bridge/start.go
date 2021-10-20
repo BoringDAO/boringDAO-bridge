@@ -59,7 +59,6 @@ func start(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	repo.Config.Eth.PrivKey = ethKey
 	for _, config := range repo.Config.Bridges {
 		config.PrivKey = ethKey
 	}
