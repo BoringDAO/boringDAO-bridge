@@ -34,23 +34,40 @@ type NBridgeTokenInfo struct {
 	IsSupported   bool
 }
 
+// NCrossInParams is an auto generated low-level Go binding around an user-defined struct.
+type NCrossInParams struct {
+	OriginToken   common.Address
+	OriginChainId *big.Int
+	FromChainId   *big.Int
+	ToChainId     *big.Int
+	From          common.Address
+	To            common.Address
+	Amount        *big.Int
+	Txid          string
+}
+
 // NBridgeABI is the input ABI used to generate the binding from.
-const NBridgeABI = "[{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_chainId\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"originToken\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"originChainId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"fromChainId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"toChainId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"CrossIn\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"originToken\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"originChainId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"fromChainId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"toChainId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"CrossOut\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"uint256[]\",\"name\":\"_chainIds\",\"type\":\"uint256[]\"},{\"internalType\":\"address[]\",\"name\":\"_tokens\",\"type\":\"address[]\"},{\"components\":[{\"internalType\":\"uint256\",\"name\":\"tokenType\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"mirrorAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"mirrorChainId\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"isSupported\",\"type\":\"bool\"}],\"internalType\":\"structNBridge.TokenInfo[]\",\"name\":\"tis\",\"type\":\"tuple[]\"}],\"name\":\"addMultiSupportTokens\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_chainId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_token\",\"type\":\"address\"},{\"components\":[{\"internalType\":\"uint256\",\"name\":\"tokenType\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"mirrorAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"mirrorChainId\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"isSupported\",\"type\":\"bool\"}],\"internalType\":\"structNBridge.TokenInfo\",\"name\":\"ti\",\"type\":\"tuple\"}],\"name\":\"addSupportToken\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"chainId\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_originToken\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_originChainId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"fromChainId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"toChainId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"txid\",\"type\":\"string\"}],\"name\":\"crossIn\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"toChainID\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"crossOut\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token0\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_threshold\",\"type\":\"uint256\"}],\"name\":\"setThreshold\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"supportedTokens\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenType\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"mirrorAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"mirrorChainId\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"isSupported\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"name\":\"txHandled\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]"
+const NBridgeABI = "[{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_chainId\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"originToken\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"originChainId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"fromChainId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"toChainId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"CrossIn\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"originToken\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"originChainId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"fromChainId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"toChainId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"CrossOut\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"uint256[]\",\"name\":\"_chainIds\",\"type\":\"uint256[]\"},{\"internalType\":\"address[]\",\"name\":\"_tokens\",\"type\":\"address[]\"},{\"components\":[{\"internalType\":\"uint256\",\"name\":\"tokenType\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"mirrorAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"mirrorChainId\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"isSupported\",\"type\":\"bool\"}],\"internalType\":\"structNBridge.TokenInfo[]\",\"name\":\"tis\",\"type\":\"tuple[]\"}],\"name\":\"addMultiSupportTokens\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_chainId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_token\",\"type\":\"address\"},{\"components\":[{\"internalType\":\"uint256\",\"name\":\"tokenType\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"mirrorAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"mirrorChainId\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"isSupported\",\"type\":\"bool\"}],\"internalType\":\"structNBridge.TokenInfo\",\"name\":\"ti\",\"type\":\"tuple\"}],\"name\":\"addSupportToken\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"chainId\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"_originToken\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_originChainId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"fromChainId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"toChainId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"txid\",\"type\":\"string\"}],\"internalType\":\"structNCrossInParams\",\"name\":\"p\",\"type\":\"tuple\"}],\"name\":\"crossIn\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"toChainID\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"crossOut\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_chainId\",\"type\":\"uint256\"}],\"name\":\"getRoleKey\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"minCrossAmount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_feeRatio\",\"type\":\"uint256\"}],\"name\":\"setFee\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"setFeeTo\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_chainId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"setMinCrossAmount\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token0\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_threshold\",\"type\":\"uint256\"}],\"name\":\"setThreshold\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"supportedTokens\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenType\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"mirrorAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"mirrorChainId\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"isSupported\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"name\":\"txHandled\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]"
 
 // NBridgeFuncSigs maps the 4-byte function signature to its string representation.
 var NBridgeFuncSigs = map[string]string{
 	"11dc39d3": "addMultiSupportTokens(uint256[],address[],(uint256,address,uint256,bool)[])",
 	"ebf3c976": "addSupportToken(uint256,address,(uint256,address,uint256,bool))",
 	"9a8a0592": "chainId()",
-	"ab01c038": "crossIn(address,uint256,uint256,uint256,address,address,uint256,string)",
+	"4871a760": "crossIn((address,uint256,uint256,uint256,address,address,uint256,string))",
 	"df7e600a": "crossOut(address,uint256,address,uint256)",
+	"8881a1aa": "getRoleKey(address,uint256)",
+	"c3470cb0": "minCrossAmount(address,uint256)",
+	"e55156b5": "setFee(address,uint256)",
+	"f46901ed": "setFeeTo(address)",
+	"9393ffde": "setMinCrossAmount(address,uint256,uint256)",
 	"9d879990": "setThreshold(address,uint256)",
 	"15431c48": "supportedTokens(uint256,address)",
 	"824df449": "txHandled(string)",
 }
 
 // NBridgeBin is the compiled bytecode used for deploying new contracts.
-var NBridgeBin = "0x608060405234801561001057600080fd5b50604051610c44380380610c4483398101604081905261002f91610037565b600055610050565b60006020828403121561004957600080fd5b5051919050565b610be58061005f6000396000f3fe608060405234801561001057600080fd5b50600436106100885760003560e01c80639d8799901161005b5780639d87999014610171578063ab01c03814610183578063df7e600a14610196578063ebf3c976146101a957600080fd5b806311dc39d31461008d57806315431c48146100a2578063824df4491461011c5780639a8a05921461015a575b600080fd5b6100a061009b3660046108fe565b6101bc565b005b6100ed6100b0366004610a1f565b6001602081815260009384526040808520909152918352912080549181015460028201546003909201546001600160a01b03909116919060ff1684565b604080519485526001600160a01b03909316602085015291830152151560608201526080015b60405180910390f35b61014a61012a3660046109e2565b805160208183018101805160028252928201919093012091525460ff1681565b6040519015158152602001610113565b61016360005481565b604051908152602001610113565b6100a061017f3660046107fa565b5050565b6100a0610191366004610868565b610280565b6100a06101a4366004610824565b6103c5565b6100a06101b7366004610a4b565b610514565b8151815181146102065760405162461bcd60e51b815260206004820152601060248201526f0d8cadccee8d040dcdee840dac2e8c6d60831b60448201526064015b60405180910390fd5b60005b818110156102795761026785828151811061022657610226610b83565b602002602001015185838151811061024057610240610b83565b602002602001015185848151811061025a5761025a610b83565b6020026020010151610514565b8061027181610b5a565b915050610209565b5050505050565b806002816040516102919190610a88565b9081526040519081900360200190205460ff16156102de5760405162461bcd60e51b815260206004820152600a6024820152691d1e081a185b991b195960b21b60448201526064016101fd565b600054861461031f5760405162461bcd60e51b815260206004820152600d60248201526c31b430b4b724b21032b93937b960991b60448201526064016101fd565b60008881526001602081815260408084206001600160a01b03808f16865290835293819020815160808101835281548152938101549094169183019190915260028301549082015260039091015460ff161515606082018190526103b95760405162461bcd60e51b81526020600482015260116024820152703737ba1039bab83837b93a103a37b5b2b760791b60448201526064016101fd565b50505050505050505050565b6000805481526001602081815260408084206001600160a01b03808a16865290835293819020815160808101835281548152938101549094169183019190915260028301549082015260039091015460ff161515606082018190526104605760405162461bcd60e51b81526020600482015260116024820152703737ba1039bab83837b93a103a37b5b2b760791b60448201526064016101fd565b8051600114156104b6577f549f0ee31ecfdd93c4d6c1591746373d18f77138d790e2424e759e4f3b88798a85600054600054873388886040516104a99796959493929190610ac3565b60405180910390a1610279565b805160021415610279577f549f0ee31ecfdd93c4d6c1591746373d18f77138d790e2424e759e4f3b88798a81602001518260400151600054873388886040516105059796959493929190610ac3565b60405180910390a15050505050565b6001600160a01b0382166105605760405162461bcd60e51b81526020600482015260136024820152726572726f7220746f6b656e206164647265737360681b60448201526064016101fd565b606081015115156001146105a55760405162461bcd60e51b815260206004820152600c60248201526b3830b930b6b99032b93937b960a11b60448201526064016101fd565b60009283526001602081815260408086206001600160a01b039586168752825294859020835181559083015191810180546001600160a01b03191692909416919091179092559182015160028201556060909101516003909101805460ff1916911515919091179055565b80356001600160a01b038116811461062757600080fd5b919050565b600082601f83011261063d57600080fd5b8135602061065261064d83610b36565b610b05565b80838252828201915082860187848660051b890101111561067257600080fd5b60005b858110156106985761068682610610565b84529284019290840190600101610675565b5090979650505050505050565b600082601f8301126106b657600080fd5b813560206106c661064d83610b36565b80838252828201915082860187848660071b89010111156106e657600080fd5b60005b85811015610698576106fb8983610780565b845292840192608091909101906001016106e9565b600082601f83011261072157600080fd5b813567ffffffffffffffff81111561073b5761073b610b99565b61074e601f8201601f1916602001610b05565b81815284602083860101111561076357600080fd5b816020850160208301376000918101602001919091529392505050565b60006080828403121561079257600080fd5b6040516080810181811067ffffffffffffffff821117156107b5576107b5610b99565b604052823581529050806107cb60208401610610565b602082015260408301356040820152606083013580151581146107ed57600080fd5b6060919091015292915050565b6000806040838503121561080d57600080fd5b61081683610610565b946020939093013593505050565b6000806000806080858703121561083a57600080fd5b61084385610610565b93506020850135925061085860408601610610565b9396929550929360600135925050565b600080600080600080600080610100898b03121561088557600080fd5b61088e89610610565b97506020890135965060408901359550606089013594506108b160808a01610610565b93506108bf60a08a01610610565b925060c0890135915060e089013567ffffffffffffffff8111156108e257600080fd5b6108ee8b828c01610710565b9150509295985092959890939650565b60008060006060848603121561091357600080fd5b833567ffffffffffffffff8082111561092b57600080fd5b818601915086601f83011261093f57600080fd5b8135602061094f61064d83610b36565b8083825282820191508286018b848660051b890101111561096f57600080fd5b600096505b84871015610992578035835260019690960195918301918301610974565b50975050870135925050808211156109a957600080fd5b6109b58783880161062c565b935060408601359150808211156109cb57600080fd5b506109d8868287016106a5565b9150509250925092565b6000602082840312156109f457600080fd5b813567ffffffffffffffff811115610a0b57600080fd5b610a1784828501610710565b949350505050565b60008060408385031215610a3257600080fd5b82359150610a4260208401610610565b90509250929050565b600080600060c08486031215610a6057600080fd5b83359250610a7060208501610610565b9150610a7f8560408601610780565b90509250925092565b6000825160005b81811015610aa95760208186018101518583015201610a8f565b81811115610ab8576000828501525b509190910192915050565b6001600160a01b0397881681526020810196909652604086019490945260608501929092528416608084015290921660a082015260c081019190915260e00190565b604051601f8201601f1916810167ffffffffffffffff81118282101715610b2e57610b2e610b99565b604052919050565b600067ffffffffffffffff821115610b5057610b50610b99565b5060051b60200190565b6000600019821415610b7c57634e487b7160e01b600052601160045260246000fd5b5060010190565b634e487b7160e01b600052603260045260246000fd5b634e487b7160e01b600052604160045260246000fdfea26469706673582212203127b834b6c19f381a844c81fe9664c7a331b362b0141db6399348bb1f3146e564736f6c63430008060033"
+var NBridgeBin = "0x608060405234801561001057600080fd5b50604051610ee1380380610ee183398101604081905261002f91610037565b600055610050565b60006020828403121561004957600080fd5b5051919050565b610e828061005f6000396000f3fe608060405234801561001057600080fd5b50600436106100cf5760003560e01c80639a8a05921161008c578063df7e600a11610066578063df7e600a1461024f578063e55156b514610212578063ebf3c97614610262578063f46901ed1461027557600080fd5b80639a8a0592146102095780639d87999014610212578063c3470cb01461022457600080fd5b806311dc39d3146100d457806315431c48146100e95780634871a76014610163578063824df449146101765780638881a1aa146101b45780639393ffde146101d5575b600080fd5b6100e76100e2366004610aa8565b610286565b005b6101346100f7366004610c92565b6001602081815260009384526040808520909152918352912080549181015460028201546003909201546001600160a01b03909116919060ff1684565b604080519485526001600160a01b03909316602085015291830152151560608201526080015b60405180910390f35b6100e7610171366004610bc9565b61034a565b6101a4610184366004610b8c565b805160208183018101805160028252928201919093012091525460ff1681565b604051901515815260200161015a565b6101c76101c2366004610a07565b6104af565b60405190815260200161015a565b6100e76101e3366004610a75565b6001600160a01b0390921660009081526003602090815260408083209383529290522055565b6101c760005481565b6100e7610220366004610a07565b5050565b6101c7610232366004610a07565b600360209081526000928352604080842090915290825290205481565b6100e761025d366004610a31565b6104f3565b6100e7610270366004610cbe565b6106ff565b6100e76102833660046109e5565b50565b8151815181146102d05760405162461bcd60e51b815260206004820152601060248201526f0d8cadccee8d040dcdee840dac2e8c6d60831b60448201526064015b60405180910390fd5b60005b81811015610343576103318582815181106102f0576102f0610e20565b602002602001015185838151811061030a5761030a610e20565b602002602001015185848151811061032457610324610e20565b60200260200101516106ff565b8061033b81610df7565b9150506102d3565b5050505050565b80516020820151600061035d83836104af565b90508360e001516002816040516103749190610cfb565b9081526040519081900360200190205460ff16156103c15760405162461bcd60e51b815260206004820152600a6024820152691d1e081a185b991b195960b21b60448201526064016102c7565b6000548560600151146104065760405162461bcd60e51b815260206004820152600d60248201526c31b430b4b724b21032b93937b960991b60448201526064016102c7565b60208086015160009081526001808352604080832089516001600160a01b0390811685529085529281902081516080810183528154815292810154909316938201939093526002820154928101929092526003015460ff161515606082018190526104a75760405162461bcd60e51b81526020600482015260116024820152703737ba1039bab83837b93a103a37b5b2b760791b60448201526064016102c7565b505050505050565b6040805160609390931b6bffffffffffffffffffffffff19166020808501919091526034808501939093528151808503909301835260549093019052805191012090565b600081116105345760405162461bcd60e51b815260206004820152600e60248201526d063726f737320616d6f756e7420360941b60448201526064016102c7565b6000805481526001602081815260408084206001600160a01b03808a16865290835293819020815160808101835281548152938101549094169183019190915260028301549082015260039091015460ff161515606082018190526105cf5760405162461bcd60e51b81526020600482015260116024820152703737ba1039bab83837b93a103a37b5b2b760791b60448201526064016102c7565b6020808201516001600160a01b031660009081526003825260408082208783529092522054801561064a578083101561064a5760405162461bcd60e51b815260206004820152601a60248201527f616d6f756e74206c657373207468616e206d696e416d6f756e7400000000000060448201526064016102c7565b8151600114156106a0577f549f0ee31ecfdd93c4d6c1591746373d18f77138d790e2424e759e4f3b88798a86600054600054883389896040516106939796959493929190610d36565b60405180910390a16104a7565b8151600214156104a7577f549f0ee31ecfdd93c4d6c1591746373d18f77138d790e2424e759e4f3b88798a82602001518360400151600054883389896040516106ef9796959493929190610d36565b60405180910390a1505050505050565b6001600160a01b03821661074b5760405162461bcd60e51b81526020600482015260136024820152726572726f7220746f6b656e206164647265737360681b60448201526064016102c7565b606081015115156001146107905760405162461bcd60e51b815260206004820152600c60248201526b3830b930b6b99032b93937b960a11b60448201526064016102c7565b60009283526001602081815260408086206001600160a01b039586168752825294859020835181559083015191810180546001600160a01b03191692909416919091179092559182015160028201556060909101516003909101805460ff1916911515919091179055565b80356001600160a01b038116811461081257600080fd5b919050565b600082601f83011261082857600080fd5b8135602061083d61083883610dd3565b610da2565b80838252828201915082860187848660051b890101111561085d57600080fd5b60005b8581101561088357610871826107fb565b84529284019290840190600101610860565b5090979650505050505050565b600082601f8301126108a157600080fd5b813560206108b161083883610dd3565b80838252828201915082860187848660071b89010111156108d157600080fd5b60005b85811015610883576108e6898361096b565b845292840192608091909101906001016108d4565b600082601f83011261090c57600080fd5b813567ffffffffffffffff81111561092657610926610e36565b610939601f8201601f1916602001610da2565b81815284602083860101111561094e57600080fd5b816020850160208301376000918101602001919091529392505050565b60006080828403121561097d57600080fd5b6040516080810181811067ffffffffffffffff821117156109a0576109a0610e36565b604052823581529050806109b6602084016107fb565b602082015260408301356040820152606083013580151581146109d857600080fd5b6060919091015292915050565b6000602082840312156109f757600080fd5b610a00826107fb565b9392505050565b60008060408385031215610a1a57600080fd5b610a23836107fb565b946020939093013593505050565b60008060008060808587031215610a4757600080fd5b610a50856107fb565b935060208501359250610a65604086016107fb565b9396929550929360600135925050565b600080600060608486031215610a8a57600080fd5b610a93846107fb565b95602085013595506040909401359392505050565b600080600060608486031215610abd57600080fd5b833567ffffffffffffffff80821115610ad557600080fd5b818601915086601f830112610ae957600080fd5b81356020610af961083883610dd3565b8083825282820191508286018b848660051b8901011115610b1957600080fd5b600096505b84871015610b3c578035835260019690960195918301918301610b1e565b5097505087013592505080821115610b5357600080fd5b610b5f87838801610817565b93506040860135915080821115610b7557600080fd5b50610b8286828701610890565b9150509250925092565b600060208284031215610b9e57600080fd5b813567ffffffffffffffff811115610bb557600080fd5b610bc1848285016108fb565b949350505050565b600060208284031215610bdb57600080fd5b813567ffffffffffffffff80821115610bf357600080fd5b908301906101008286031215610c0857600080fd5b610c10610d78565b610c19836107fb565b8152602083013560208201526040830135604082015260608301356060820152610c45608084016107fb565b6080820152610c5660a084016107fb565b60a082015260c083013560c082015260e083013582811115610c7757600080fd5b610c83878286016108fb565b60e08301525095945050505050565b60008060408385031215610ca557600080fd5b82359150610cb5602084016107fb565b90509250929050565b600080600060c08486031215610cd357600080fd5b83359250610ce3602085016107fb565b9150610cf2856040860161096b565b90509250925092565b6000825160005b81811015610d1c5760208186018101518583015201610d02565b81811115610d2b576000828501525b509190910192915050565b6001600160a01b0397881681526020810196909652604086019490945260608501929092528416608084015290921660a082015260c081019190915260e00190565b604051610100810167ffffffffffffffff81118282101715610d9c57610d9c610e36565b60405290565b604051601f8201601f1916810167ffffffffffffffff81118282101715610dcb57610dcb610e36565b604052919050565b600067ffffffffffffffff821115610ded57610ded610e36565b5060051b60200190565b6000600019821415610e1957634e487b7160e01b600052601160045260246000fd5b5060010190565b634e487b7160e01b600052603260045260246000fd5b634e487b7160e01b600052604160045260246000fdfea2646970667358221220b0749a7fc489318479fb70691eaf56b8ab9d61c209eb0077ceffffb6fa5cfbe664736f6c63430008060033"
 
 // DeployNBridge deploys a new Ethereum contract, binding an instance of NBridge to it.
 func DeployNBridge(auth *bind.TransactOpts, backend bind.ContractBackend, _chainId *big.Int) (common.Address, *types.Transaction, *NBridge, error) {
@@ -239,6 +256,68 @@ func (_NBridge *NBridgeCallerSession) ChainId() (*big.Int, error) {
 	return _NBridge.Contract.ChainId(&_NBridge.CallOpts)
 }
 
+// GetRoleKey is a free data retrieval call binding the contract method 0x8881a1aa.
+//
+// Solidity: function getRoleKey(address token, uint256 _chainId) pure returns(bytes32)
+func (_NBridge *NBridgeCaller) GetRoleKey(opts *bind.CallOpts, token common.Address, _chainId *big.Int) ([32]byte, error) {
+	var out []interface{}
+	err := _NBridge.contract.Call(opts, &out, "getRoleKey", token, _chainId)
+
+	if err != nil {
+		return *new([32]byte), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
+
+	return out0, err
+
+}
+
+// GetRoleKey is a free data retrieval call binding the contract method 0x8881a1aa.
+//
+// Solidity: function getRoleKey(address token, uint256 _chainId) pure returns(bytes32)
+func (_NBridge *NBridgeSession) GetRoleKey(token common.Address, _chainId *big.Int) ([32]byte, error) {
+	return _NBridge.Contract.GetRoleKey(&_NBridge.CallOpts, token, _chainId)
+}
+
+// GetRoleKey is a free data retrieval call binding the contract method 0x8881a1aa.
+//
+// Solidity: function getRoleKey(address token, uint256 _chainId) pure returns(bytes32)
+func (_NBridge *NBridgeCallerSession) GetRoleKey(token common.Address, _chainId *big.Int) ([32]byte, error) {
+	return _NBridge.Contract.GetRoleKey(&_NBridge.CallOpts, token, _chainId)
+}
+
+// MinCrossAmount is a free data retrieval call binding the contract method 0xc3470cb0.
+//
+// Solidity: function minCrossAmount(address , uint256 ) view returns(uint256)
+func (_NBridge *NBridgeCaller) MinCrossAmount(opts *bind.CallOpts, arg0 common.Address, arg1 *big.Int) (*big.Int, error) {
+	var out []interface{}
+	err := _NBridge.contract.Call(opts, &out, "minCrossAmount", arg0, arg1)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// MinCrossAmount is a free data retrieval call binding the contract method 0xc3470cb0.
+//
+// Solidity: function minCrossAmount(address , uint256 ) view returns(uint256)
+func (_NBridge *NBridgeSession) MinCrossAmount(arg0 common.Address, arg1 *big.Int) (*big.Int, error) {
+	return _NBridge.Contract.MinCrossAmount(&_NBridge.CallOpts, arg0, arg1)
+}
+
+// MinCrossAmount is a free data retrieval call binding the contract method 0xc3470cb0.
+//
+// Solidity: function minCrossAmount(address , uint256 ) view returns(uint256)
+func (_NBridge *NBridgeCallerSession) MinCrossAmount(arg0 common.Address, arg1 *big.Int) (*big.Int, error) {
+	return _NBridge.Contract.MinCrossAmount(&_NBridge.CallOpts, arg0, arg1)
+}
+
 // SupportedTokens is a free data retrieval call binding the contract method 0x15431c48.
 //
 // Solidity: function supportedTokens(uint256 , address ) view returns(uint256 tokenType, address mirrorAddress, uint256 mirrorChainId, bool isSupported)
@@ -367,25 +446,25 @@ func (_NBridge *NBridgeTransactorSession) AddSupportToken(_chainId *big.Int, _to
 	return _NBridge.Contract.AddSupportToken(&_NBridge.TransactOpts, _chainId, _token, ti)
 }
 
-// CrossIn is a paid mutator transaction binding the contract method 0xab01c038.
+// CrossIn is a paid mutator transaction binding the contract method 0x4871a760.
 //
-// Solidity: function crossIn(address _originToken, uint256 _originChainId, uint256 fromChainId, uint256 toChainId, address from, address to, uint256 amount, string txid) returns()
-func (_NBridge *NBridgeTransactor) CrossIn(opts *bind.TransactOpts, _originToken common.Address, _originChainId *big.Int, fromChainId *big.Int, toChainId *big.Int, from common.Address, to common.Address, amount *big.Int, txid string) (*types.Transaction, error) {
-	return _NBridge.contract.Transact(opts, "crossIn", _originToken, _originChainId, fromChainId, toChainId, from, to, amount, txid)
+// Solidity: function crossIn((address,uint256,uint256,uint256,address,address,uint256,string) p) returns()
+func (_NBridge *NBridgeTransactor) CrossIn(opts *bind.TransactOpts, p NCrossInParams) (*types.Transaction, error) {
+	return _NBridge.contract.Transact(opts, "crossIn", p)
 }
 
-// CrossIn is a paid mutator transaction binding the contract method 0xab01c038.
+// CrossIn is a paid mutator transaction binding the contract method 0x4871a760.
 //
-// Solidity: function crossIn(address _originToken, uint256 _originChainId, uint256 fromChainId, uint256 toChainId, address from, address to, uint256 amount, string txid) returns()
-func (_NBridge *NBridgeSession) CrossIn(_originToken common.Address, _originChainId *big.Int, fromChainId *big.Int, toChainId *big.Int, from common.Address, to common.Address, amount *big.Int, txid string) (*types.Transaction, error) {
-	return _NBridge.Contract.CrossIn(&_NBridge.TransactOpts, _originToken, _originChainId, fromChainId, toChainId, from, to, amount, txid)
+// Solidity: function crossIn((address,uint256,uint256,uint256,address,address,uint256,string) p) returns()
+func (_NBridge *NBridgeSession) CrossIn(p NCrossInParams) (*types.Transaction, error) {
+	return _NBridge.Contract.CrossIn(&_NBridge.TransactOpts, p)
 }
 
-// CrossIn is a paid mutator transaction binding the contract method 0xab01c038.
+// CrossIn is a paid mutator transaction binding the contract method 0x4871a760.
 //
-// Solidity: function crossIn(address _originToken, uint256 _originChainId, uint256 fromChainId, uint256 toChainId, address from, address to, uint256 amount, string txid) returns()
-func (_NBridge *NBridgeTransactorSession) CrossIn(_originToken common.Address, _originChainId *big.Int, fromChainId *big.Int, toChainId *big.Int, from common.Address, to common.Address, amount *big.Int, txid string) (*types.Transaction, error) {
-	return _NBridge.Contract.CrossIn(&_NBridge.TransactOpts, _originToken, _originChainId, fromChainId, toChainId, from, to, amount, txid)
+// Solidity: function crossIn((address,uint256,uint256,uint256,address,address,uint256,string) p) returns()
+func (_NBridge *NBridgeTransactorSession) CrossIn(p NCrossInParams) (*types.Transaction, error) {
+	return _NBridge.Contract.CrossIn(&_NBridge.TransactOpts, p)
 }
 
 // CrossOut is a paid mutator transaction binding the contract method 0xdf7e600a.
@@ -407,6 +486,69 @@ func (_NBridge *NBridgeSession) CrossOut(_token common.Address, toChainID *big.I
 // Solidity: function crossOut(address _token, uint256 toChainID, address to, uint256 amount) returns()
 func (_NBridge *NBridgeTransactorSession) CrossOut(_token common.Address, toChainID *big.Int, to common.Address, amount *big.Int) (*types.Transaction, error) {
 	return _NBridge.Contract.CrossOut(&_NBridge.TransactOpts, _token, toChainID, to, amount)
+}
+
+// SetFee is a paid mutator transaction binding the contract method 0xe55156b5.
+//
+// Solidity: function setFee(address token, uint256 _feeRatio) returns()
+func (_NBridge *NBridgeTransactor) SetFee(opts *bind.TransactOpts, token common.Address, _feeRatio *big.Int) (*types.Transaction, error) {
+	return _NBridge.contract.Transact(opts, "setFee", token, _feeRatio)
+}
+
+// SetFee is a paid mutator transaction binding the contract method 0xe55156b5.
+//
+// Solidity: function setFee(address token, uint256 _feeRatio) returns()
+func (_NBridge *NBridgeSession) SetFee(token common.Address, _feeRatio *big.Int) (*types.Transaction, error) {
+	return _NBridge.Contract.SetFee(&_NBridge.TransactOpts, token, _feeRatio)
+}
+
+// SetFee is a paid mutator transaction binding the contract method 0xe55156b5.
+//
+// Solidity: function setFee(address token, uint256 _feeRatio) returns()
+func (_NBridge *NBridgeTransactorSession) SetFee(token common.Address, _feeRatio *big.Int) (*types.Transaction, error) {
+	return _NBridge.Contract.SetFee(&_NBridge.TransactOpts, token, _feeRatio)
+}
+
+// SetFeeTo is a paid mutator transaction binding the contract method 0xf46901ed.
+//
+// Solidity: function setFeeTo(address account) returns()
+func (_NBridge *NBridgeTransactor) SetFeeTo(opts *bind.TransactOpts, account common.Address) (*types.Transaction, error) {
+	return _NBridge.contract.Transact(opts, "setFeeTo", account)
+}
+
+// SetFeeTo is a paid mutator transaction binding the contract method 0xf46901ed.
+//
+// Solidity: function setFeeTo(address account) returns()
+func (_NBridge *NBridgeSession) SetFeeTo(account common.Address) (*types.Transaction, error) {
+	return _NBridge.Contract.SetFeeTo(&_NBridge.TransactOpts, account)
+}
+
+// SetFeeTo is a paid mutator transaction binding the contract method 0xf46901ed.
+//
+// Solidity: function setFeeTo(address account) returns()
+func (_NBridge *NBridgeTransactorSession) SetFeeTo(account common.Address) (*types.Transaction, error) {
+	return _NBridge.Contract.SetFeeTo(&_NBridge.TransactOpts, account)
+}
+
+// SetMinCrossAmount is a paid mutator transaction binding the contract method 0x9393ffde.
+//
+// Solidity: function setMinCrossAmount(address token, uint256 _chainId, uint256 amount) returns()
+func (_NBridge *NBridgeTransactor) SetMinCrossAmount(opts *bind.TransactOpts, token common.Address, _chainId *big.Int, amount *big.Int) (*types.Transaction, error) {
+	return _NBridge.contract.Transact(opts, "setMinCrossAmount", token, _chainId, amount)
+}
+
+// SetMinCrossAmount is a paid mutator transaction binding the contract method 0x9393ffde.
+//
+// Solidity: function setMinCrossAmount(address token, uint256 _chainId, uint256 amount) returns()
+func (_NBridge *NBridgeSession) SetMinCrossAmount(token common.Address, _chainId *big.Int, amount *big.Int) (*types.Transaction, error) {
+	return _NBridge.Contract.SetMinCrossAmount(&_NBridge.TransactOpts, token, _chainId, amount)
+}
+
+// SetMinCrossAmount is a paid mutator transaction binding the contract method 0x9393ffde.
+//
+// Solidity: function setMinCrossAmount(address token, uint256 _chainId, uint256 amount) returns()
+func (_NBridge *NBridgeTransactorSession) SetMinCrossAmount(token common.Address, _chainId *big.Int, amount *big.Int) (*types.Transaction, error) {
+	return _NBridge.Contract.SetMinCrossAmount(&_NBridge.TransactOpts, token, _chainId, amount)
 }
 
 // SetThreshold is a paid mutator transaction binding the contract method 0x9d879990.

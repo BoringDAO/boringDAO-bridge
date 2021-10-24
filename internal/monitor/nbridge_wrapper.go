@@ -184,7 +184,17 @@ func (bw *BridgeWrapper) CrossIn(originToken common.Address, originChainId *big.
 		if bw.config.ChainID == 65 || bw.config.ChainID == 66 {
 			tx, hash, err = bw.okChainCrossIn(originToken, originChainId, fromChainId, toChainId, from, to, amount, txId)
 		} else {
-			tx, err = bw.session.CrossIn(originToken, originChainId, fromChainId, toChainId, from, to, amount, txId)
+			param := NCrossInParams{
+				OriginToken:   originToken,
+				OriginChainId: originChainId,
+				FromChainId:   fromChainId,
+				ToChainId:     toChainId,
+				From:          from,
+				To:            to,
+				Amount:        amount,
+				Txid:          txId,
+			}
+			tx, err = bw.session.CrossIn(param)
 			if tx != nil {
 				hash = tx.Hash()
 			}
