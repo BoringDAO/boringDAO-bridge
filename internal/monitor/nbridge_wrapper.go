@@ -181,19 +181,19 @@ func (bw *BridgeWrapper) CrossIn(originToken common.Address, originChainId *big.
 		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
 		bw.session.TransactOpts.GasPrice = gasPrice.BigInt()
 
+		param := NCrossInParams{
+			OriginToken:   originToken,
+			OriginChainId: originChainId,
+			FromChainId:   fromChainId,
+			ToChainId:     toChainId,
+			From:          from,
+			To:            to,
+			Amount:        amount,
+			Txid:          txId,
+		}
 		if bw.config.ChainID == 65 || bw.config.ChainID == 66 {
-			tx, hash, err = bw.okChainCrossIn(originToken, originChainId, fromChainId, toChainId, from, to, amount, txId)
+			tx, hash, err = bw.okChainCrossIn(param)
 		} else {
-			param := NCrossInParams{
-				OriginToken:   originToken,
-				OriginChainId: originChainId,
-				FromChainId:   fromChainId,
-				ToChainId:     toChainId,
-				From:          from,
-				To:            to,
-				Amount:        amount,
-				Txid:          txId,
-			}
 			tx, err = bw.session.CrossIn(param)
 			if tx != nil {
 				hash = tx.Hash()
@@ -216,13 +216,12 @@ func (bw *BridgeWrapper) CrossIn(originToken common.Address, originChainId *big.
 	return tx, hash
 }
 
-func (bw *BridgeWrapper) okChainCrossIn(originToken common.Address, originChainId *big.Int, fromChainId *big.Int, toChainId *big.Int,
-	from common.Address, to common.Address, amount *big.Int, txId string) (*types.Transaction, common.Hash, error) {
+func (bw *BridgeWrapper) okChainCrossIn(param NCrossInParams) (*types.Transaction, common.Hash, error) {
 	parsed, err := abi.JSON(strings.NewReader(NBridgeABI))
 	if err != nil {
 		return nil, common.Hash{}, err
 	}
-	input, err := parsed.Pack("crossIn", originToken, originChainId, fromChainId, toChainId, from, to, amount, txId)
+	input, err := parsed.Pack("crossIn", param)
 	if err != nil {
 		return nil, common.Hash{}, err
 	}
