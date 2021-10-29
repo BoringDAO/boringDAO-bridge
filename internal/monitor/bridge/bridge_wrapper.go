@@ -2,6 +2,7 @@ package bridge
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
 	"regexp"
@@ -15,6 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -190,6 +192,11 @@ func (bw *BridgeWrapper) CrossMint(ethToken common.Address, from common.Address,
 		}
 		if err != nil {
 			bw.logger.Warnf("CrossMint: %s", err.Error())
+			if errors.Is(err, core.ErrNonceTooLow) {
+				tx = nil
+				hash = common.Hash{}
+				return nil
+			}
 
 			if bw.isNetworkError(err) {
 				bw.switchToNextAddr()

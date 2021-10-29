@@ -257,11 +257,13 @@ func (m *Monitor) CrossMint(ethToken common.Address, txId string, addrFromEth co
 			m.bridgeWrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
 
 			transaction, hash = m.bridgeWrapper.CrossMint(ethToken, addrFromEth, recipient, amount, txId)
-			m.bridgeWrapper.session.TransactOpts.Nonce = big.NewInt(int64(transaction.Nonce()))
-			hashes = append(hashes, hash)
+			if transaction != nil {
+				m.bridgeWrapper.session.TransactOpts.Nonce = big.NewInt(int64(transaction.Nonce()))
+				hashes = append(hashes, hash)
 
-			m.logger.Infof("send CrossMint tx %s with gasPrice %s and nonce %d",
-				hash.String(), gasPrice.String(), transaction.Nonce())
+				m.logger.Infof("send CrossMint tx %s with gasPrice %s and nonce %d",
+					hash.String(), gasPrice.String(), transaction.Nonce())
+			}
 		}
 
 		receipt, err = m.bridgeWrapper.TransactionReceiptsLimitedRetry(context.TODO(), hashes)

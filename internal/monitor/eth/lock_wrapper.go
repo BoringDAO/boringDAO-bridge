@@ -2,6 +2,7 @@ package eth
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
 	"regexp"
@@ -14,6 +15,7 @@ import (
 	"github.com/boringdao/bridge/pkg/kit/hexutil"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -175,6 +177,10 @@ func (lw *LockWrapper) Unlock(token common.Address, chainID *big.Int, from commo
 		result, err = lw.session.Unlock(token, chainID, from, to, amount, txid)
 		if err != nil {
 			lw.logger.Warnf("Unlock: %s", err.Error())
+			if errors.Is(err, core.ErrNonceTooLow) {
+				result = nil
+				return nil
+			}
 
 			if lw.isNetworkError(err) {
 				lw.switchToNextAddr()

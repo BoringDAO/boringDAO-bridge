@@ -279,11 +279,13 @@ func (m *Monitor) UnlockBor(txId string, token common.Address, chainId *big.Int,
 			m.lockWrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
 
 			transaction = m.lockWrapper.Unlock(token, chainId, from, recipient, amount, txId)
-			m.lockWrapper.session.TransactOpts.Nonce = big.NewInt(int64(transaction.Nonce()))
-			hashes = append(hashes, transaction.Hash())
+			if transaction != nil {
+				m.lockWrapper.session.TransactOpts.Nonce = big.NewInt(int64(transaction.Nonce()))
+				hashes = append(hashes, transaction.Hash())
 
-			m.logger.Infof("send UnlockBor tx %s with gasPrice %s and nonce %d",
-				transaction.Hash().String(), gasPrice.String(), transaction.Nonce())
+				m.logger.Infof("send UnlockBor tx %s with gasPrice %s and nonce %d",
+					transaction.Hash().String(), gasPrice.String(), transaction.Nonce())
+			}
 		}
 		receipt, err = m.lockWrapper.TransactionReceiptsLimitedRetry(context.TODO(), hashes)
 		if err == nil {
