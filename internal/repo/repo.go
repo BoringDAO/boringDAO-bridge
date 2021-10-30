@@ -26,7 +26,7 @@ func Load(repoRoot string) (*Repo, error) {
 }
 
 func checkConfig(config *Config) error {
-	if len(config.Nft.Tokens) == 0 {
+	if len(config.Nft) == 0 {
 		return fmt.Errorf("supported original nft token is not configured")
 	}
 

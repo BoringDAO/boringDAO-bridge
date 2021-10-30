@@ -2,10 +2,7 @@ title = "Bridge configuration file"
 
 
 [nft]
-    tokens = [
-      "0x13edDC17aE2257e4F06105822330E4a5DcED36e2", #fin
-      # "0xa9C744B12AB13Cd4cAC6f3cbbE33113d5DBB09Ee", #boring
-    ]
+  "0x13edDC17aE2257e4F06105822330E4a5DcED36e2" = 42
 
 [[bridges]]
   name = "eth"

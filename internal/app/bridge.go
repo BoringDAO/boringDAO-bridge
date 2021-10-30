@@ -41,7 +41,7 @@ func New(repoRoot *repo.Repo) (*Bridge, error) {
 	monitors := make(map[uint64]monitor.IMonitor)
 
 	for _, bConfig := range repoRoot.Config.Bridges {
-		monitor, err := monitor.New(repoRoot.Config.RepoRoot, bConfig, &repoRoot.Config.Nft, chainIDs, loggers.Logger(bConfig.Name))
+		monitor, err := monitor.New(repoRoot.Config.RepoRoot, bConfig, repoRoot.Config.Nft, chainIDs, loggers.Logger(bConfig.Name))
 		if err != nil {
 			return nil, err
 		}

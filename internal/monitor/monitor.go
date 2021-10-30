@@ -32,7 +32,7 @@ type Monitor struct {
 	bridgeWrapper *BridgeWrapper
 	storage       storage.Storage
 	config        *repo.BridgeConfig
-	nft           *repo.Nft
+	nft           map[string]string
 	chainIDs      []uint64
 
 	logger logrus.FieldLogger
@@ -40,7 +40,7 @@ type Monitor struct {
 	cancel context.CancelFunc
 }
 
-func New(repoRoot string, config *repo.BridgeConfig, nft *repo.Nft, chainIDs []uint64, logger logrus.FieldLogger) (*Monitor, error) {
+func New(repoRoot string, config *repo.BridgeConfig, nft map[string]string, chainIDs []uint64, logger logrus.FieldLogger) (*Monitor, error) {
 	storagePath := repo.GetStoragePath(repoRoot, fmt.Sprintf("bridge_%d", config.ChainID))
 	storage, err := leveldb.New(storagePath)
 	if err != nil {
@@ -178,7 +178,7 @@ func (m *Monitor) handleCross(crossOut *BridgeCrossOut, isHistory bool) {
 		return
 	}
 
-	if !m.checkSupportedToken(crossOut.OriginToken0.String()) {
+	if !m.checkSupportedToken(crossOut.OriginToken0.String(), crossOut.OriginChainId.String()) {
 		m.logger.Warnf("ignore log with unsupported original token: %s", crossOut.OriginToken0.String())
 		return
 	}
@@ -234,9 +234,9 @@ func (m *Monitor) handleCross(crossOut *BridgeCrossOut, isHistory bool) {
 	m.crossOutC <- coco
 }
 
-func (m *Monitor) checkSupportedToken(token string) bool {
-	for _, tokenAddr := range m.nft.Tokens {
-		if strings.EqualFold(token, tokenAddr) {
+func (m *Monitor) checkSupportedToken(token, chainID string) bool {
+	for tokenAddr, tokenChainID := range m.nft {
+		if strings.EqualFold(token, tokenAddr) && strings.EqualFold(chainID, tokenChainID) {
 			return true
 		}
 	}

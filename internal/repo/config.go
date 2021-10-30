@@ -22,10 +22,10 @@ const (
 )
 
 type Config struct {
-	RepoRoot string `json:"repo_root"`
-	Title    string `json:"title"`
-	Nft      `json:"nft"`
-	Bridges  []*BridgeConfig `json:"bridges"`
+	RepoRoot string            `json:"repo_root"`
+	Title    string            `json:"title"`
+	Nft      map[string]string `json:"nft"`
+	Bridges  []*BridgeConfig   `json:"bridges"`
 	Log      `json:"log"`
 }
 
@@ -35,10 +35,6 @@ type Log struct {
 	Filename     string            `toml:"filename" json:"filename"`
 	ReportCaller bool              `mapstructure:"report_caller" json:"report_caller"`
 	Module       map[string]string `toml:"module" json:"module"`
-}
-
-type Nft struct {
-	Tokens []string `toml:"tokens" json:"tokens"`
 }
 
 type BridgeConfig struct {
