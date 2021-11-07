@@ -19,6 +19,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
+	"go.uber.org/atomic"
 )
 
 var _ IMonitor = (*Monitor)(nil)
@@ -34,6 +35,7 @@ type Monitor struct {
 	config        *repo.BridgeConfig
 	token         map[string]string
 	chainIDs      []uint64
+	cocoNum       atomic.Int64
 
 	logger logrus.FieldLogger
 	ctx    context.Context
@@ -105,6 +107,7 @@ func (m *Monitor) ListenFinishedCocoC() chan *Coco {
 func (m *Monitor) HandleFinishedCoco(coco *Coco) {
 	m.persistBHeight(coco.ToChainId.Uint64(), coco.BlockHeight)
 	m.putTxID(coco.TxId, coco)
+	m.cocoNum.Dec()
 }
 
 func (m *Monitor) listenCrossOutEvent() {
@@ -128,11 +131,23 @@ func (m *Monitor) listenCrossOutEvent() {
 
 			filter := m.bridgeWrapper.FilterCrossOut(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
 			for filter.Next() {
-				m.handleCross(filter.Event, true)
+				res := m.handleCross(filter.Event, true)
+				if res {
+					m.cocoNum.Inc()
+				}
 			}
 			m.logger.WithFields(logrus.Fields{"start": start, "end": end}).Infof("FilterCrossOut end")
 
 			start = end + 1
+
+			if m.cocoNum.Load() == 0 {
+				for _, chainID := range m.chainIDs {
+					if chainID == m.config.ChainID {
+						continue
+					}
+					m.persistBHeight(chainID, end)
+				}
+			}
 		case <-m.ctx.Done():
 			m.logger.Info("listenCrossOutEvent done")
 			return
@@ -167,19 +182,19 @@ func (m *Monitor) handleCrossInCocoC() {
 	}
 }
 
-func (m *Monitor) handleCross(crossOut *NBridgeCrossOut, isHistory bool) {
+func (m *Monitor) handleCross(crossOut *NBridgeCrossOut, isHistory bool) bool {
 	if !strings.EqualFold(crossOut.Raw.Address.String(), m.config.BridgeContract) {
 		m.logger.Warnf("ignore log with contract address: %s", crossOut.Raw.Address.String())
-		return
+		return false
 	}
 
 	if !m.checkSupportedToken(crossOut.OriginToken.String(), crossOut.OriginChainId.String()) {
 		m.logger.Warnf("ignore log with unsupported original token: %s", crossOut.OriginToken.String())
-		return
+		return false
 	}
 
 	if m.HasTx(crossOut.Raw.TxHash.String()) {
-		return
+		return false
 	}
 
 	coco := &Coco{
@@ -209,7 +224,7 @@ func (m *Monitor) handleCross(crossOut *NBridgeCrossOut, isHistory bool) {
 	}).Info("CrossOut")
 
 	if crossOut.Raw.Removed {
-		return
+		return false
 	}
 
 	if !m.confirmEvent(crossOut.Raw) {
@@ -219,12 +234,14 @@ func (m *Monitor) handleCross(crossOut *NBridgeCrossOut, isHistory bool) {
 			"ToChainId":    coco.ToChainId.String(),
 			"block_height": crossOut.Raw.BlockNumber,
 		}).Info("CrossOut has not confirmed")
-		return
+		return false
 	}
 
 	m.logger.WithField("tx", crossOut.Raw.TxHash.String()).Info("confirmEvent")
 
 	m.crossOutC <- coco
+
+	return true
 }
 
 func (m *Monitor) checkSupportedToken(token, chainID string) bool {
