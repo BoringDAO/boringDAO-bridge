@@ -1,16 +1,14 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
-
-	"github.com/fatih/color"
 
 	"github.com/boringdao/bridge/internal/app"
 	"github.com/boringdao/bridge/internal/loggers"
@@ -92,19 +90,11 @@ func ethKey() (string, error) {
 		return "", fmt.Errorf("eth private key format error:%w", err)
 	}
 
-	key1, err := gopass.GetPasswdPrompt("Please input eth/bridge private key again: ", true, os.Stdin, os.Stdout)
-	if err != nil {
-		return "", fmt.Errorf("eth private key format error:%w", err)
-	}
+	addr := repo.ReadEvmAddress("Please input the address of your private key:")
+	keyAddr := crypto.PubkeyToAddress(priv.PublicKey).String()
 
-	if !bytes.Equal(key, key1) {
-		return "", fmt.Errorf("the two input private keys are not equal")
-	}
-
-	keyAddr := crypto.PubkeyToAddress(priv.PublicKey)
-	color.Blue("Please confirm the address of your private key %s, Y/n?", keyAddr)
-	if !repo.ReadYes() {
-		return "", fmt.Errorf("please check your private key and try again")
+	if strings.Compare(addr, keyAddr) != 0 {
+		return "", fmt.Errorf("the address cannot match the private key, please check and try again")
 	}
 
 	return string(key), nil

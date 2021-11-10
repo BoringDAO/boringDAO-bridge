@@ -1,9 +1,7 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"os"
 
 	"github.com/boringdao/bridge/internal/repo"
 	"github.com/urfave/cli"
@@ -20,6 +18,10 @@ func initCMD() cli.Command {
 				Value: "",
 				Usage: "bridge config repo path",
 			},
+			cli.BoolFlag{
+				Name:  "interactive,i",
+				Usage: "configure bridge in interactive mode",
+			},
 		},
 	}
 }
@@ -30,18 +32,18 @@ func initialize(ctx *cli.Context) error {
 		return err
 	}
 
+	interactive := ctx.Bool("interactive")
+
 	fmt.Printf("initializing bridge at %s\n", repoRoot)
 
 	if repo.Initialized(repoRoot) {
 		fmt.Println("bridge configuration file already exists")
-		fmt.Println("reinitializing would overwrite your configuration, Y/N?")
-		input := bufio.NewScanner(os.Stdin)
-		input.Scan()
-		if input.Text() == "Y" || input.Text() == "y" {
-			return repo.Initialize(repoRoot)
+		fmt.Println("reinitializing would overwrite your configuration, Y/n?")
+		if repo.ReadYes() {
+			return repo.Initialize(repoRoot, interactive)
 		}
 		return nil
 	}
 
-	return repo.Initialize(repoRoot)
+	return repo.Initialize(repoRoot, interactive)
 }
