@@ -136,7 +136,7 @@ func (m *Monitor) listenCrossOutEvent() {
 					m.cocoNum.Inc()
 				}
 			}
-			m.logger.WithFields(logrus.Fields{"start": start, "end": end}).Infof("FilterCrossOut end")
+			m.logger.Infof("finished filtering cross out event between block [%d, %d]", start, end)
 
 			start = end + 1
 
@@ -409,10 +409,7 @@ func (m *Monitor) persistBHeight(chainID uint64, height uint64) {
 	buf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(buf, height)
 	m.storage.Put(bHeightKey(chainID), buf)
-	m.logger.WithFields(logrus.Fields{
-		"chainID": chainID,
-		"height":  height,
-	}).Info("Persist Bridge Block Height")
+	m.logger.Infof("handled cross out events before block %d on chain %d", height, chainID)
 }
 
 func TxKey(hash string, chainID uint64) []byte {
