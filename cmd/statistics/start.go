@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"os/signal"
@@ -10,15 +9,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/fatih/color"
-
 	"github.com/boringdao/bridge/internal/app"
 	"github.com/boringdao/bridge/internal/loggers"
 	"github.com/boringdao/bridge/internal/repo"
-	"github.com/boringdao/bridge/pkg/kit/hexutil"
 	"github.com/boringdao/bridge/pkg/kit/log"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/howeyc/gopass"
 	"github.com/urfave/cli"
 )
 
@@ -58,14 +52,6 @@ func start(ctx *cli.Context) error {
 
 	loggers.Initialize(repo.Config)
 
-	ethKey, err := ethKey()
-	if err != nil {
-		return err
-	}
-	for _, config := range repo.Config.Bridges {
-		config.PrivKey = ethKey
-	}
-
 	bridge, err := app.New(repo)
 	if err != nil {
 		return fmt.Errorf("boring-node new: %w", err)
@@ -83,31 +69,6 @@ func start(ctx *cli.Context) error {
 
 	logger.Info("Bridge exits")
 	return nil
-}
-
-func ethKey() (string, error) {
-	key, err := gopass.GetPasswdPrompt("Please input eth/bridge private key: ", true, os.Stdin, os.Stdout)
-	priv, err := crypto.ToECDSA(hexutil.Decode(string(key)))
-	if err != nil || priv == nil {
-		return "", fmt.Errorf("eth private key format error:%w", err)
-	}
-
-	key1, err := gopass.GetPasswdPrompt("Please input eth/bridge private key again: ", true, os.Stdin, os.Stdout)
-	if err != nil {
-		return "", fmt.Errorf("eth private key format error:%w", err)
-	}
-
-	if !bytes.Equal(key, key1) {
-		return "", fmt.Errorf("the two input private keys are not equal")
-	}
-
-	keyAddr := crypto.PubkeyToAddress(priv.PublicKey)
-	color.Blue("Please confirm the address of your private key %s, Y/n?", keyAddr)
-	if !repo.ReadYes() {
-		return "", fmt.Errorf("please check your private key and try again")
-	}
-
-	return string(key), nil
 }
 
 func handleShutdown(bridge *app.Bridge, wg *sync.WaitGroup) {

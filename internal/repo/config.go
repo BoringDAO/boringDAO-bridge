@@ -12,20 +12,19 @@ import (
 
 const (
 	// defaultPathName is the default config dir name
-	defaultPathName = ".bridge"
+	defaultPathName = ".statistics"
 	// defaultPathRoot is the path to the default config dir location.
 	defaultPathRoot = "~/" + defaultPathName
 	// envDir is the environment variable used to change the path root.
-	envDir = "BRIDGE_PATH"
+	envDir = "STATISTICS_PATH"
 	// Config name
-	configName = "bridge.toml"
+	configName = "statistics.toml"
 )
 
 type Config struct {
-	RepoRoot string            `json:"repo_root"`
-	Title    string            `json:"title"`
-	Token    map[string]string `json:"token"`
-	Bridges  []*BridgeConfig   `json:"bridges"`
+	RepoRoot string              `json:"repo_root"`
+	Title    string              `json:"title"`
+	Bridges  []*StatisticsConfig `json:"bridges"`
 	Log      `json:"log"`
 }
 
@@ -37,19 +36,15 @@ type Log struct {
 	Module       map[string]string `toml:"module" json:"module"`
 }
 
-type Token struct {
-	Tokens map[string]string `toml:"tokens" json:"tokens"`
-}
-
-type BridgeConfig struct {
-	Name           string   `toml:"name" json:"name"`
-	Addrs          []string `toml:"addrs" json:"addrs"`
-	ChainID        uint64   `toml:"chainID" json:"chainID"`
-	MinConfirms    uint64   `toml:"minConfirms" json:"minConfirms"`
-	PrivKey        string   `toml:"privKey" json:"privKey"`
-	GasLimit       uint64   `toml:"gasLimit" json:"gasLimit"`
-	Height         uint64   `toml:"height" json:"height"`
-	BridgeContract string   `toml:"bridgeContract" json:"bridgeContract"`
+type StatisticsConfig struct {
+	Name             string   `toml:"name" json:"name"`
+	Addrs            []string `toml:"addrs" json:"addrs"`
+	ChainID          uint64   `toml:"chainID" json:"chainID"`
+	MinConfirms      uint64   `toml:"minConfirms" json:"minConfirms"`
+	GasLimit         uint64   `toml:"gasLimit" json:"gasLimit"`
+	Height           uint64   `toml:"height" json:"height"`
+	UsdtContract     string   `toml:"usdtContract" json:"usdtContract"`
+	SwapPairContract string   `toml:"swapPairContract" json:"swapPairContract"`
 }
 
 func (c *Config) Bytes() ([]byte, error) {

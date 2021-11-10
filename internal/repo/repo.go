@@ -26,16 +26,12 @@ func Load(repoRoot string) (*Repo, error) {
 }
 
 func checkConfig(config *Config) error {
-	if len(config.Token) == 0 {
-		return fmt.Errorf("supported original token is not configured")
-	}
-
 	for _, bConfig := range config.Bridges {
 		//if bConfig.Name != "bsc" && bConfig.Name != "okex" && bConfig.Name != "avax" && bConfig.Name != "harmony" {
 		//	return fmt.Errorf("unknown blockchain %s, current only bsc, okex and avax are supported", bConfig.Name)
 		//}
 
-		if bConfig.BridgeContract == "" {
+		if bConfig.UsdtContract == "" {
 			return fmt.Errorf("%s bridge contract is not configured", bConfig.Name)
 		}
 
@@ -47,9 +43,6 @@ func checkConfig(config *Config) error {
 			fmt.Println("Warning: bsc minconfirms should be at least 15, please change it if it's in prod environment")
 		}
 	}
-
-	fmt.Println("Token configuration:")
-	prettyPrint(config.Token)
 
 	for _, bConfig := range config.Bridges {
 		fmt.Println(fmt.Sprintf("%s configuration:", bConfig.Name))

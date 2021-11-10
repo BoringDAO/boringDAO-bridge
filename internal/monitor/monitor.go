@@ -1,382 +1,200 @@
 package monitor
 
 import (
-	"bytes"
 	"context"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"math/big"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/boringdao/bridge/internal/repo"
 	"github.com/boringdao/bridge/pkg/storage"
 	"github.com/boringdao/bridge/pkg/storage/leveldb"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/shopspring/decimal"
+	lru "github.com/hashicorp/golang-lru"
 	"github.com/sirupsen/logrus"
-	"go.uber.org/atomic"
 )
 
 var _ IMonitor = (*Monitor)(nil)
 
 type Monitor struct {
-	bHeight       uint64
-	bridgeAbi     abi.ABI
-	crossOutC     chan *Coco
-	crossInC      chan *Coco
-	finishedC     chan *Coco
-	bridgeWrapper *BridgeWrapper
-	storage       storage.Storage
-	config        *repo.BridgeConfig
-	token         map[string]string
-	chainIDs      []uint64
-	cocoNum       atomic.Int64
+	bHeight     uint64
+	usdtWrapper *UsdtWrapper
+	storage     storage.Storage
+	config      *repo.StatisticsConfig
+	cache       *lru.Cache
 
 	logger logrus.FieldLogger
 	ctx    context.Context
 	cancel context.CancelFunc
 }
 
-func New(repoRoot string, config *repo.BridgeConfig, token map[string]string, chainIDs []uint64, logger logrus.FieldLogger) (*Monitor, error) {
-	storagePath := repo.GetStoragePath(repoRoot, fmt.Sprintf("bridge_%d", config.ChainID))
+type TransferEvent struct {
+	Transfer  *UsdtTransfer
+	Timestamp uint64
+}
+
+func New(repoRoot string, config *repo.StatisticsConfig, logger logrus.FieldLogger) (*Monitor, error) {
+	storagePath := repo.GetStoragePath(repoRoot, fmt.Sprintf("statistics_%d", config.ChainID))
 	storage, err := leveldb.New(storagePath)
 	if err != nil {
 		return nil, err
 	}
 
-	bw, err := NewBridgeWrapper(config, logger)
+	bw, err := NewUsdtWrapper(config, logger)
 	if err != nil {
 		return nil, err
 	}
 
-	borAbi, err := abi.JSON(bytes.NewReader([]byte(NBridgeABI)))
+	cache, err := lru.New(1000)
 	if err != nil {
-		return nil, fmt.Errorf("abi unmarshal: %s", err.Error())
+		return nil, err
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &Monitor{
-		config:        config,
-		token:         token,
-		storage:       storage,
-		bridgeWrapper: bw,
-		bridgeAbi:     borAbi,
-		crossOutC:     make(chan *Coco, 128),
-		crossInC:      make(chan *Coco, 128),
-		finishedC:     make(chan *Coco, 128),
-		chainIDs:      chainIDs,
-		logger:        logger,
-		ctx:           ctx,
-		cancel:        cancel,
+		config:      config,
+		storage:     storage,
+		usdtWrapper: bw,
+		cache:       cache,
+		logger:      logger,
+		ctx:         ctx,
+		cancel:      cancel,
 	}, nil
 }
 
 func (m *Monitor) Start() error {
 	m.loadHeightFromStorage()
 
-	go m.listenCrossOutEvent()
-	go m.handleCrossInCocoC()
+	go m.listenTransferEvent()
 
 	return nil
 }
 
 func (m *Monitor) Stop() error {
 	m.cancel()
-	m.bridgeWrapper.Close()
+	m.usdtWrapper.Close()
 	return nil
 }
 
-func (m *Monitor) ListenCrossOutC() chan *Coco {
-	return m.crossOutC
-}
-
-func (m *Monitor) HandleCrossIn(coco *Coco) {
-	m.crossInC <- coco
-}
-
-func (m *Monitor) ListenFinishedCocoC() chan *Coco {
-	return m.finishedC
-}
-
-func (m *Monitor) HandleFinishedCoco(coco *Coco) {
-	m.persistBHeight(coco.ToChainId.Uint64(), coco.BlockHeight)
-	m.putTxID(coco.TxId, coco)
-	m.cocoNum.Dec()
-}
-
-func (m *Monitor) listenCrossOutEvent() {
-	ticker := time.NewTicker(30 * time.Second)
+func (m *Monitor) listenTransferEvent() {
+	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
+	var once sync.Once
 
+	step := uint64(1000)
 	start := m.bHeight
+	swapPair := common.HexToAddress(m.config.SwapPairContract)
 
 	for {
 		select {
 		case <-ticker.C:
-			num := m.bridgeWrapper.BlockNumber(context.TODO())
+			num := m.usdtWrapper.BlockNumber(context.TODO())
 			end := num - m.config.MinConfirms
 			if end < start {
 				continue
 			}
 
-			if end-start > 300 {
-				end = start + 300
+			if end-start > step {
+				end = start + step
+			} else {
+				once.Do(func() {
+					ticker.Reset(30 * time.Second)
+				})
 			}
 
-			filter := m.bridgeWrapper.FilterCrossOut(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
-			for filter.Next() {
-				res := m.handleCross(filter.Event, true)
-				if res {
-					m.cocoNum.Inc()
-				}
+			iteratorAdd, iteratorSub := m.usdtWrapper.FilterTransfer(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx}, swapPair)
+			for iteratorAdd.Next() {
+				m.handleAddLiquidityEvent(iteratorAdd.Event)
 			}
-			m.logger.WithFields(logrus.Fields{"start": start, "end": end}).Infof("FilterCrossOut end")
+			for iteratorSub.Next() {
+				m.handleRemoveLiquidityEvent(iteratorSub.Event)
+			}
+			m.logger.WithFields(logrus.Fields{"start": start, "end": end}).Infof("FilterTransfer end")
 
 			start = end + 1
 
-			if m.cocoNum.Load() == 0 {
-				for _, chainID := range m.chainIDs {
-					if chainID == m.config.ChainID {
-						continue
-					}
-					m.persistBHeight(chainID, end)
-				}
-			}
+			m.persistBHeight(end)
+
 		case <-m.ctx.Done():
-			m.logger.Info("listenCrossOutEvent done")
+			m.logger.Info("listenAddLiquidityEvent done")
 			return
 		}
 	}
 }
 
-func (m *Monitor) handleCrossInCocoC() {
-	for {
-		select {
-		case coco := <-m.crossInC:
-			if err := m.CrossIn(coco.OriginToken, coco.OriginChainId, coco.FromChainId, coco.ToChainId, coco.From, coco.To, coco.Amount, coco.TxId); err != nil {
-				m.logger.WithFields(logrus.Fields{
-					"OriginToken":   coco.OriginToken.String(),
-					"OriginChainId": coco.OriginChainId.String(),
-					"FromChainId":   coco.FromChainId.String(),
-					"ToChainId":     coco.ToChainId.String(),
-					"From":          coco.From.String(),
-					"To":            coco.To.String(),
-					"Amount":        coco.Amount.String(),
-					"TxId":          coco.TxId,
-					"error":         err.Error(),
-				}).Panic("CrossIn failed")
-			}
-
-			m.finishedC <- coco
-
-		case <-m.ctx.Done():
-			m.logger.Info("handleCrossInEvent done")
-			return
-		}
-	}
-}
-
-func (m *Monitor) handleCross(crossOut *NBridgeCrossOut, isHistory bool) bool {
-	if !strings.EqualFold(crossOut.Raw.Address.String(), m.config.BridgeContract) {
-		m.logger.Warnf("ignore log with contract address: %s", crossOut.Raw.Address.String())
+func (m *Monitor) handleAddLiquidityEvent(transfer *UsdtTransfer) bool {
+	if !strings.EqualFold(transfer.Raw.Address.String(), m.config.UsdtContract) {
+		m.logger.Warnf("ignore log with unexpected contract address: %s", transfer.Raw.Address.String())
 		return false
 	}
 
-	if !m.checkSupportedToken(crossOut.OriginToken.String(), crossOut.OriginChainId.String()) {
-		m.logger.Warnf("ignore log with unsupported original token: %s", crossOut.OriginToken.String())
+	if m.hasAddLiquidityTx(transfer.Raw.TxHash.String(), transfer.From.String()) {
+		m.logger.Warnf("add liquidity tx %s has been processed", transfer.Raw.TxHash.String())
 		return false
 	}
 
-	if m.HasTx(crossOut.Raw.TxHash.String()) {
+	if transfer.To.String() != m.config.SwapPairContract {
+		m.logger.Warnf("get unexpected add liquidity event from %s to %s", transfer.From.String(), transfer.To.String())
 		return false
 	}
 
-	coco := &Coco{
-		IsHistory:     isHistory,
-		OriginToken:   crossOut.OriginToken,
-		OriginChainId: crossOut.OriginChainId,
-		FromChainId:   crossOut.FromChainId,
-		ToChainId:     crossOut.ToChainId,
-		From:          crossOut.From,
-		To:            crossOut.To,
-		Amount:        crossOut.Amount,
-		TxId:          crossOut.Raw.TxHash.String(),
-		BlockHeight:   crossOut.Raw.BlockNumber,
+	transferEvent := &TransferEvent{
+		Transfer:  transfer,
+		Timestamp: m.getBlockTimeStamp(transfer.Raw.BlockNumber),
 	}
 
-	m.logger.WithFields(logrus.Fields{
-		"OriginToken":   coco.OriginToken.String(),
-		"OriginChainId": coco.OriginChainId.String(),
-		"FromChainId":   coco.FromChainId.String(),
-		"ToChainId":     coco.ToChainId.String(),
-		"From":          coco.From.String(),
-		"To":            coco.To.String(),
-		"Amount":        coco.Amount.String(),
-		"TxId":          crossOut.Raw.TxHash.String(),
-		"block_height":  crossOut.Raw.BlockNumber,
-		"removed":       crossOut.Raw.Removed,
-	}).Info("CrossOut")
+	m.persistEvent(transferEvent, true)
 
-	if crossOut.Raw.Removed {
-		return false
-	}
-
-	if !m.confirmEvent(crossOut.Raw) {
-		m.logger.WithFields(logrus.Fields{
-			"txId":         crossOut.Raw.TxHash.String(),
-			"FromChainId":  coco.FromChainId.String(),
-			"ToChainId":    coco.ToChainId.String(),
-			"block_height": crossOut.Raw.BlockNumber,
-		}).Info("CrossOut has not confirmed")
-		return false
-	}
-
-	m.logger.WithField("tx", crossOut.Raw.TxHash.String()).Info("confirmEvent")
-
-	m.crossOutC <- coco
+	m.logger.Infof("user %s add liquidity %s at block %d timestamp %d",
+		transfer.From.String(), transfer.Value.String(), transfer.Raw.BlockNumber, transferEvent.Timestamp)
 
 	return true
 }
 
-func (m *Monitor) checkSupportedToken(token, chainID string) bool {
-	for tokenAddr, originChainId := range m.token {
-		if strings.EqualFold(token, tokenAddr) && strings.EqualFold(chainID, originChainId) {
-			return true
-		}
+func (m *Monitor) handleRemoveLiquidityEvent(transfer *UsdtTransfer) bool {
+	if !strings.EqualFold(transfer.Raw.Address.String(), m.config.UsdtContract) {
+		m.logger.Warnf("ignore log with unexpected contract address: %s", transfer.Raw.Address.String())
+		return false
 	}
 
-	return false
-}
-
-func (m *Monitor) confirmEvent(event types.Log) bool {
-	for {
-		num := m.bridgeWrapper.BlockNumber(context.TODO())
-		isConfirmed := num-event.BlockNumber >= m.config.MinConfirms
-		if !isConfirmed {
-			time.Sleep(15 * time.Second)
-			continue
-		}
-		log, err := m.GetLockLog(event.TxHash.String())
-		if err != nil {
-			m.logger.WithFields(logrus.Fields{
-				"err":        err,
-				"now_height": num,
-			}).Error("confirmEvent")
-			return false
-		}
-		return log.BlockHeight == event.BlockNumber
-	}
-}
-
-func (m *Monitor) CrossIn(originToken common.Address, originChainId *big.Int, fromChainId *big.Int, toChainId *big.Int,
-	from common.Address, to common.Address, amount *big.Int, txId string) error {
-	minted := m.bridgeWrapper.TxHandled(txId)
-	if minted {
-		m.logger.Infof("find TxMinted txId:%s", txId)
-		return nil
+	if m.hasRemoveLiquidityTx(transfer.Raw.TxHash.String(), transfer.To.String()) {
+		m.logger.Warnf("remove liquidity tx %s has been processed", transfer.Raw.TxHash.String())
+		return false
 	}
 
-	m.logger.WithFields(logrus.Fields{
-		"from": from.String(),
-		"to":   to.String(),
-		"txId": txId,
-	}).Info("will crossIn")
-
-	var (
-		transaction *types.Transaction
-		receipt     *types.Receipt
-		err         error
-		hash        common.Hash
-		hashes      []common.Hash
-	)
-
-	m.bridgeWrapper.session.TransactOpts.Nonce = nil
-	m.bridgeWrapper.session.TransactOpts.GasPrice = nil
-
-	for {
-		price := m.bridgeWrapper.SuggestGasPrice(context.TODO())
-		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
-		if m.bridgeWrapper.session.TransactOpts.GasPrice == nil ||
-			gasPrice.BigInt().Cmp(m.bridgeWrapper.session.TransactOpts.GasPrice) == 1 {
-			m.bridgeWrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
-
-			transaction, hash = m.bridgeWrapper.CrossIn(originToken, originChainId, fromChainId, toChainId, from, to, amount, txId)
-			m.bridgeWrapper.session.TransactOpts.Nonce = big.NewInt(int64(transaction.Nonce()))
-			hashes = append(hashes, hash)
-
-			m.logger.Infof("send CrossIn tx %s with gasPrice %s and nonce %d",
-				hash.String(), gasPrice.String(), transaction.Nonce())
-		}
-
-		receipt, err = m.bridgeWrapper.TransactionReceiptsLimitedRetry(context.TODO(), hashes)
-		if err == nil {
-			break
-		}
+	if transfer.From.String() != m.config.SwapPairContract {
+		m.logger.Warnf("get unexpected remove liquidity event from %s to %s", transfer.From.String(), transfer.To.String())
+		return false
 	}
 
-	if receipt.Status == 1 {
-		m.logger.WithField("tx_hash", hash.String()).Info("CrossIn success")
-	} else {
-		return fmt.Errorf("CrossIn fail:%s", hash.String())
+	transferEvent := &TransferEvent{
+		Transfer:  transfer,
+		Timestamp: m.getBlockTimeStamp(transfer.Raw.BlockNumber),
 	}
 
-	return nil
-}
+	m.persistEvent(transferEvent, false)
 
-func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
-	receipt := m.bridgeWrapper.TransactionReceipt(context.TODO(), common.HexToHash(txId))
-	for _, log := range receipt.Logs {
-		if !strings.EqualFold(log.Address.String(), m.config.BridgeContract) {
-			continue
-		}
+	m.logger.Infof("user %s remove liquidity %s at block %d timestamp %d",
+		transfer.To.String(), transfer.Value.String(), transfer.Raw.BlockNumber, transferEvent.Timestamp)
 
-		if log.Removed {
-			continue
-		}
-		for _, topic := range log.Topics {
-			if strings.EqualFold(topic.String(), m.bridgeAbi.Events["CrossOut"].ID.String()) {
-				var lock NBridgeCrossOut
-				if err := m.bridgeAbi.UnpackIntoInterface(&lock, "CrossOut", log.Data); err != nil {
-					m.logger.Error(err)
-					continue
-				}
-				return &Coco{
-					OriginToken:   lock.OriginToken,
-					OriginChainId: lock.OriginChainId,
-					FromChainId:   lock.FromChainId,
-					ToChainId:     lock.ToChainId,
-					From:          lock.From,
-					To:            lock.To,
-					Amount:        lock.Amount,
-					TxId:          log.TxHash.String(),
-					BlockHeight:   receipt.BlockNumber.Uint64(),
-				}, nil
-			}
-		}
-	}
-	return nil, fmt.Errorf("not found CrossOut log in tx:%s", txId)
+	return true
 }
 
 func (m *Monitor) loadHeightFromStorage() {
-	height := m.bridgeWrapper.BlockNumber(context.TODO())
+	height := m.usdtWrapper.BlockNumber(context.TODO())
 	m.bHeight = height - m.config.MinConfirms
 
-	for _, chainID := range m.chainIDs {
-		if chainID == m.config.ChainID {
-			continue
-		}
-		b := m.storage.Get(bHeightKey(chainID))
-		if b != nil {
-			height := binary.LittleEndian.Uint64(b)
-			if height < m.bHeight {
-				m.bHeight = height
-			}
+	b := m.storage.Get(bHeightKey(m.config.ChainID))
+	if b != nil {
+		height := binary.LittleEndian.Uint64(b)
+		if height < m.bHeight {
+			m.bHeight = height
 		}
 	}
 
@@ -384,12 +202,7 @@ func (m *Monitor) loadHeightFromStorage() {
 		m.bHeight = m.config.Height
 	}
 
-	for _, chainID := range m.chainIDs {
-		if chainID == m.config.ChainID {
-			continue
-		}
-		m.persistBHeight(chainID, m.bHeight)
-	}
+	m.persistBHeight(m.bHeight)
 
 	m.logger.WithFields(logrus.Fields{
 		"height":  m.bHeight,
@@ -397,31 +210,88 @@ func (m *Monitor) loadHeightFromStorage() {
 	}).Info("Subscribe")
 }
 
+func (m *Monitor) persistEvent(event *TransferEvent, add bool) {
+	batch := m.storage.NewBatch()
+	data, err := json.Marshal(event)
+	if err != nil {
+		m.logger.Panicf("marshal transfer event %v: %v", event, err)
+	}
+	if add {
+		batch.Put(addLiquidityTxKey(event.Transfer.From.String(), event.Transfer.Raw.TxHash.String()), data)
+	} else {
+		batch.Put(removeLiquidityTxKey(event.Transfer.To.String(), event.Transfer.Raw.TxHash.String()), data)
+	}
+	batch.Commit()
+}
+
 func bHeightKey(chainID uint64) []byte {
 	return []byte(fmt.Sprintf("bHeight-%d", chainID))
 }
 
-func (m *Monitor) HasTx(txId string) bool {
-	return m.storage.Has(TxKey(txId, m.config.ChainID))
+func (m *Monitor) hasAddLiquidityTx(txId, user string) bool {
+	return m.storage.Has(addLiquidityTxKey(user, txId))
 }
 
-func (m *Monitor) persistBHeight(chainID uint64, height uint64) {
+func (m *Monitor) hasRemoveLiquidityTx(txId, user string) bool {
+	return m.storage.Has(removeLiquidityTxKey(user, txId))
+}
+
+func (m *Monitor) persistBHeight(height uint64) {
 	buf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(buf, height)
-	m.storage.Put(bHeightKey(chainID), buf)
-	m.logger.WithFields(logrus.Fields{
-		"chainID": chainID,
-		"height":  height,
-	}).Info("Persist Bridge Block Height")
+	m.storage.Put(bHeightKey(m.config.ChainID), buf)
+	//m.logger.WithFields(logrus.Fields{
+	//	"chainID": m.config.ChainID,
+	//	"height":  height,
+	//}).Info("Persist Bridge Block Height")
 }
 
-func TxKey(hash string, chainID uint64) []byte {
-	return []byte(fmt.Sprintf("bridge-tx-%d-%s", chainID, hash))
-}
-func (m *Monitor) putTxID(txId string, coco *Coco) {
-	data, err := json.Marshal(&coco)
-	if err != nil {
-		m.logger.Error(err)
+func (m *Monitor) getBlockTimeStamp(block uint64) uint64 {
+	val, ok := m.cache.Get(block)
+	if ok {
+		return val.(uint64)
 	}
-	m.storage.Put(TxKey(txId, m.config.ChainID), data)
+
+	header := m.usdtWrapper.HeaderByNumber(context.TODO(), big.NewInt(int64(block)))
+	m.cache.Add(block, header.Time)
+
+	return header.Time
+}
+
+func addLiquidityTxKey(user, hash string) []byte {
+	return []byte(fmt.Sprintf("tx-add-%s-%s", hash, user))
+}
+
+func removeLiquidityTxKey(user, hash string) []byte {
+	return []byte(fmt.Sprintf("tx-remove-%s-%s", hash, user))
+}
+
+func (m *Monitor) addUserAmount(user string, amount *big.Int) *big.Int {
+	balance := big.NewInt(0)
+	val := m.storage.Get(userKey(user))
+	if len(val) != 0 {
+		balance.SetBytes(val)
+	}
+
+	balance = balance.Add(balance, amount)
+
+	return balance
+}
+
+func (m *Monitor) subUserAmount(user string, amount *big.Int) *big.Int {
+	balance := big.NewInt(0)
+	val := m.storage.Get(userKey(user))
+	if len(val) != 0 {
+		balance = balance.SetBytes(val)
+	}
+
+	balance = balance.Sub(balance, amount)
+
+	m.storage.Put(userKey(user), balance.Bytes())
+
+	return balance
+}
+
+func userKey(addr string) []byte {
+	return []byte(fmt.Sprintf("user-%s", addr))
 }

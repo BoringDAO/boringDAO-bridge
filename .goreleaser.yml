@@ -13,8 +13,8 @@ builds:
       - linux
       - windows
       - darwin
-    main: ./cmd/bridge/
-    binary: bridge
+    main: ./cmd/statistics/
+    binary: statistics
     ldflags:
       - -s -w -X main.version={{.Version}} -X main.commit={{.ShortCommit}} -X main.date={{.Date}} -X main.builtBy=goreleaser
 archives:

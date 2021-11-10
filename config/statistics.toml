@@ -1,0 +1,143 @@
+title = "Bridge configuration file"
+
+[[bridges]]
+  name = "eth"
+  addrs = [
+    "https://mainnet.infura.io/v3/788169d3033b492d81f858f69577bf63",
+      "https://eth-mainnet.alchemyapi.io/v2/WNEqzHmY4jcmm_PNLDJLvZbrfkCFlFKj",
+#    "https://kovan.infura.io/v3/788169d3033b492d81f858f69577bf63",
+#    "https://eth-kovan.alchemyapi.io/v2/WNEqzHmY4jcmm_PNLDJLvZbrfkCFlFKj",
+#    "https://ropsten.infura.io/v3/3e8a2d2286964b62bc6b1d67c379badd",
+#    "https://eth-ropsten.alchemyapi.io/v2/K36BtEv6HiX4gn-b_XEB-l1mjqtm7FEI"
+  ]
+  minConfirms = 15 # min confirms
+  chainID = 1
+  gasLimit = 1500000 # gas Limit
+  usdtContract = "0xdac17f958d2ee523a2206206994597c13d831ec7"
+  swapPairContract= "0x9312142EfbA17Ce795F95E17076B0800D14a3b19"
+  height = 13178366
+
+[[bridges]]
+  name = "bsc"
+  addrs = [
+      "https://bsc-dataseed1.binance.org",
+      "https://bsc-dataseed2.binance.org",
+    "https://bsc-dataseed3.binance.org",
+    "https://bsc-dataseed4.binance.org",
+#    "https://data-seed-prebsc-1-s1.binance.org:8545",
+#    "https://data-seed-prebsc-1-s1.binance.org:8545"
+  ]
+#  chainID = 97 # bsc test
+  chainID = 56
+  minConfirms = 15 # min confirms
+  gasLimit = 1500000 # gas Limit
+  usdtContract = "0x55d398326f99059ff775485246999027b3197955"
+  swapPairContract= "0x37e6812C17252534B8b30c8b05Fb677C4a94C397"
+  height = 10568342
+
+[[bridges]]
+  name = "okex"
+  addrs = [
+      "https://exchainrpc.okex.org",
+#    "https://exchaintestrpc.okex.org"
+  ]
+  chainID = 66
+#  chainID = 65 # okex chain test
+  minConfirms = 15 # min confirms
+  gasLimit = 1500000 # gas Limit
+  usdtContract = "0x382bB369d343125BfB2117af9c149795C6C65C50"
+  swapPairContract= "0x232c6B4e2e0833b1E6E07c9a37898203E7DD7b24"
+  height = 5283213
+
+[[bridges]]
+  name = "xdai"
+  addrs = [
+      "https://rpc.xdaichain.com/",
+      "https://xdai.poanetwork.dev/"
+  ]
+  chainID = 100
+  minConfirms = 15 # min confirms
+  gasLimit = 1500000 # gas Limit
+  usdtContract = "0x4ECaBa5870353805a9F068101A40E0f32ed605C6"
+  swapPairContract= "0xE9fE1cEFeD8492ccE0A72bC01C46002791644784"
+  height = 17890777
+
+[[bridges]]
+  name = "heco"
+  addrs = [
+    "https://http-mainnet-node.huobichain.com",
+    "https://http-mainnet.hecochain.com/",
+  ]
+  chainID = 128
+  minConfirms = 15 # min confirms
+  gasLimit = 1500000 # gas Limit
+  usdtContract = "0xa71edc38d189767582c38a3145b5873052c3e47a"
+  swapPairContract= "0xE9fE1cEFeD8492ccE0A72bC01C46002791644784"
+  height = 7901583
+
+[[bridges]]
+  name = "matic"
+  addrs = [
+    "https://polygon-rpc.com/",
+    "https://rpc-mainnet.matic.network",
+    "https://rpc-mainnet.maticvigil.com",
+    "https://rpc-mainnet.matic.quiknode.pro",
+  ]
+  chainID = 137
+  minConfirms = 15 # min confirms
+  gasLimit = 1500000 # gas Limit
+  usdtContract = "0xc2132d05d31c914a87c6611c10748aeb04b58e8f"
+  swapPairContract= "0xeD6701d701841401b446F23757CaA422D81691B0"
+  height = 18668052
+
+[[bridges]]
+  name = "fantom"
+  addrs = [
+    "https://rpc.ftm.tools/"
+  ]
+  chainID = 250
+  minConfirms = 15 # min confirms
+  gasLimit = 1500000 # gas Limit
+  usdtContract = "0x049d68029688eabf473097a2fc38ef61633a3c7a"
+  swapPairContract= "0xe4aF65953eeB4b868B7b7ff33808E22069B09916"
+  height = 16203810
+
+[[bridges]]
+  name = "avax"
+  addrs = [
+      "https://api.avax.network/ext/bc/C/rpc"
+#    "https://api.avax-test.network/ext/bc/C/rpc"
+  ]
+  chainID = 43114
+#  chainID = 43113 # avax chain test
+  minConfirms = 1 # min confirms
+  gasLimit = 1500000 # gas Limit
+  usdtContract = "0xc7198437980c041c805A1EDcbA50c1Ce5db95118"
+  swapPairContract= "0x216f332D17145871D1d5ff5fEB4b08513Ef7Cc21"
+  height = 3762869
+
+[[bridges]]
+  name = "harmony"
+  addrs = [
+      "https://api.harmony.one"
+#    "https://api.s0.b.hmny.io",
+  ]
+  chainID = 1666600000
+#  chainID = 1666700000 # harmony chain test
+  minConfirms = 1 # min confirms
+  gasLimit = 1500000 # gas Limit
+  usdtContract = "0x3c2b8be99c50593081eaa2a724f0b8285f5aba8f"
+  swapPairContract= "0xB238a595e9797E009eFD5f938C9918181662066C"
+  height = 16621088
+
+[log]
+  level = "info"
+  dir = "logs"
+  filename = "bridge.log"
+[log.module]
+  bsc = "info"
+  okex = "info"
+  avax = "info"
+  eth = "info"
+  app = "info"
+

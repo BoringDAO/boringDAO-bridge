@@ -1,7 +1,7 @@
 
 SHELL := /bin/bash
 CURRENT_PATH = $(shell pwd)
-APP_NAME = bridge
+APP_NAME = statistics
 APP_VERSION = 1.0.0
 
 # build with verison infos
@@ -53,17 +53,17 @@ prepare:
 install:
 	cd internal/repo && packr
 	$(GO) install -ldflags '${GOLDFLAGS}' ./cmd/${APP_NAME}
-	@printf "${GREEN}Build bridge successfully!${NC}\n"
+	@printf "${GREEN}Build statistics successfully!${NC}\n"
 
 build:
 	@mkdir -p bin
 	$(GO) build -ldflags '${GOLDFLAGS}' ./cmd/${APP_NAME}
-	@mv ./bridge bin
-	@printf "${GREEN}Build bridge successfully!${NC}\n"
+	@mv ./statistics bin
+	@printf "${GREEN}Build statistics successfully!${NC}\n"
 
 docker-build: packr
 	$(GO) install -ldflags '${STATIC_LDFLAGS}' ./cmd/${APP_NAME}
-	@echo "Build bridge successfully"
+	@echo "Build statistics successfully"
 
 ## make build-linux: Go build linux executable file
 build-linux:
