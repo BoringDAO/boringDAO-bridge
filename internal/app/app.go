@@ -33,15 +33,11 @@ func New(repoRoot *repo.Repo) (*Bridge, error) {
 	if err != nil {
 		return nil, err
 	}
-	var chainIDs []uint64
-	for _, bConfig := range repoRoot.Config.Bridges {
-		chainIDs = append(chainIDs, bConfig.ChainID)
-	}
 
 	monitors := make(map[uint64]monitor.IMonitor)
 
 	for _, bConfig := range repoRoot.Config.Bridges {
-		monitor, err := monitor.New(repoRoot.Config.RepoRoot, bConfig, repoRoot.Config.Token, chainIDs, loggers.Logger(bConfig.Name))
+		monitor, err := monitor.New(repoRoot.Config.RepoRoot, bConfig, loggers.Logger(bConfig.Name))
 		if err != nil {
 			return nil, err
 		}
@@ -66,9 +62,6 @@ func (b *Bridge) Start() error {
 			return err
 		}
 
-		go b.listenBridgeCrossOutC(mnt)
-		go b.listenBridgeFinishedCocoC(mnt)
-
 		b.logger.Infof("monitor for chain ID %d has started", chainID)
 	}
 
@@ -78,54 +71,6 @@ func (b *Bridge) Start() error {
 func (b *Bridge) Stop() error {
 	b.cancel()
 	return nil
-}
-
-func (b *Bridge) listenBridgeCrossOutC(mnt monitor.IMonitor) {
-	cocoC := mnt.ListenCrossOutC()
-	for {
-		select {
-		case coco := <-cocoC:
-			targetMnt, ok := b.monitors[coco.ToChainId.Uint64()]
-			if !ok {
-				b.logger.WithFields(logrus.Fields{
-					"from chain ID": coco.FromChainId.String(),
-					"to chain ID":   coco.ToChainId.String(),
-					"txId":          coco.TxId,
-				}).Error("unexpected to chain ID in cross out coco")
-				continue
-			}
-
-			targetMnt.HandleCrossIn(coco)
-
-		case <-b.ctx.Done():
-			close(cocoC)
-			return
-		}
-	}
-}
-
-func (b *Bridge) listenBridgeFinishedCocoC(mnt monitor.IMonitor) {
-	cocoC := mnt.ListenFinishedCocoC()
-	for {
-		select {
-		case coco := <-cocoC:
-			sourceMnt, ok := b.monitors[coco.FromChainId.Uint64()]
-			if !ok {
-				b.logger.WithFields(logrus.Fields{
-					"from chain ID": coco.FromChainId.String(),
-					"to chain ID":   coco.ToChainId.String(),
-					"txId":          coco.TxId,
-				}).Error("unexpected from chain ID in finished coco")
-				continue
-			}
-
-			sourceMnt.HandleFinishedCoco(coco)
-
-		case <-b.ctx.Done():
-			close(cocoC)
-			return
-		}
-	}
 }
 
 func (b *Bridge) printLogo() {
