@@ -588,7 +588,8 @@ func (w *Wrapper) isNetworkError(err error) bool {
 
 	return regexp.MustCompile("Post .* EOF").MatchString(err.Error()) ||
 		strings.Contains(err.Error(), "connection reset by peer") ||
-		strings.Contains(err.Error(), "TLS handshake timeout")
+		strings.Contains(err.Error(), "TLS handshake timeout") ||
+		strings.Contains(err.Error(), "too many requests")
 }
 
 // ensureContext is a helper method to ensure a context is not nil, even if the
