@@ -561,7 +561,7 @@ func (w *Wrapper) switchToNextAddr() {
 			continue
 		}
 		w.ethClient = ethclient.NewClient(rpcClient)
-
+		w.rpcClient = rpcClient
 		w.twoWay, err = mnt.NewTwoWay(common.HexToAddress(w.config.TwoWayContract), w.ethClient)
 		if err != nil {
 			continue
