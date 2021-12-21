@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	center_chain "github.com/boringdao/bridge/internal/monitor/center"
+
 	"github.com/boringdao/bridge/internal/loggers"
 	"github.com/boringdao/bridge/internal/monitor"
 	"github.com/boringdao/bridge/internal/monitor/chain"
@@ -17,12 +19,14 @@ import (
 )
 
 type Bridge struct {
-	repo    *repo.Repo
-	storage storage.Storage
-	mnts    map[uint64]monitor.Mnt
-	logger  logrus.FieldLogger
-	cocoC   chan *monitor.Coco
-	mux     sync.Mutex
+	repo        *repo.Repo
+	storage     storage.Storage
+	mnts        map[uint64]monitor.Mnt
+	center      *center_chain.Monitor
+	logger      logrus.FieldLogger
+	edgeCocoC   chan *monitor.Coco
+	centerCocoC chan *monitor.Coco
+	mux         sync.Mutex
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -36,7 +40,7 @@ func New(repoRoot *repo.Repo) (*Bridge, error) {
 	}
 
 	mnts := make(map[uint64]monitor.Mnt)
-	for _, config := range repoRoot.Config.Bridges {
+	for _, config := range repoRoot.Config.Edges {
 		mnt, err := chain.New(repoRoot.Config.RepoRoot, config, loggers.Logger(config.Name))
 		if err != nil {
 			return nil, err
@@ -44,15 +48,22 @@ func New(repoRoot *repo.Repo) (*Bridge, error) {
 		mnts[config.ChainID] = mnt
 	}
 
+	center, err := center_chain.New(repoRoot.Config.RepoRoot, repoRoot.Config.Center, loggers.Logger(repoRoot.Config.Center.Name))
+	if err != nil {
+		return nil, err
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Bridge{
-		repo:    repoRoot,
-		mnts:    mnts,
-		storage: boringStorage,
-		cocoC:   make(chan *monitor.Coco, 1024),
-		logger:  loggers.Logger(loggers.APP),
-		ctx:     ctx,
-		cancel:  cancel,
+		repo:        repoRoot,
+		mnts:        mnts,
+		center:      center,
+		storage:     boringStorage,
+		edgeCocoC:   make(chan *monitor.Coco),
+		centerCocoC: make(chan *monitor.Coco),
+		logger:      loggers.Logger(loggers.APP),
+		ctx:         ctx,
+		cancel:      cancel,
 	}, nil
 }
 
@@ -65,12 +76,23 @@ func (b *Bridge) Start() error {
 		b.logger.Infof("mnt %s for chain ID %d has started", mnt.Name(), chainID)
 		go func() {
 			for coco := range mnt.HandleCocoC() {
-				b.cocoC <- coco
+				b.edgeCocoC <- coco
 			}
 		}()
 	}
+	if err := b.center.Start(); err != nil {
+		return err
+	}
+	b.logger.Infof("mnt %s for chain ID %d has started", b.center.Name(), b.center.ChainId())
 
-	go b.listenCocoC()
+	go func() {
+		for coco := range b.center.HandleCocoC() {
+			b.centerCocoC <- coco
+		}
+	}()
+
+	go b.listenEdgeCocoC()
+	go b.listenCenterCocoC()
 
 	b.printLogo()
 
@@ -82,40 +104,68 @@ func (b *Bridge) Stop() error {
 	return nil
 }
 
-func (b *Bridge) listenCocoC() {
+func (b *Bridge) listenEdgeCocoC() {
 	for {
 		select {
-		case coco := <-b.cocoC:
-			handle := func() {
-				mnt0 := b.mnts[coco.ChainID0.Uint64()]
-				mnt1 := b.mnts[coco.ChainID1.Uint64()]
-				mnt1.MntLock()
-				defer mnt1.MntUnlock()
+		case coco := <-b.edgeCocoC:
+			edge := b.mnts[coco.FromChainId.Uint64()]
 
-				b.logger.Infof("========> start handle %s to %s transaction...", mnt0.Name(), mnt1.Name())
-				defer b.logger.Infof("========> end handle %s to %s transaction...", mnt0.Name(), mnt1.Name())
-				if mnt0.HasTx(coco.TxId, coco) {
-					b.logger.WithField("tx", coco.TxId).Error("has handled the interchain event")
-					return
-				}
-				var err error
-				switch coco.Typ {
-				case monitor.Lock:
-					err = mnt1.CrossIn(fmt.Sprintf("%s#LOCK", coco.TxId), coco.Token1, coco.From, coco.To, coco.ChainID0, coco.Amount)
-				case monitor.CrossBurn:
-					err = mnt1.Unlock(fmt.Sprintf("%s#CrossBurn", coco.TxId), coco.Token1, coco.From, coco.To, coco.ChainID0, coco.Amount)
-				case monitor.Rollback:
-					err = mnt1.Rollback(fmt.Sprintf("%s#Rollback", coco.TxId), coco.Token1, coco.From, coco.To, coco.ChainID0, coco.Amount)
-				}
-				if err != nil {
-					b.logger.Panic(err)
-				}
-				mnt0.PutTxID(coco.TxId, coco)
-
+			b.logger.Infof("========> start handle %s to %s transaction...", edge.Name(), b.center.Name())
+			defer b.logger.Infof("========> end handle %s to %s transaction...", edge.Name(), b.center.Name())
+			if edge.HasTx(coco.TxId, coco) {
+				b.logger.WithField("tx", coco.TxId).Error("has handled the interchain event")
+				return
 			}
-			go handle()
+			var err error
+			switch coco.Typ {
+			case monitor.Deposited:
+				err = b.center.Issue(coco.FromToken, coco.ToToken, coco.From, coco.To, coco.FromChainId, coco.ToChainId, coco.Amount, fmt.Sprintf("%s#Deposited", coco.TxId))
+			case monitor.CrossOuted:
+				if coco.ToChainId.Uint64() == b.center.ChainId() {
+					err = b.center.CrossIn(coco.FromToken, coco.From, coco.To, coco.FromChainId, coco.ToChainId, coco.Amount, fmt.Sprintf("%s#CrossOuted", coco.TxId))
+				} else {
+					err = b.center.ForwardCrossOut(coco.FromToken, coco.From, coco.To, coco.FromChainId, coco.ToChainId, coco.Amount, fmt.Sprintf("%s#CrossOuted", coco.TxId))
+				}
+			case monitor.CrossInFailed:
+				err = b.center.RollbackCrossIn(coco.FromToken, coco.ToToken, coco.From, coco.To, coco.FromChainId, coco.ToChainId, coco.Amount, fmt.Sprintf("%s#CrossInFailed", coco.TxId))
+			}
+			if err != nil {
+				b.logger.Panic(err)
+			}
+			edge.PutTxID(coco.TxId, coco)
 		case <-b.ctx.Done():
-			close(b.cocoC)
+			close(b.edgeCocoC)
+			return
+		}
+	}
+}
+
+func (b *Bridge) listenCenterCocoC() {
+	for {
+		select {
+		case coco := <-b.centerCocoC:
+			edge := b.mnts[coco.ToChainId.Uint64()]
+
+			b.logger.Infof("========> start handle %s to %s transaction...", b.center.Name(), edge.Name())
+			defer b.logger.Infof("========> end handle %s to %s transaction...", b.center.Name(), edge.Name())
+			if b.center.HasTx(coco.TxId, coco) {
+				b.logger.WithField("tx", coco.TxId).Error("has handled the interchain event")
+				return
+			}
+			var err error
+			switch coco.Typ {
+			case monitor.CrossOuted:
+				err = edge.CrossIn(coco.FromToken, coco.ToToken, coco.From, coco.To, coco.FromChainId, coco.ToChainId, coco.Amount, fmt.Sprintf("%s#CrossIn", coco.TxId))
+			case monitor.Withdrawed:
+				err = edge.CrossIn(coco.FromToken, coco.ToToken, coco.From, coco.To, coco.FromChainId, coco.ToChainId, coco.Amount, fmt.Sprintf("%s#Withdrawed", coco.TxId))
+			}
+			if err != nil {
+				b.logger.Panic(err)
+			}
+			b.center.PutTxID(coco.TxId, coco)
+
+		case <-b.ctx.Done():
+			close(b.centerCocoC)
 			return
 		}
 	}

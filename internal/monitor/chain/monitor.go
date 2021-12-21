@@ -1,7 +1,6 @@
 package chain
 
 import (
-	"bytes"
 	"context"
 	"encoding/binary"
 	"encoding/json"
@@ -11,13 +10,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/boringdao/bridge/internal/monitor/contracts/edge"
+
 	"github.com/boringdao/bridge/internal/monitor"
-	mnt "github.com/boringdao/bridge/internal/monitor/contracts"
 	"github.com/boringdao/bridge/internal/repo"
 	"github.com/boringdao/bridge/pkg/kit/hexutil"
 	"github.com/boringdao/bridge/pkg/storage"
 	"github.com/boringdao/bridge/pkg/storage/leveldb"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -27,24 +26,23 @@ import (
 )
 
 type Monitor struct {
-	lHeight     uint64
-	cHeight     uint64
-	rHeight     uint64
-	twoWayAbi   abi.ABI
-	wrapper     *Wrapper
-	cocoC       chan *monitor.Coco
-	logger      logrus.FieldLogger
-	storage     storage.Storage
-	config      *repo.BridgeConfig
-	minConfirms uint64
-	twoWayAddr  common.Address
-	address     common.Address
-	mut         sync.Mutex
-	ctx         context.Context
-	cancel      context.CancelFunc
+	depositedHeight     uint64
+	crossOutedHeight    uint64
+	crossInFailedHeight uint64
+	wrapper             *Wrapper
+	cocoC               chan *monitor.Coco
+	logger              logrus.FieldLogger
+	storage             storage.Storage
+	config              *repo.EdgeConfig
+	minConfirms         uint64
+	edgeAddr            common.Address
+	address             common.Address
+	mut                 sync.Mutex
+	ctx                 context.Context
+	cancel              context.CancelFunc
 }
 
-func New(repoRoot string, config *repo.BridgeConfig, logger logrus.FieldLogger) (monitor.Mnt, error) {
+func New(repoRoot string, config *repo.EdgeConfig, logger logrus.FieldLogger) (monitor.Mnt, error) {
 	storagePath := repo.GetStoragePath(repoRoot, fmt.Sprintf("%s_%d", config.Name, config.ChainID))
 	ethStorage, err := leveldb.New(storagePath)
 	if err != nil {
@@ -63,11 +61,6 @@ func New(repoRoot string, config *repo.BridgeConfig, logger logrus.FieldLogger) 
 		minConfirms = int(config.MinConfirms)
 	}
 
-	twoWayAbi, err := abi.JSON(bytes.NewReader([]byte(mnt.TwoWayABI)))
-	if err != nil {
-		return nil, fmt.Errorf("abi unmarshal: %s", err.Error())
-	}
-
 	wrapper, err := NewWrapper(config, logger)
 	if err != nil {
 		return nil, err
@@ -80,8 +73,7 @@ func New(repoRoot string, config *repo.BridgeConfig, logger logrus.FieldLogger) 
 		storage:     ethStorage,
 		address:     address,
 		wrapper:     wrapper,
-		twoWayAbi:   twoWayAbi,
-		twoWayAddr:  common.HexToAddress(config.TwoWayContract),
+		edgeAddr:    common.HexToAddress(config.EdgeContract),
 		minConfirms: uint64(minConfirms),
 		cocoC:       make(chan *monitor.Coco),
 		logger:      logger,
@@ -92,9 +84,9 @@ func New(repoRoot string, config *repo.BridgeConfig, logger logrus.FieldLogger) 
 
 func (m *Monitor) Start() error {
 	m.loadHeightFromStorage()
-	go m.listenLockEvent()
-	go m.listenCrossBurnEvent()
-	go m.listenRollback()
+	go m.listenDepositedEvent()
+	go m.listenCrossOutedEvent()
+	go m.listenCrossInFailedEvent()
 	return nil
 }
 
@@ -104,11 +96,11 @@ func (m *Monitor) Stop() error {
 	return nil
 }
 
-func (m *Monitor) listenLockEvent() {
+func (m *Monitor) listenDepositedEvent() {
 	ticker := time.NewTicker(20 * time.Second)
 	defer ticker.Stop()
 
-	start := m.lHeight
+	start := m.depositedHeight
 
 	for {
 		select {
@@ -125,17 +117,17 @@ func (m *Monitor) listenLockEvent() {
 			if end >= start+300 {
 				end = start + 300
 			}
-			filter := m.wrapper.FilterLock(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
+			filter := m.wrapper.FilterDeposited(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
 			for filter.Next() {
-				m.handleLock(filter.Event)
+				m.handleDeposited(filter.Event)
 				hasEvent = true
 			}
 
-			m.logger.WithFields(logrus.Fields{"start": start, "end": end, "current": num}).Infof("CrossLockLockIterator")
+			m.logger.WithFields(logrus.Fields{"start": start, "end": end, "current": num}).Infof("FilterDeposited")
 			start = end + 1
 
 			if !hasEvent {
-				m.persistLHeight(end)
+				m.persistDepositedHeight(end)
 			}
 		case <-m.ctx.Done():
 			m.logger.Info("CrossLockLockIterator done")
@@ -144,11 +136,11 @@ func (m *Monitor) listenLockEvent() {
 	}
 }
 
-func (m *Monitor) listenCrossBurnEvent() {
+func (m *Monitor) listenCrossOutedEvent() {
 	ticker := time.NewTicker(20 * time.Second)
 	defer ticker.Stop()
 
-	start := m.cHeight
+	start := m.crossOutedHeight
 
 	for {
 		select {
@@ -165,17 +157,17 @@ func (m *Monitor) listenCrossBurnEvent() {
 			if end >= start+300 {
 				end = start + 300
 			}
-			filter := m.wrapper.FilterCrossBurn(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
+			filter := m.wrapper.FilterCrossOuted(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
 			for filter.Next() {
-				m.handleCrossBurn(filter.Event)
+				m.handleCrossOuted(filter.Event)
 				hasEvent = true
 			}
 
-			m.logger.WithFields(logrus.Fields{"start": start, "end": end, "current": num}).Infof("CrossBurn")
+			m.logger.WithFields(logrus.Fields{"start": start, "end": end, "current": num}).Infof("FilterCrossOuted")
 			start = end + 1
 
 			if !hasEvent {
-				m.persistCHeight(end)
+				m.persistCrossOutedHeight(end)
 			}
 		case <-m.ctx.Done():
 			m.logger.Info("CrossBurn done")
@@ -184,11 +176,11 @@ func (m *Monitor) listenCrossBurnEvent() {
 	}
 }
 
-func (m *Monitor) listenRollback() {
+func (m *Monitor) listenCrossInFailedEvent() {
 	ticker := time.NewTicker(20 * time.Second)
 	defer ticker.Stop()
 
-	start := m.rHeight
+	start := m.crossInFailedHeight
 
 	for {
 		select {
@@ -205,17 +197,17 @@ func (m *Monitor) listenRollback() {
 			if end >= start+300 {
 				end = start + 300
 			}
-			filter := m.wrapper.FilterRollback(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
+			filter := m.wrapper.FilterCrossInFailed(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
 			for filter.Next() {
-				m.handleRollback(filter.Event)
+				m.handleCrossInFailed(filter.Event)
 				hasEvent = true
 			}
 
-			m.logger.WithFields(logrus.Fields{"start": start, "end": end, "current": num}).Infof("RollbackIterator")
+			m.logger.WithFields(logrus.Fields{"start": start, "end": end, "current": num}).Infof("FilterCrossInFailed")
 			start = end + 1
 
 			if !hasEvent {
-				m.persistRHeight(end)
+				m.persistCrossInFailedHeight(end)
 			}
 		case <-m.ctx.Done():
 			m.logger.Info("RollbackIterator done")
@@ -228,321 +220,149 @@ func (m *Monitor) HandleCocoC() chan *monitor.Coco {
 	return m.cocoC
 }
 
-func (m *Monitor) handleRollback(rollback *mnt.TwoWayRollback) {
-	if !strings.EqualFold(rollback.Raw.Address.String(), m.config.TwoWayContract) {
+func (m *Monitor) handleCrossInFailed(rollback *edge.TwoWayEdgeCrossInFailed) {
+	if !strings.EqualFold(rollback.Raw.Address.String(), m.config.EdgeContract) {
 		return
 	}
 
-	if m.storage.Has(TxKey(rollback.Raw.TxHash.String(), monitor.Rollback, rollback.Raw.Index)) {
+	if m.storage.Has(TxKey(rollback.Raw.TxHash.String(), monitor.CrossInFailed, rollback.Raw.Index)) {
 		return
 	}
 	coco := &monitor.Coco{
-		Typ:         monitor.Rollback,
-		Token0:      rollback.Token0,
-		Token1:      rollback.Token1,
-		ChainID0:    rollback.ChainID0,
-		ChainID1:    rollback.ChainID1,
-		From:        rollback.From,
-		To:          rollback.To,
-		Amount:      rollback.Amount,
+		Typ:         monitor.CrossInFailed,
+		From:        rollback.P.From,
+		To:          rollback.P.To,
+		FromToken:   rollback.P.FromToken,
+		ToToken:     rollback.P.ToToken,
+		FromChainId: rollback.P.FromChainId,
+		ToChainId:   rollback.P.ToChainId,
+		Amount:      rollback.P.Amount,
 		Index:       rollback.Raw.Index,
 		TxId:        rollback.Raw.TxHash.String(),
 		BlockHeight: rollback.Raw.BlockNumber,
 	}
 
 	m.logger.WithFields(logrus.Fields{
-		"token0":       coco.Token0.String(),
-		"token1":       coco.Token1.String(),
-		"from":         coco.From.String(),
-		"to":           coco.To.String(),
-		"chain0":       coco.ChainID0.String(),
-		"chain1":       coco.ChainID1.String(),
-		"amount":       coco.Amount.String(),
-		"index":        coco.Index,
-		"txId":         rollback.Raw.TxHash.String(),
-		"block_height": rollback.Raw.BlockNumber,
-		"removed":      rollback.Raw.Removed,
-	}).Info("TwoWayRollback")
+		"from":          coco.From.String(),
+		"to":            coco.To.String(),
+		"from_chain_id": coco.FromChainId.String(),
+		"to_chain_id":   coco.ToChainId.String(),
+		"from_token":    coco.FromToken.String(),
+		"to_token":      coco.ToToken.String(),
+		"amount":        coco.Amount.String(),
+		"index":         coco.Index,
+		"txId":          rollback.Raw.TxHash.String(),
+		"block_height":  rollback.Raw.BlockNumber,
+		"removed":       rollback.Raw.Removed,
+	}).Info("CrossInFailed")
 
 	if rollback.Raw.Removed {
 		return
 	}
 
-	if !m.confirmEvent(rollback.Raw, monitor.Rollback) {
-		m.logger.WithFields(logrus.Fields{
-			"txId":         rollback.Raw.TxHash.String(),
-			"block_height": rollback.Raw.BlockNumber,
-		}).Info("TwoWay has not confirmed")
-		return
-	}
-
-	m.logger.WithField("tx", rollback.Raw.TxHash.String()).Info("confirmEvent")
 	m.cocoC <- coco
-	m.persistRBlockHeight(rollback.Raw.TxHash.String(), rollback.Raw.BlockNumber, coco)
+	m.persistCrossInFailedBlockHeight(rollback.Raw.TxHash.String(), rollback.Raw.BlockNumber, coco)
 }
 
-func (m *Monitor) handleLock(lock *mnt.TwoWayLock) {
-	if !strings.EqualFold(lock.Raw.Address.String(), m.config.TwoWayContract) {
+func (m *Monitor) handleDeposited(lock *edge.TwoWayEdgeDeposited) {
+	if !strings.EqualFold(lock.Raw.Address.String(), m.config.EdgeContract) {
 		return
 	}
 
-	if m.storage.Has(TxKey(lock.Raw.TxHash.String(), monitor.Lock, lock.Raw.Index)) {
+	if m.storage.Has(TxKey(lock.Raw.TxHash.String(), monitor.Deposited, lock.Raw.Index)) {
 		return
 	}
 	coco := &monitor.Coco{
-		Typ:         monitor.Lock,
-		Token0:      lock.Token0,
-		Token1:      lock.Token1,
-		ChainID0:    lock.ChainID0,
-		ChainID1:    lock.ChainID1,
+		Typ:         monitor.Deposited,
 		From:        lock.From,
-		To:          lock.To,
 		Amount:      lock.Amount,
+		FromToken:   lock.FromToken,
 		Index:       lock.Raw.Index,
 		TxId:        lock.Raw.TxHash.String(),
 		BlockHeight: lock.Raw.BlockNumber,
 	}
 
 	m.logger.WithFields(logrus.Fields{
-		"token0":       coco.Token0.String(),
-		"token1":       coco.Token1.String(),
-		"from":         coco.From.String(),
-		"to":           coco.To.String(),
-		"chain0":       coco.ChainID0.String(),
-		"chain1":       coco.ChainID1.String(),
-		"amount":       coco.Amount.String(),
-		"index":        coco.Index,
-		"txId":         lock.Raw.TxHash.String(),
-		"block_height": lock.Raw.BlockNumber,
-		"removed":      lock.Raw.Removed,
-	}).Info("TwoWayLock")
+		"from":          coco.From.String(),
+		"to":            coco.To.String(),
+		"from_chain_id": coco.FromChainId.String(),
+		"to_chain_id":   coco.ToChainId.String(),
+		"from_token":    coco.FromToken.String(),
+		"to_token":      coco.ToToken.String(),
+		"amount":        coco.Amount.String(),
+		"index":         coco.Index,
+		"txId":          lock.Raw.TxHash.String(),
+		"block_height":  lock.Raw.BlockNumber,
+		"removed":       lock.Raw.Removed,
+	}).Info("Deposited")
 
 	if lock.Raw.Removed {
 		return
 	}
 
-	if !m.confirmEvent(lock.Raw, monitor.Lock) {
-		m.logger.WithFields(logrus.Fields{
-			"txId":         lock.Raw.TxHash.String(),
-			"block_height": lock.Raw.BlockNumber,
-		}).Info("TwoWayLock has not confirmed")
-		return
-	}
-
-	m.logger.WithField("tx", lock.Raw.TxHash.String()).Info("confirmEvent")
 	m.cocoC <- coco
-	m.persistLBlockHeight(lock.Raw.TxHash.String(), lock.Raw.BlockNumber, coco)
+	m.persistDepositedBlockHeight(lock.Raw.TxHash.String(), lock.Raw.BlockNumber, coco)
 }
 
-func (m *Monitor) handleCrossBurn(crossBurn *mnt.TwoWayCrossBurn) {
-	if !strings.EqualFold(crossBurn.Raw.Address.String(), m.config.TwoWayContract) {
+func (m *Monitor) handleCrossOuted(crossBurn *edge.TwoWayEdgeCrossOuted) {
+	if !strings.EqualFold(crossBurn.Raw.Address.String(), m.config.EdgeContract) {
 		return
 	}
 
-	if m.storage.Has(TxKey(crossBurn.Raw.TxHash.String(), monitor.CrossBurn, crossBurn.Raw.Index)) {
+	if m.storage.Has(TxKey(crossBurn.Raw.TxHash.String(), monitor.CrossOuted, crossBurn.Raw.Index)) {
 		return
 	}
 	coco := &monitor.Coco{
-		Typ:         monitor.CrossBurn,
-		Token0:      crossBurn.Token0,
-		Token1:      crossBurn.Token1,
-		ChainID0:    crossBurn.ChainID0,
-		ChainID1:    crossBurn.ChainID1,
-		From:        crossBurn.From,
-		To:          crossBurn.To,
-		Amount:      crossBurn.Amount,
+		Typ:         monitor.CrossOuted,
+		From:        crossBurn.P.From,
+		To:          crossBurn.P.To,
+		FromToken:   crossBurn.P.FromToken,
+		FromChainId: crossBurn.P.FromChainId,
+		ToChainId:   crossBurn.P.ToChainId,
+		Amount:      crossBurn.P.Amount,
 		Index:       crossBurn.Raw.Index,
 		TxId:        crossBurn.Raw.TxHash.String(),
 		BlockHeight: crossBurn.Raw.BlockNumber,
 	}
 
 	m.logger.WithFields(logrus.Fields{
-		"token0":       coco.Token0.String(),
-		"token1":       coco.Token1.String(),
-		"from":         coco.From.String(),
-		"to":           coco.To.String(),
-		"chain0":       coco.ChainID0.String(),
-		"chain1":       coco.ChainID1.String(),
-		"amount":       coco.Amount.String(),
-		"index":        coco.Index,
-		"txId":         crossBurn.Raw.TxHash.String(),
-		"block_height": crossBurn.Raw.BlockNumber,
-		"removed":      crossBurn.Raw.Removed,
-	}).Info("TwoWayCrossBurn")
+		"from":          coco.From.String(),
+		"to":            coco.To.String(),
+		"from_chain_id": coco.FromChainId.String(),
+		"to_chain_id":   coco.ToChainId.String(),
+		"from_token":    coco.FromToken.String(),
+		"to_token":      coco.ToToken.String(),
+		"amount":        coco.Amount.String(),
+		"index":         coco.Index,
+		"txId":          crossBurn.Raw.TxHash.String(),
+		"block_height":  crossBurn.Raw.BlockNumber,
+		"removed":       crossBurn.Raw.Removed,
+	}).Info("CrossOuted")
 
 	if crossBurn.Raw.Removed {
 		return
 	}
 
-	if !m.confirmEvent(crossBurn.Raw, monitor.CrossBurn) {
-		m.logger.WithFields(logrus.Fields{
-			"txId":         crossBurn.Raw.TxHash.String(),
-			"block_height": crossBurn.Raw.BlockNumber,
-		}).Info("TwoWayCrossBurn has not confirmed")
-		return
-	}
-
-	m.logger.WithField("tx", crossBurn.Raw.TxHash.String()).Info("confirmEvent")
 	m.cocoC <- coco
-	m.persistCBlockHeight(crossBurn.Raw.TxHash.String(), crossBurn.Raw.BlockNumber, coco)
+	m.persistCrossOutedBlockHeight(crossBurn.Raw.TxHash.String(), crossBurn.Raw.BlockNumber, coco)
 }
 
-func (m *Monitor) confirmEvent(event types.Log, typ int) bool {
-	for {
-		num, err := m.fetchBlockNum()
-		if err != nil {
-			time.Sleep(15 * time.Second)
-			continue
-		}
-		isConfirmed := num-event.BlockNumber >= m.minConfirms
-		if !isConfirmed {
-			time.Sleep(15 * time.Second)
-			continue
-		}
-		var log *monitor.Coco
-		switch typ {
-		case monitor.Lock:
-			log, err = m.GetLockLog(event.TxHash.String())
-		case monitor.CrossBurn:
-			log, err = m.GetCrossBurnLog(event.TxHash.String())
-		case monitor.Rollback:
-			log, err = m.GetRollback(event.TxHash.String())
-		}
-		if err != nil {
-			m.logger.WithFields(logrus.Fields{
-				"err":        err,
-				"now_height": num,
-			}).Error("confirmEvent")
-			continue
-		}
-		return log.BlockHeight == event.BlockNumber
-	}
-}
-
-func (m *Monitor) Unlock(txId string, token common.Address, from common.Address, recipient common.Address, chainID, amount *big.Int) error {
-	unlocked := m.wrapper.TxUnlocked(txId)
+func (m *Monitor) CrossIn(fromToken, toToken common.Address, from, to common.Address, fromChainID, toChainID, amount *big.Int, txId string) error {
+	unlocked := m.wrapper.TxHandled(txId)
 	if unlocked {
-		m.logger.Infof("find txUnlocked Chain %d txId:%s", chainID.Uint64(), txId)
+		m.logger.Infof("find TxHandled txId:%s", txId)
 		return nil
 	}
 
 	m.logger.WithFields(logrus.Fields{
-		"tx_id":     txId,
-		"token":     token.String(),
-		"sender":    from.String(),
-		"recipient": recipient.String(),
-		"amount":    amount.String(),
-	}).Info("will unlock")
-
-	var (
-		transaction *types.Transaction
-		receipt     *types.Receipt
-		err         error
-		hashes      []common.Hash
-	)
-
-	m.wrapper.session.TransactOpts.Nonce = nil
-	m.wrapper.session.TransactOpts.GasPrice = nil
-
-	for {
-		price := m.wrapper.SuggestGasPrice(context.TODO())
-		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
-		if m.wrapper.session.TransactOpts.GasPrice == nil ||
-			gasPrice.BigInt().Cmp(m.wrapper.session.TransactOpts.GasPrice) == 1 {
-			m.wrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
-			var hash common.Hash
-			transaction, hash = m.wrapper.Unlock(token, from, recipient, chainID, amount, txId)
-			if transaction != nil {
-				m.wrapper.session.TransactOpts.Nonce = big.NewInt(int64(transaction.Nonce()))
-				hashes = append(hashes, hash)
-
-				m.logger.Infof("send UnlockBor tx %s with gasPrice %s and nonce %d",
-					hash, gasPrice.String(), transaction.Nonce())
-			}
-		}
-		receipt, err = m.wrapper.TransactionReceiptsLimitedRetry(context.TODO(), hashes)
-		if err == nil {
-			break
-		}
-	}
-
-	if receipt.Status == 1 {
-		m.logger.WithField("tx_hash", receipt.TxHash.String()).Info("unlock success")
-	} else {
-		return fmt.Errorf("unlock fail:%s", receipt.TxHash.String())
-	}
-	return nil
-}
-
-func (m *Monitor) Rollback(txId string, token common.Address, from common.Address, recipient common.Address, chainID, amount *big.Int) error {
-	unlocked := m.wrapper.TxRollbacked(txId)
-	if unlocked {
-		m.logger.Infof("find bridge.Rollback Chain %d txId:%s", chainID.Uint64(), txId)
-		return nil
-	}
-
-	m.logger.WithFields(logrus.Fields{
-		"tx_id":     txId,
-		"token":     token.String(),
-		"sender":    from.String(),
-		"chainId":   chainID.String(),
-		"recipient": recipient.String(),
-		"amount":    amount.String(),
-	}).Info("will rollback")
-
-	var (
-		transaction *types.Transaction
-		receipt     *types.Receipt
-		err         error
-		hashes      []common.Hash
-	)
-
-	m.wrapper.session.TransactOpts.Nonce = nil
-	m.wrapper.session.TransactOpts.GasPrice = nil
-
-	for {
-		price := m.wrapper.SuggestGasPrice(context.TODO())
-		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
-		if m.wrapper.session.TransactOpts.GasPrice == nil ||
-			gasPrice.BigInt().Cmp(m.wrapper.session.TransactOpts.GasPrice) == 1 {
-			m.wrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
-			var hash common.Hash
-			transaction, hash = m.wrapper.Rollback(token, from, chainID, amount, txId)
-			if transaction != nil {
-				m.wrapper.session.TransactOpts.Nonce = big.NewInt(int64(transaction.Nonce()))
-				hashes = append(hashes, hash)
-
-				m.logger.Infof("send bridge.Rollback tx %s with gasPrice %s and nonce %d",
-					hash, gasPrice.String(), transaction.Nonce())
-			}
-		}
-		receipt, err = m.wrapper.TransactionReceiptsLimitedRetry(context.TODO(), hashes)
-		if err == nil {
-			break
-		}
-	}
-
-	if receipt.Status == 1 {
-		m.logger.WithField("tx_hash", receipt.TxHash.String()).Info("rollback success")
-	} else {
-		return fmt.Errorf("rollback fail:%s", receipt.TxHash.String())
-	}
-	return nil
-}
-
-func (m *Monitor) CrossIn(txId string, token common.Address, from common.Address, recipient common.Address, chainID, amount *big.Int) error {
-	unlocked := m.wrapper.TxMinted(txId)
-	if unlocked {
-		m.logger.Infof("find TxMinted txId:%s", txId)
-		return nil
-	}
-
-	m.logger.WithFields(logrus.Fields{
-		"tx_id":     txId,
-		"token":     token.String(),
-		"sender":    from.String(),
-		"recipient": recipient.String(),
-		"amount":    amount.String(),
+		"tx_id":       txId,
+		"from_token":  fromToken.String(),
+		"to_token":    toToken.String(),
+		"from":        from.String(),
+		"to":          to.String(),
+		"fromChainId": fromChainID.String(),
+		"toChainId":   toChainID.String(),
+		"amount":      amount.String(),
 	}).Info("will crossIn")
 
 	var (
@@ -563,7 +383,7 @@ func (m *Monitor) CrossIn(txId string, token common.Address, from common.Address
 			m.wrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
 
 			var hash common.Hash
-			transaction, hash = m.wrapper.CrossIn(token, from, recipient, chainID, amount, txId)
+			transaction, hash = m.wrapper.CrossIn(fromToken, toToken, from, to, fromChainID, toChainID, amount, txId)
 			if transaction != nil {
 				m.wrapper.session.TransactOpts.Nonce = big.NewInt(int64(transaction.Nonce()))
 				hashes = append(hashes, hash)
@@ -586,93 +406,6 @@ func (m *Monitor) CrossIn(txId string, token common.Address, from common.Address
 	return nil
 }
 
-func (m *Monitor) GetLockLog(txId string) (*monitor.Coco, error) {
-	receipt := m.wrapper.TransactionReceipt(context.TODO(), common.HexToHash(txId))
-	for _, log := range receipt.Logs {
-		if !strings.EqualFold(log.Address.String(), m.config.TwoWayContract) {
-			continue
-		}
-
-		if log.Removed {
-			continue
-		}
-		lock, err := m.wrapper.twoWay.ParseLock(*log)
-		if err != nil {
-			continue
-		}
-		return &monitor.Coco{
-			Token0:      lock.Token0,
-			Token1:      lock.Token1,
-			ChainID0:    lock.ChainID0,
-			ChainID1:    lock.ChainID1,
-			From:        lock.From,
-			To:          lock.To,
-			Amount:      lock.Amount,
-			TxId:        log.TxHash.String(),
-			BlockHeight: receipt.BlockNumber.Uint64(),
-		}, nil
-	}
-	return nil, fmt.Errorf("not found Lock log in tx:%s", txId)
-}
-
-func (m *Monitor) GetRollback(txId string) (*monitor.Coco, error) {
-	receipt := m.wrapper.TransactionReceipt(context.TODO(), common.HexToHash(txId))
-	for _, log := range receipt.Logs {
-		if !strings.EqualFold(log.Address.String(), m.config.TwoWayContract) {
-			continue
-		}
-
-		if log.Removed {
-			continue
-		}
-		rollback, err := m.wrapper.twoWay.ParseRollback(*log)
-		if err != nil {
-			continue
-		}
-		return &monitor.Coco{
-			Token0:      rollback.Token0,
-			Token1:      rollback.Token1,
-			ChainID0:    rollback.ChainID0,
-			ChainID1:    rollback.ChainID1,
-			From:        rollback.From,
-			To:          rollback.To,
-			Amount:      rollback.Amount,
-			TxId:        log.TxHash.String(),
-			BlockHeight: receipt.BlockNumber.Uint64(),
-		}, nil
-	}
-	return nil, fmt.Errorf("not found rollback log in tx:%s", txId)
-}
-
-func (m *Monitor) GetCrossBurnLog(txId string) (*monitor.Coco, error) {
-	receipt := m.wrapper.TransactionReceipt(context.TODO(), common.HexToHash(txId))
-	for _, log := range receipt.Logs {
-		if !strings.EqualFold(log.Address.String(), m.config.TwoWayContract) {
-			continue
-		}
-
-		if log.Removed {
-			continue
-		}
-		crossBurn, err := m.wrapper.twoWay.ParseCrossBurn(*log)
-		if err != nil {
-			continue
-		}
-		return &monitor.Coco{
-			Token0:      crossBurn.Token0,
-			Token1:      crossBurn.Token1,
-			ChainID0:    crossBurn.ChainID0,
-			ChainID1:    crossBurn.ChainID1,
-			From:        crossBurn.From,
-			To:          crossBurn.To,
-			Amount:      crossBurn.Amount,
-			TxId:        log.TxHash.String(),
-			BlockHeight: receipt.BlockNumber.Uint64(),
-		}, nil
-	}
-	return nil, fmt.Errorf("not found crossBurn log in tx:%s", txId)
-}
-
 func (m *Monitor) Name() string {
 	return m.config.Name
 }
@@ -687,69 +420,69 @@ func (m *Monitor) loadHeightFromStorage() {
 	header = m.wrapper.HeaderByNumber(context.TODO(), nil)
 
 	// load block height
-	b := m.storage.Get(lHeightKey())
+	b := m.storage.Get(depositedHeightKey())
 	if b == nil {
-		m.lHeight = header.Number.Uint64() - m.minConfirms
-		m.persistLHeight(m.lHeight)
+		m.depositedHeight = header.Number.Uint64() - m.minConfirms
+		m.persistDepositedHeight(m.depositedHeight)
 	} else {
-		m.lHeight = binary.LittleEndian.Uint64(b)
+		m.depositedHeight = binary.LittleEndian.Uint64(b)
 
 	}
 
 	// load block height
-	c := m.storage.Get(cHeightKey())
+	c := m.storage.Get(crossOutedHeightKey())
 	if c == nil {
-		m.cHeight = header.Number.Uint64() - m.minConfirms
-		m.persistCHeight(m.cHeight)
+		m.crossOutedHeight = header.Number.Uint64() - m.minConfirms
+		m.persistCrossOutedHeight(m.crossOutedHeight)
 	} else {
-		m.cHeight = binary.LittleEndian.Uint64(c)
+		m.crossOutedHeight = binary.LittleEndian.Uint64(c)
 
 	}
 
 	// load block height
-	r := m.storage.Get(rHeightKey())
+	r := m.storage.Get(crossInFailedHeightKey())
 	if r == nil {
-		m.rHeight = header.Number.Uint64() - m.minConfirms
-		m.persistRHeight(m.rHeight)
+		m.crossInFailedHeight = header.Number.Uint64() - m.minConfirms
+		m.persistCrossInFailedHeight(m.crossInFailedHeight)
 	} else {
-		m.rHeight = binary.LittleEndian.Uint64(r)
+		m.crossInFailedHeight = binary.LittleEndian.Uint64(r)
 
 	}
 
-	if m.config.LockHeight != 0 {
-		m.lHeight = m.config.LockHeight
+	if m.config.DepositedHeight != 0 {
+		m.depositedHeight = m.config.DepositedHeight
 	}
 
-	if m.config.CrossBurnHeight != 0 {
-		m.cHeight = m.config.CrossBurnHeight
+	if m.config.CrossOutedHeight != 0 {
+		m.crossOutedHeight = m.config.CrossOutedHeight
 	}
 
-	if m.config.RollbackHeight != 0 {
-		m.rHeight = m.config.RollbackHeight
+	if m.config.CrossInFailedHeight != 0 {
+		m.crossInFailedHeight = m.config.CrossInFailedHeight
 	}
 
 	m.logger.WithFields(logrus.Fields{
-		"lock_height":     m.lHeight,
-		"cross_height":    m.cHeight,
-		"rollback_height": m.rHeight,
-		"address":         m.address.String(),
+		"depositedHeight":     m.depositedHeight,
+		"crossOutedHeight":    m.crossOutedHeight,
+		"crossInFailedHeight": m.crossInFailedHeight,
+		"address":             m.address.String(),
 	}).Info("Subscribe")
 }
 
-func lHeightKey() []byte {
-	return []byte(fmt.Sprintf("lHeight"))
+func depositedHeightKey() []byte {
+	return []byte(fmt.Sprintf("depositedHeight"))
 }
 
-func cHeightKey() []byte {
-	return []byte(fmt.Sprintf("cHeight"))
+func crossOutedHeightKey() []byte {
+	return []byte(fmt.Sprintf("crossOutedHeight"))
 }
 
-func rHeightKey() []byte {
-	return []byte(fmt.Sprintf("rHeight"))
+func crossInFailedHeightKey() []byte {
+	return []byte(fmt.Sprintf("crossInFailedHeight"))
 }
 
-func (m *Monitor) persistLBlockHeight(txId string, height uint64, coco *monitor.Coco) {
-	m.persistLHeight(height)
+func (m *Monitor) persistDepositedBlockHeight(txId string, height uint64, coco *monitor.Coco) {
+	m.persistDepositedHeight(height)
 	for {
 		if m.storage.Has(TxKey(txId, coco.Typ, coco.Index)) {
 			return
@@ -758,58 +491,56 @@ func (m *Monitor) persistLBlockHeight(txId string, height uint64, coco *monitor.
 	}
 }
 
-func (m *Monitor) persistCBlockHeight(txId string, height uint64, coco *monitor.Coco) {
-	m.persistCHeight(height)
+func (m *Monitor) persistCrossOutedBlockHeight(txId string, height uint64, coco *monitor.Coco) {
+	m.persistCrossOutedHeight(height)
 	for {
 		if m.storage.Has(TxKey(txId, coco.Typ, coco.Index)) {
+			m.logger.WithFields(logrus.Fields{
+				"height": m.crossOutedHeight,
+			}).Info("Persist Cross Outed Height")
 			return
 		}
 		time.Sleep(500 * time.Millisecond)
 	}
 }
 
-func (m *Monitor) persistRBlockHeight(txId string, height uint64, coco *monitor.Coco) {
-	m.persistRHeight(height)
+func (m *Monitor) persistCrossInFailedBlockHeight(txId string, height uint64, coco *monitor.Coco) {
+	m.persistCrossInFailedHeight(height)
 	for {
 		if m.storage.Has(TxKey(txId, coco.Typ, coco.Index)) {
+			m.logger.WithFields(logrus.Fields{
+				"height": m.crossInFailedHeight,
+			}).Info("Persist Cross In Failed Height")
 			return
 		}
 		time.Sleep(500 * time.Millisecond)
 	}
+
 }
 
 func (m *Monitor) HasTx(txId string, coco *monitor.Coco) bool {
 	return m.storage.Has(TxKey(txId, coco.Typ, coco.Index))
 }
 
-func (m *Monitor) persistLHeight(height uint64) {
+func (m *Monitor) persistDepositedHeight(height uint64) {
 	buf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(buf, height)
-	m.storage.Put(lHeightKey(), buf)
-	m.lHeight = height
-	m.logger.WithFields(logrus.Fields{
-		"height": m.lHeight,
-	}).Info("Persist Lock Block Height")
+	m.storage.Put(depositedHeightKey(), buf)
+	m.depositedHeight = height
 }
 
-func (m *Monitor) persistRHeight(height uint64) {
+func (m *Monitor) persistCrossOutedHeight(height uint64) {
 	buf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(buf, height)
-	m.storage.Put(rHeightKey(), buf)
-	m.rHeight = height
-	m.logger.WithFields(logrus.Fields{
-		"height": m.rHeight,
-	}).Info("Persist Rollback Block Height")
+	m.storage.Put(crossOutedHeightKey(), buf)
+	m.crossOutedHeight = height
 }
 
-func (m *Monitor) persistCHeight(height uint64) {
+func (m *Monitor) persistCrossInFailedHeight(height uint64) {
 	buf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(buf, height)
-	m.storage.Put(cHeightKey(), buf)
-	m.cHeight = height
-	m.logger.WithFields(logrus.Fields{
-		"height": m.cHeight,
-	}).Info("Persist CrossBurn Block Height")
+	m.storage.Put(crossInFailedHeightKey(), buf)
+	m.crossInFailedHeight = height
 }
 
 func TxKey(hash string, typ int, idx uint) []byte {

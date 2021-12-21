@@ -9,9 +9,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/boringdao/bridge/internal/monitor/contracts/edge"
+
 	"github.com/Rican7/retry"
 	"github.com/Rican7/retry/strategy"
-	mnt "github.com/boringdao/bridge/internal/monitor/contracts"
 	"github.com/boringdao/bridge/internal/repo"
 	"github.com/boringdao/bridge/pkg/kit/hexutil"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -29,15 +30,15 @@ import (
 
 type Wrapper struct {
 	addrIdx   int
-	config    *repo.BridgeConfig
+	config    *repo.EdgeConfig
 	ethClient *ethclient.Client
 	rpcClient *rpc.Client
-	twoWay    *mnt.TwoWay
-	session   *mnt.TwoWaySession
+	twoWay    *edge.TwoWayEdge
+	session   *edge.TwoWayEdgeSession
 	logger    logrus.FieldLogger
 }
 
-func NewWrapper(config *repo.BridgeConfig, logger logrus.FieldLogger) (*Wrapper, error) {
+func NewWrapper(config *repo.EdgeConfig, logger logrus.FieldLogger) (*Wrapper, error) {
 	if len(config.Addrs) == 0 {
 		return nil, fmt.Errorf("addrs for %s session wrapper is empty", config.Name)
 	}
@@ -48,9 +49,9 @@ func NewWrapper(config *repo.BridgeConfig, logger logrus.FieldLogger) (*Wrapper,
 	}
 	etherCli := ethclient.NewClient(rpcClient)
 
-	twoWay, err := mnt.NewTwoWay(common.HexToAddress(config.TwoWayContract), etherCli)
+	twoWay, err := edge.NewTwoWayEdge(common.HexToAddress(config.EdgeContract), etherCli)
 	if err != nil {
-		return nil, fmt.Errorf("failed to instantiate a TwoWayContract contract: %w", err)
+		return nil, fmt.Errorf("failed to instantiate a EdgeContract contract: %w", err)
 	}
 
 	privKey, err := crypto.ToECDSA(hexutil.Decode(config.PrivKey))
@@ -77,7 +78,7 @@ func NewWrapper(config *repo.BridgeConfig, logger logrus.FieldLogger) (*Wrapper,
 		auth.GasLimit = config.GasLimit
 	}
 
-	session := &mnt.TwoWaySession{
+	session := &edge.TwoWayEdgeSession{
 		Contract: twoWay,
 		CallOpts: bind.CallOpts{
 			Pending: false,
@@ -117,14 +118,14 @@ func (w *Wrapper) HeaderByNumber(ctx context.Context, number *big.Int) *types.He
 	return header
 }
 
-func (w *Wrapper) FilterCrossBurn(opts *bind.FilterOpts) *mnt.TwoWayCrossBurnIterator {
-	var iterator *mnt.TwoWayCrossBurnIterator
+func (w *Wrapper) FilterDeposited(opts *bind.FilterOpts) *edge.TwoWayEdgeDepositedIterator {
+	var iterator *edge.TwoWayEdgeDepositedIterator
 	var err error
 
 	if err := retry.Retry(func(attempt uint) error {
-		iterator, err = w.twoWay.FilterCrossBurn(opts)
+		iterator, err = w.twoWay.FilterDeposited(opts)
 		if err != nil {
-			w.logger.Warnf("FilterCrossBurn: %s", err.Error())
+			w.logger.Warnf("FilterDeposited: %s", err.Error())
 
 			if w.isNetworkError(err) {
 				w.switchToNextAddr()
@@ -138,14 +139,14 @@ func (w *Wrapper) FilterCrossBurn(opts *bind.FilterOpts) *mnt.TwoWayCrossBurnIte
 	return iterator
 }
 
-func (w *Wrapper) FilterRollback(opts *bind.FilterOpts) *mnt.TwoWayRollbackIterator {
-	var iterator *mnt.TwoWayRollbackIterator
+func (w *Wrapper) FilterCrossOuted(opts *bind.FilterOpts) *edge.TwoWayEdgeCrossOutedIterator {
+	var iterator *edge.TwoWayEdgeCrossOutedIterator
 	var err error
 
 	if err := retry.Retry(func(attempt uint) error {
-		iterator, err = w.twoWay.FilterRollback(opts)
+		iterator, err = w.twoWay.FilterCrossOuted(opts)
 		if err != nil {
-			w.logger.Warnf("FilterRollback: %s", err.Error())
+			w.logger.Warnf("FilterCrossOuted: %s", err.Error())
 
 			if w.isNetworkError(err) {
 				w.switchToNextAddr()
@@ -159,14 +160,14 @@ func (w *Wrapper) FilterRollback(opts *bind.FilterOpts) *mnt.TwoWayRollbackItera
 	return iterator
 }
 
-func (w *Wrapper) FilterLock(opts *bind.FilterOpts) *mnt.TwoWayLockIterator {
-	var iterator *mnt.TwoWayLockIterator
+func (w *Wrapper) FilterCrossInFailed(opts *bind.FilterOpts) *edge.TwoWayEdgeCrossInFailedIterator {
+	var iterator *edge.TwoWayEdgeCrossInFailedIterator
 	var err error
 
 	if err := retry.Retry(func(attempt uint) error {
-		iterator, err = w.twoWay.FilterLock(opts)
+		iterator, err = w.twoWay.FilterCrossInFailed(opts)
 		if err != nil {
-			w.logger.Warnf("FilterLock: %s", err.Error())
+			w.logger.Warnf("FilterCrossInFailed: %s", err.Error())
 
 			if w.isNetworkError(err) {
 				w.switchToNextAddr()
@@ -180,56 +181,14 @@ func (w *Wrapper) FilterLock(opts *bind.FilterOpts) *mnt.TwoWayLockIterator {
 	return iterator
 }
 
-func (w *Wrapper) TxUnlocked(txId string) bool {
+func (w *Wrapper) TxHandled(txId string) bool {
 	var result bool
 	var err error
 
 	if err := retry.Retry(func(attempt uint) error {
-		result, err = w.session.TxUnlocked(txId)
+		result, err = w.session.TxHandled(txId)
 		if err != nil {
-			w.logger.Warnf("TxUnlocked: %s", err.Error())
-
-			if w.isNetworkError(err) {
-				w.switchToNextAddr()
-			}
-		}
-		return err
-	}, strategy.Wait(10*time.Second)); err != nil {
-		w.logger.Panic(err)
-	}
-
-	return result
-}
-
-func (w *Wrapper) TxRollbacked(txId string) bool {
-	var result bool
-	var err error
-
-	if err := retry.Retry(func(attempt uint) error {
-		result, err = w.session.TxRollbacked(txId)
-		if err != nil {
-			w.logger.Warnf("TxRollbacked: %s", err.Error())
-
-			if w.isNetworkError(err) {
-				w.switchToNextAddr()
-			}
-		}
-		return err
-	}, strategy.Wait(10*time.Second)); err != nil {
-		w.logger.Panic(err)
-	}
-
-	return result
-}
-
-func (w *Wrapper) TxMinted(txId string) bool {
-	var result bool
-	var err error
-
-	if err := retry.Retry(func(attempt uint) error {
-		result, err = w.session.TxMinted(txId)
-		if err != nil {
-			w.logger.Warnf("TxMinted: %s", err.Error())
+			w.logger.Warnf("TxHandled: %s", err.Error())
 
 			if w.isNetworkError(err) {
 				w.switchToNextAddr()
@@ -264,7 +223,7 @@ func (w *Wrapper) SuggestGasPrice(ctx context.Context) *big.Int {
 	return result
 }
 
-func (w *Wrapper) CrossIn(token, from, to common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
+func (w *Wrapper) CrossIn(fromToken, toToken common.Address, from, to common.Address, fromChainID, toChainID, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
 	var tx *types.Transaction
 	var err error
 	var hash common.Hash
@@ -275,7 +234,7 @@ func (w *Wrapper) CrossIn(token, from, to common.Address, chainID, amount *big.I
 		w.session.TransactOpts.GasPrice = gasPrice.BigInt()
 
 		var newHash common.Hash
-		tx, newHash, err = w.crossIn(token, from, to, chainID, amount, txid)
+		tx, newHash, err = w.crossIn(fromToken, toToken, from, to, fromChainID, toChainID, amount, txid)
 		if tx != nil {
 			hash = newHash
 		}
@@ -301,83 +260,21 @@ func (w *Wrapper) CrossIn(token, from, to common.Address, chainID, amount *big.I
 	return tx, hash
 }
 
-func (w *Wrapper) Rollback(token common.Address, from common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
-	var tx *types.Transaction
-	var err error
-	var hash common.Hash
-
-	if err := retry.Retry(func(attempt uint) error {
-		price := w.SuggestGasPrice(context.TODO())
-		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
-		w.session.TransactOpts.GasPrice = gasPrice.BigInt()
-		var newHash common.Hash
-		tx, newHash, err = w.rollback(token, from, chainID, amount, txid)
-		if tx != nil {
-			hash = newHash
-		}
-		if err != nil {
-			w.logger.Warnf("Rollback: %s", err.Error())
-			if errors.Is(err, core.ErrNonceTooLow) {
-				tx = nil
-				hash = common.Hash{}
-				return nil
-			}
-
-			if w.isNetworkError(err) {
-				w.switchToNextAddr()
-			}
-
-		}
-		return err
-	}, strategy.Wait(10*time.Second)); err != nil {
-		w.logger.Panic(err)
-	}
-
-	return tx, hash
-}
-
-func (w *Wrapper) Unlock(token common.Address, from common.Address, to common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
-	var tx *types.Transaction
-	var err error
-	var hash common.Hash
-
-	if err := retry.Retry(func(attempt uint) error {
-		price := w.SuggestGasPrice(context.TODO())
-		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
-		w.session.TransactOpts.GasPrice = gasPrice.BigInt()
-		var newHash common.Hash
-		tx, newHash, err = w.unlock(token, from, to, chainID, amount, txid)
-		if tx != nil {
-			hash = newHash
-		}
-		if err != nil {
-			w.logger.Warnf("Unlock: %s", err.Error())
-			if errors.Is(err, core.ErrNonceTooLow) {
-				tx = nil
-				hash = common.Hash{}
-				return nil
-			}
-
-			if w.isNetworkError(err) {
-				w.switchToNextAddr()
-				return err
-			}
-		}
-
-		return err
-	}, strategy.Wait(10*time.Second)); err != nil {
-		w.logger.Panic(err)
-	}
-
-	return tx, hash
-}
-
-func (w *Wrapper) unlock(token, from, to common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash, error) {
-	parsed, err := abi.JSON(strings.NewReader(mnt.TwoWayABI))
+func (w *Wrapper) crossIn(fromToken, toToken common.Address, from, to common.Address, fromChainID, toChainID, amount *big.Int, txid string) (*types.Transaction, common.Hash, error) {
+	parsed, err := abi.JSON(strings.NewReader(edge.TwoWayEdgeMetaData.ABI))
 	if err != nil {
 		return nil, common.Hash{}, err
 	}
-	input, err := parsed.Pack("unlock", token, chainID, from, to, amount, txid)
+	in := edge.InParam{
+		FromChainId: fromChainID,
+		FromToken:   fromToken,
+		From:        from,
+		ToChainId:   toChainID,
+		ToToken:     toToken,
+		To:          to,
+		Amount:      amount,
+	}
+	input, err := parsed.Pack("crossIn", in, txid)
 	if err != nil {
 		return nil, common.Hash{}, err
 	}
@@ -398,91 +295,7 @@ func (w *Wrapper) unlock(token, from, to common.Address, chainID, amount *big.In
 	}
 
 	// Create the transaction, sign it and schedule it for execution
-	rawTx := types.NewTransaction(nonce, common.HexToAddress(w.config.TwoWayContract), value, opts.GasLimit, opts.GasPrice, input)
-	signedTx, err := opts.Signer(opts.From, rawTx)
-	if err != nil {
-		return nil, common.Hash{}, err
-	}
-	data, err := rlp.EncodeToBytes(signedTx)
-	if err != nil {
-		return nil, common.Hash{}, err
-	}
-
-	var txHash common.Hash
-	err = w.rpcClient.CallContext(ensureContext(opts.Context), &txHash, "eth_sendRawTransaction", hexutil.Encode(data))
-
-	return signedTx, txHash, err
-}
-
-func (w *Wrapper) crossIn(token common.Address, from common.Address, to common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash, error) {
-	parsed, err := abi.JSON(strings.NewReader(mnt.TwoWayABI))
-	if err != nil {
-		return nil, common.Hash{}, err
-	}
-	input, err := parsed.Pack("crossIn", token, chainID, from, to, amount, txid)
-	if err != nil {
-		return nil, common.Hash{}, err
-	}
-
-	opts := w.session.TransactOpts
-	value := opts.Value
-	if value == nil {
-		value = new(big.Int)
-	}
-	var nonce uint64
-	if opts.Nonce == nil {
-		nonce, err = w.ethClient.PendingNonceAt(ensureContext(opts.Context), opts.From)
-		if err != nil {
-			return nil, common.Hash{}, fmt.Errorf("failed to retrieve account nonce: %v", err)
-		}
-	} else {
-		nonce = opts.Nonce.Uint64()
-	}
-
-	// Create the transaction, sign it and schedule it for execution
-	rawTx := types.NewTransaction(nonce, common.HexToAddress(w.config.TwoWayContract), value, opts.GasLimit, opts.GasPrice, input)
-	signedTx, err := opts.Signer(opts.From, rawTx)
-	if err != nil {
-		return nil, common.Hash{}, err
-	}
-	data, err := rlp.EncodeToBytes(signedTx)
-	if err != nil {
-		return nil, common.Hash{}, err
-	}
-
-	var txHash common.Hash
-	err = w.rpcClient.CallContext(ensureContext(opts.Context), &txHash, "eth_sendRawTransaction", hexutil.Encode(data))
-
-	return signedTx, txHash, err
-}
-
-func (w *Wrapper) rollback(token common.Address, from common.Address, chainID, amount *big.Int, txid string) (*types.Transaction, common.Hash, error) {
-	parsed, err := abi.JSON(strings.NewReader(mnt.TwoWayABI))
-	if err != nil {
-		return nil, common.Hash{}, err
-	}
-	input, err := parsed.Pack("rollback", token, chainID, from, amount, txid)
-	if err != nil {
-		return nil, common.Hash{}, err
-	}
-
-	opts := w.session.TransactOpts
-	value := opts.Value
-	if value == nil {
-		value = new(big.Int)
-	}
-	var nonce uint64
-	if opts.Nonce == nil {
-		nonce, err = w.ethClient.PendingNonceAt(ensureContext(opts.Context), opts.From)
-		if err != nil {
-			return nil, common.Hash{}, fmt.Errorf("failed to retrieve account nonce: %v", err)
-		}
-	} else {
-		nonce = opts.Nonce.Uint64()
-	}
-
-	// Create the transaction, sign it and schedule it for execution
-	rawTx := types.NewTransaction(nonce, common.HexToAddress(w.config.TwoWayContract), value, opts.GasLimit, opts.GasPrice, input)
+	rawTx := types.NewTransaction(nonce, common.HexToAddress(w.config.EdgeContract), value, opts.GasLimit, opts.GasPrice, input)
 	signedTx, err := opts.Signer(opts.From, rawTx)
 	if err != nil {
 		return nil, common.Hash{}, err
@@ -562,7 +375,7 @@ func (w *Wrapper) switchToNextAddr() {
 		}
 		w.ethClient = ethclient.NewClient(rpcClient)
 		w.rpcClient = rpcClient
-		w.twoWay, err = mnt.NewTwoWay(common.HexToAddress(w.config.TwoWayContract), w.ethClient)
+		w.twoWay, err = edge.NewTwoWayEdge(common.HexToAddress(w.config.EdgeContract), w.ethClient)
 		if err != nil {
 			continue
 		}

@@ -59,10 +59,10 @@ func start(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	for _, config := range repo.Config.Bridges {
+	for _, config := range repo.Config.Edges {
 		config.PrivKey = ethKey
 	}
-
+	repo.Config.Center.PrivKey = ethKey
 	bridge, err := app.New(repo)
 	if err != nil {
 		return fmt.Errorf("boring-node new: %w", err)

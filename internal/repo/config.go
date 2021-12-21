@@ -22,9 +22,10 @@ const (
 )
 
 type Config struct {
-	RepoRoot string          `json:"repo_root"`
-	Title    string          `json:"title"`
-	Bridges  []*BridgeConfig `json:"bridges"`
+	RepoRoot string        `json:"repo_root"`
+	Title    string        `json:"title"`
+	Edges    []*EdgeConfig `json:"edges"`
+	Center   *CenterConfig `json:"center"`
 	Log      `json:"log"`
 }
 
@@ -36,17 +37,29 @@ type Log struct {
 	Module       map[string]string `toml:"module" json:"module"`
 }
 
-type BridgeConfig struct {
-	Name            string   `toml:"name" json:"name"`
-	Addrs           []string `toml:"addrs" json:"addrs"`
-	ChainID         uint64   `toml:"chainID" json:"chainID"`
-	MinConfirms     uint64   `toml:"minConfirms" json:"minConfirms"`
-	PrivKey         string   `toml:"privKey" json:"privKey"`
-	GasLimit        uint64   `toml:"gasLimit" json:"gasLimit"`
-	LockHeight      uint64   `mapstructure:"lHeight" json:"lHeight"`
-	CrossBurnHeight uint64   `mapstructure:"cHeight" json:"cHeight"`
-	RollbackHeight  uint64   `mapstructure:"rHeight" json:"rHeight"`
-	TwoWayContract  string   `toml:"twoWayContract" json:"twoWayContract"`
+type CenterConfig struct {
+	Name             string   `toml:"name" json:"name"`
+	Addrs            []string `toml:"addrs" json:"addrs"`
+	ChainID          uint64   `toml:"chainID" json:"chainID"`
+	MinConfirms      uint64   `toml:"minConfirms" json:"minConfirms"`
+	PrivKey          string   `toml:"privKey" json:"privKey"`
+	GasLimit         uint64   `toml:"gasLimit" json:"gasLimit"`
+	WithdrawedHeight uint64   `mapstructure:"withdrawedHeight" json:"withdrawedHeight"`
+	CrossOutedHeight uint64   `mapstructure:"crossOutedHeight" json:"crossOutedHeight"`
+	CenterContract   string   `toml:"centerContract" json:"centerContract"`
+}
+
+type EdgeConfig struct {
+	Name                string   `toml:"name" json:"name"`
+	Addrs               []string `toml:"addrs" json:"addrs"`
+	ChainID             uint64   `toml:"chainID" json:"chainID"`
+	MinConfirms         uint64   `toml:"minConfirms" json:"minConfirms"`
+	PrivKey             string   `toml:"privKey" json:"privKey"`
+	GasLimit            uint64   `toml:"gasLimit" json:"gasLimit"`
+	DepositedHeight     uint64   `mapstructure:"depositedHeight" json:"depositedHeight"`
+	CrossOutedHeight    uint64   `mapstructure:"crossOutedHeight" json:"crossOutedHeight"`
+	CrossInFailedHeight uint64   `mapstructure:"crossInFailedHeight" json:"crossInFailedHeight"`
+	EdgeContract        string   `toml:"EdgeContract" json:"EdgeContract"`
 }
 
 func (c *Config) Bytes() ([]byte, error) {
