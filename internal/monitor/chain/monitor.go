@@ -276,6 +276,7 @@ func (m *Monitor) handleDeposited(lock *edge.TwoWayEdgeDeposited) {
 		Typ:         monitor.Deposited,
 		From:        lock.From,
 		Amount:      lock.Amount,
+		FromChainId: lock.FromChainId,
 		FromToken:   lock.FromToken,
 		Index:       lock.Raw.Index,
 		TxId:        lock.Raw.TxHash.String(),

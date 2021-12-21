@@ -2,37 +2,34 @@ title = "Bridge configuration file"
 
 
 [center]
-  name = "matic"
+  name = "matic_test"
   addrs = [
-    "https://rpc-mumbai.matic.today",
-    "https://matic-mumbai.chainstacklabs.com",
-    "https://rpc-mumbai.maticvigil.com",
-    "https://matic-testnet-archive-rpc.bwarelabs.com"
+    "https://rpc-mumbai.maticvigil.com"
   ]
   chainID = 80001 # main 137, testnet 80001
-  minConfirms = 15 # min confirms
+  minConfirms = 1 # min confirms
   gasLimit = 1500000 # gas Limit
-  centerContract = "0x63651c56cb3F5f0Fd4Ac6734E9B3F8B51aB49B70"
+  centerContract = "0xA273050a583F0A9288288cC438c29Ff7709e2Bf7"
 
 [[edges]]
-  name = "bsc"
+  name = "bsc_test"
   addrs = [
-    "https://data-seed-prebsc-2-s1.binance.org:8545" # rpc host
+    "https://data-seed-prebsc-1-s1.binance.org:8545" # rpc host
   ]
   chainID = 97
-  minConfirms = 15 # min confirms
+  minConfirms = 1 # min confirms
   gasLimit = 1500000 # gas Limit
-  edgeContract = "0x63651c56cb3F5f0Fd4Ac6734E9B3F8B51aB49B70"
+  edgeContract = "0x0b7b6751e3d062166F59ce9690B888b70161A9F6"
 
 [[edges]]
-  name = "okex"
-  addrs = [
-    "https://exchaintestrpc.okex.org" # rpc host
-  ]
-  chainID = 65
-  minConfirms = 15 # min confirms
-  gasLimit = 1500000 # gas Limit
-  edgeContract = "0x63651c56cb3F5f0Fd4Ac6734E9B3F8B51aB49B70"
+name = "kovan_test"
+addrs = [
+  "https://kovan.infura.io/v3/f05d1f443cdc4cd089c073969678e26a" # rpc host
+]
+chainID = 42
+minConfirms = 1 # min confirms
+gasLimit = 1500000 # gas Limit
+edgeContract = "0x6Baa33f7E86D7484B51171CE797e3BA44f185502"
 
 [log]
   level = "info"
