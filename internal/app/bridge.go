@@ -7,6 +7,7 @@ import (
 	"time"
 
 	center_chain "github.com/boringdao/bridge/internal/monitor/center"
+	"github.com/common-nighthawk/go-figure"
 
 	"github.com/boringdao/bridge/internal/loggers"
 	"github.com/boringdao/bridge/internal/monitor"
@@ -14,7 +15,6 @@ import (
 	"github.com/boringdao/bridge/internal/repo"
 	"github.com/boringdao/bridge/pkg/storage"
 	"github.com/boringdao/bridge/pkg/storage/leveldb"
-	"github.com/common-nighthawk/go-figure"
 	"github.com/sirupsen/logrus"
 )
 
@@ -126,8 +126,6 @@ func (b *Bridge) listenEdgeCocoC() {
 				} else {
 					err = b.center.ForwardCrossOut(coco.FromToken, coco.From, coco.To, coco.FromChainId, coco.ToChainId, coco.Amount, fmt.Sprintf("%s#CrossOuted", coco.TxId))
 				}
-			case monitor.CrossInFailed:
-				err = b.center.RollbackCrossIn(coco.FromToken, coco.ToToken, coco.From, coco.To, coco.FromChainId, coco.ToChainId, coco.Amount, fmt.Sprintf("%s#CrossInFailed", coco.TxId))
 			}
 			if err != nil {
 				b.logger.Panic(err)

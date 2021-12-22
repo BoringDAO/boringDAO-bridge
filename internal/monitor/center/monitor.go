@@ -221,7 +221,7 @@ func (m *Monitor) handleWithdrawed(withdrawed *center.TwoWayCenterWithdrawed) {
 	m.persistWithdrawedBlockHeight(withdrawed.Raw.TxHash.String(), withdrawed.Raw.BlockNumber, coco)
 }
 
-func (m *Monitor) handleCenterCrossOuted(outed *center.TwoWayCenterCenterCrossOuted) {
+func (m *Monitor) handleCenterCrossOuted(outed *center.TwoWayCenterCrossOuted) {
 	if !strings.EqualFold(outed.Raw.Address.String(), m.config.CenterContract) {
 		return
 	}

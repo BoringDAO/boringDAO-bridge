@@ -26,20 +26,19 @@ import (
 )
 
 type Monitor struct {
-	depositedHeight     uint64
-	crossOutedHeight    uint64
-	crossInFailedHeight uint64
-	wrapper             *Wrapper
-	cocoC               chan *monitor.Coco
-	logger              logrus.FieldLogger
-	storage             storage.Storage
-	config              *repo.EdgeConfig
-	minConfirms         uint64
-	edgeAddr            common.Address
-	address             common.Address
-	mut                 sync.Mutex
-	ctx                 context.Context
-	cancel              context.CancelFunc
+	depositedHeight  uint64
+	crossOutedHeight uint64
+	wrapper          *Wrapper
+	cocoC            chan *monitor.Coco
+	logger           logrus.FieldLogger
+	storage          storage.Storage
+	config           *repo.EdgeConfig
+	minConfirms      uint64
+	edgeAddr         common.Address
+	address          common.Address
+	mut              sync.Mutex
+	ctx              context.Context
+	cancel           context.CancelFunc
 }
 
 func New(repoRoot string, config *repo.EdgeConfig, logger logrus.FieldLogger) (monitor.Mnt, error) {
@@ -86,7 +85,6 @@ func (m *Monitor) Start() error {
 	m.loadHeightFromStorage()
 	go m.listenDepositedEvent()
 	go m.listenCrossOutedEvent()
-	go m.listenCrossInFailedEvent()
 	return nil
 }
 
@@ -176,92 +174,8 @@ func (m *Monitor) listenCrossOutedEvent() {
 	}
 }
 
-func (m *Monitor) listenCrossInFailedEvent() {
-	ticker := time.NewTicker(20 * time.Second)
-	defer ticker.Stop()
-
-	start := m.crossInFailedHeight
-
-	for {
-		select {
-		case <-ticker.C:
-			hasEvent := false
-			num, err := m.fetchBlockNum()
-			if err != nil {
-				continue
-			}
-			end := num - m.minConfirms
-			if num < m.minConfirms || end < start {
-				continue
-			}
-			if end >= start+300 {
-				end = start + 300
-			}
-			filter := m.wrapper.FilterCrossInFailed(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
-			for filter.Next() {
-				m.handleCrossInFailed(filter.Event)
-				hasEvent = true
-			}
-
-			m.logger.WithFields(logrus.Fields{"start": start, "end": end, "current": num}).Infof("FilterCrossInFailed")
-			start = end + 1
-
-			if !hasEvent {
-				m.persistCrossInFailedHeight(end)
-			}
-		case <-m.ctx.Done():
-			m.logger.Info("RollbackIterator done")
-			return
-		}
-	}
-}
-
 func (m *Monitor) HandleCocoC() chan *monitor.Coco {
 	return m.cocoC
-}
-
-func (m *Monitor) handleCrossInFailed(rollback *edge.TwoWayEdgeCrossInFailed) {
-	if !strings.EqualFold(rollback.Raw.Address.String(), m.config.EdgeContract) {
-		return
-	}
-
-	if m.storage.Has(TxKey(rollback.Raw.TxHash.String(), monitor.CrossInFailed, rollback.Raw.Index)) {
-		return
-	}
-	coco := &monitor.Coco{
-		Typ:         monitor.CrossInFailed,
-		From:        rollback.P.From,
-		To:          rollback.P.To,
-		FromToken:   rollback.P.FromToken,
-		ToToken:     rollback.P.ToToken,
-		FromChainId: rollback.P.FromChainId,
-		ToChainId:   rollback.P.ToChainId,
-		Amount:      rollback.P.Amount,
-		Index:       rollback.Raw.Index,
-		TxId:        rollback.Raw.TxHash.String(),
-		BlockHeight: rollback.Raw.BlockNumber,
-	}
-
-	m.logger.WithFields(logrus.Fields{
-		"from":          coco.From.String(),
-		"to":            coco.To.String(),
-		"from_chain_id": coco.FromChainId.String(),
-		"to_chain_id":   coco.ToChainId.String(),
-		"from_token":    coco.FromToken.String(),
-		"to_token":      coco.ToToken.String(),
-		"amount":        coco.Amount.String(),
-		"index":         coco.Index,
-		"txId":          rollback.Raw.TxHash.String(),
-		"block_height":  rollback.Raw.BlockNumber,
-		"removed":       rollback.Raw.Removed,
-	}).Info("CrossInFailed")
-
-	if rollback.Raw.Removed {
-		return
-	}
-
-	m.cocoC <- coco
-	m.persistCrossInFailedBlockHeight(rollback.Raw.TxHash.String(), rollback.Raw.BlockNumber, coco)
 }
 
 func (m *Monitor) handleDeposited(lock *edge.TwoWayEdgeDeposited) {
@@ -440,16 +354,6 @@ func (m *Monitor) loadHeightFromStorage() {
 
 	}
 
-	// load block height
-	r := m.storage.Get(crossInFailedHeightKey())
-	if r == nil {
-		m.crossInFailedHeight = header.Number.Uint64() - m.minConfirms
-		m.persistCrossInFailedHeight(m.crossInFailedHeight)
-	} else {
-		m.crossInFailedHeight = binary.LittleEndian.Uint64(r)
-
-	}
-
 	if m.config.DepositedHeight != 0 {
 		m.depositedHeight = m.config.DepositedHeight
 	}
@@ -458,15 +362,10 @@ func (m *Monitor) loadHeightFromStorage() {
 		m.crossOutedHeight = m.config.CrossOutedHeight
 	}
 
-	if m.config.CrossInFailedHeight != 0 {
-		m.crossInFailedHeight = m.config.CrossInFailedHeight
-	}
-
 	m.logger.WithFields(logrus.Fields{
-		"depositedHeight":     m.depositedHeight,
-		"crossOutedHeight":    m.crossOutedHeight,
-		"crossInFailedHeight": m.crossInFailedHeight,
-		"address":             m.address.String(),
+		"depositedHeight":  m.depositedHeight,
+		"crossOutedHeight": m.crossOutedHeight,
+		"address":          m.address.String(),
 	}).Info("Subscribe")
 }
 
@@ -505,20 +404,6 @@ func (m *Monitor) persistCrossOutedBlockHeight(txId string, height uint64, coco 
 	}
 }
 
-func (m *Monitor) persistCrossInFailedBlockHeight(txId string, height uint64, coco *monitor.Coco) {
-	m.persistCrossInFailedHeight(height)
-	for {
-		if m.storage.Has(TxKey(txId, coco.Typ, coco.Index)) {
-			m.logger.WithFields(logrus.Fields{
-				"height": m.crossInFailedHeight,
-			}).Info("Persist Cross In Failed Height")
-			return
-		}
-		time.Sleep(500 * time.Millisecond)
-	}
-
-}
-
 func (m *Monitor) HasTx(txId string, coco *monitor.Coco) bool {
 	return m.storage.Has(TxKey(txId, coco.Typ, coco.Index))
 }
@@ -535,13 +420,6 @@ func (m *Monitor) persistCrossOutedHeight(height uint64) {
 	binary.LittleEndian.PutUint64(buf, height)
 	m.storage.Put(crossOutedHeightKey(), buf)
 	m.crossOutedHeight = height
-}
-
-func (m *Monitor) persistCrossInFailedHeight(height uint64) {
-	buf := make([]byte, 8)
-	binary.LittleEndian.PutUint64(buf, height)
-	m.storage.Put(crossInFailedHeightKey(), buf)
-	m.crossInFailedHeight = height
 }
 
 func TxKey(hash string, typ int, idx uint) []byte {

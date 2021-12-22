@@ -139,12 +139,13 @@ func (w *Wrapper) FilterWithdrawed(opts *bind.FilterOpts) *center.TwoWayCenterWi
 	return iterator
 }
 
-func (w *Wrapper) FilterCenterCrossOuted(opts *bind.FilterOpts) *center.TwoWayCenterCenterCrossOutedIterator {
-	var iterator *center.TwoWayCenterCenterCrossOutedIterator
+func (w *Wrapper) FilterCenterCrossOuted(opts *bind.FilterOpts) *center.TwoWayCenterCrossOutedIterator {
+	var iterator *center.TwoWayCenterCrossOutedIterator
 	var err error
 
 	if err := retry.Retry(func(attempt uint) error {
-		iterator, err = w.twoWay.FilterCenterCrossOuted(opts)
+		iterator, err = w.twoWay.FilterCrossOuted(opts)
+
 		if err != nil {
 			w.logger.Warnf("FilterCenterCrossOuted: %s", err.Error())
 
