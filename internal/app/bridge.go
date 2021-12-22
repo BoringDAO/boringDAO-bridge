@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"sync"
 	"time"
 
@@ -119,7 +120,7 @@ func (b *Bridge) listenEdgeCocoC() {
 			var err error
 			switch coco.Typ {
 			case monitor.Deposited:
-				err = b.center.Issue(coco.FromToken, coco.ToToken, coco.From, coco.To, coco.FromChainId, coco.ToChainId, coco.Amount, fmt.Sprintf("%s#Deposited", coco.TxId))
+				err = b.center.Issue(coco.FromToken, coco.ToToken, coco.From, coco.From, coco.FromChainId, big.NewInt(int64(b.center.ChainId())), coco.Amount, fmt.Sprintf("%s#Deposited", coco.TxId))
 			case monitor.CrossOuted:
 				if coco.ToChainId.Uint64() == b.center.ChainId() {
 					err = b.center.CrossIn(coco.FromToken, coco.From, coco.To, coco.FromChainId, coco.ToChainId, coco.Amount, fmt.Sprintf("%s#CrossOuted", coco.TxId))

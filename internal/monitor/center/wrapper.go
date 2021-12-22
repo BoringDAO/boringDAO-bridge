@@ -414,7 +414,7 @@ func (w *Wrapper) Issue(fromToken, toToken common.Address, from, to common.Addre
 			hash = newHash
 		}
 		if err != nil {
-			w.logger.Warnf("CrossIn: %s", err.Error())
+			w.logger.Warnf("Issue: %s", err.Error())
 			if errors.Is(err, core.ErrNonceTooLow) {
 				tx = nil
 				hash = common.Hash{}
@@ -443,9 +443,9 @@ func (w *Wrapper) issue(fromToken, toToken common.Address, from, to common.Addre
 	in := center.InParam{
 		FromChainId: fromChainID,
 		FromToken:   fromToken,
-		ToToken:     toToken,
 		From:        from,
 		ToChainId:   toChainID,
+		ToToken:     toToken,
 		To:          to,
 		Amount:      amount,
 	}
@@ -531,9 +531,9 @@ func (w *Wrapper) rollbackCrossIn(fromToken, toToken common.Address, from, to co
 	in := center.InParam{
 		FromChainId: fromChainID,
 		FromToken:   fromToken,
-		ToToken:     toToken,
 		From:        from,
 		ToChainId:   toChainID,
+		ToToken:     toToken,
 		To:          to,
 		Amount:      amount,
 	}
