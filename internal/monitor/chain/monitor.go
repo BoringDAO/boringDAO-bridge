@@ -385,6 +385,9 @@ func (m *Monitor) persistDepositedBlockHeight(txId string, height uint64, coco *
 	m.persistDepositedHeight(height)
 	for {
 		if m.storage.Has(TxKey(txId, coco.Typ, coco.Index)) {
+			m.logger.WithFields(logrus.Fields{
+				"height": m.depositedHeight,
+			}).Info("Persist Deposited Height")
 			return
 		}
 		time.Sleep(500 * time.Millisecond)

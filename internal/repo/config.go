@@ -38,15 +38,16 @@ type Log struct {
 }
 
 type CenterConfig struct {
-	Name             string   `toml:"name" json:"name"`
-	Addrs            []string `toml:"addrs" json:"addrs"`
-	ChainID          uint64   `toml:"chainID" json:"chainID"`
-	MinConfirms      uint64   `toml:"minConfirms" json:"minConfirms"`
-	PrivKey          string   `toml:"privKey" json:"privKey"`
-	GasLimit         uint64   `toml:"gasLimit" json:"gasLimit"`
-	WithdrawedHeight uint64   `mapstructure:"withdrawedHeight" json:"withdrawedHeight"`
-	CrossOutedHeight uint64   `mapstructure:"crossOutedHeight" json:"crossOutedHeight"`
-	CenterContract   string   `toml:"centerContract" json:"centerContract"`
+	Name                    string   `toml:"name" json:"name"`
+	Addrs                   []string `toml:"addrs" json:"addrs"`
+	ChainID                 uint64   `toml:"chainID" json:"chainID"`
+	MinConfirms             uint64   `toml:"minConfirms" json:"minConfirms"`
+	PrivKey                 string   `toml:"privKey" json:"privKey"`
+	GasLimit                uint64   `toml:"gasLimit" json:"gasLimit"`
+	WithdrawedHeight        uint64   `mapstructure:"withdrawedHeight" json:"withdrawedHeight"`
+	CrossOutedHeight        uint64   `mapstructure:"crossOutedHeight" json:"crossOutedHeight"`
+	ForwardCrossOutedHeight uint64   `mapstructure:"forwardCrossOutedHeight" json:"forwardCrossOutedHeight"`
+	CenterContract          string   `toml:"centerContract" json:"centerContract"`
 }
 
 type EdgeConfig struct {

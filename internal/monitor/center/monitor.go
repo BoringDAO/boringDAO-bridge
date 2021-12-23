@@ -25,19 +25,20 @@ import (
 )
 
 type Monitor struct {
-	crossOutedHeight uint64
-	withdrawedHeight uint64
-	wrapper          *Wrapper
-	cocoC            chan *monitor.Coco
-	logger           logrus.FieldLogger
-	storage          storage.Storage
-	config           *repo.CenterConfig
-	minConfirms      uint64
-	centerAddr       common.Address
-	address          common.Address
-	mut              sync.Mutex
-	ctx              context.Context
-	cancel           context.CancelFunc
+	crossOutedHeight        uint64
+	forwardCrossOutedHeight uint64
+	withdrawedHeight        uint64
+	wrapper                 *Wrapper
+	cocoC                   chan *monitor.Coco
+	logger                  logrus.FieldLogger
+	storage                 storage.Storage
+	config                  *repo.CenterConfig
+	minConfirms             uint64
+	centerAddr              common.Address
+	address                 common.Address
+	mut                     sync.Mutex
+	ctx                     context.Context
+	cancel                  context.CancelFunc
 }
 
 func New(repoRoot string, config *repo.CenterConfig, logger logrus.FieldLogger) (*Monitor, error) {
@@ -84,6 +85,7 @@ func (m *Monitor) Start() error {
 	m.loadHeightFromStorage()
 	go m.listenWithdrawedEvent()
 	go m.listenCenterCrossOutedEvent()
+	go m.listenForwardCrossOutedEvent()
 	return nil
 }
 
@@ -168,6 +170,46 @@ func (m *Monitor) listenCenterCrossOutedEvent() {
 			}
 		case <-m.ctx.Done():
 			m.logger.Info("FilterCenterCrossOuted done")
+			return
+		}
+	}
+}
+
+func (m *Monitor) listenForwardCrossOutedEvent() {
+	ticker := time.NewTicker(20 * time.Second)
+	defer ticker.Stop()
+
+	start := m.forwardCrossOutedHeight
+
+	for {
+		select {
+		case <-ticker.C:
+			hasEvent := false
+			num, err := m.fetchBlockNum()
+			if err != nil {
+				continue
+			}
+			end := num - m.minConfirms
+			if num < m.minConfirms || end < start {
+				continue
+			}
+			if end >= start+300 {
+				end = start + 300
+			}
+			filter := m.wrapper.FilterForwardCrossOuted(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
+			for filter.Next() {
+				m.handleForwardCrossOuted(filter.Event)
+				hasEvent = true
+			}
+
+			m.logger.WithFields(logrus.Fields{"start": start, "end": end, "current": num}).Infof("FilterForwardCrossOuted")
+			start = end + 1
+
+			if !hasEvent {
+				m.persistForwardCrossOutedHeight(end)
+			}
+		case <-m.ctx.Done():
+			m.logger.Info("FilterForwardCrossOuted done")
 			return
 		}
 	}
@@ -263,6 +305,50 @@ func (m *Monitor) handleCenterCrossOuted(outed *center.TwoWayCenterCrossOuted) {
 
 	m.cocoC <- coco
 	m.persistCrossOutedBlockHeight(outed.Raw.TxHash.String(), outed.Raw.BlockNumber, coco)
+}
+
+func (m *Monitor) handleForwardCrossOuted(outed *center.TwoWayCenterForwardCrossOuted) {
+	if !strings.EqualFold(outed.Raw.Address.String(), m.config.CenterContract) {
+		return
+	}
+
+	if m.storage.Has(TxKey(outed.Raw.TxHash.String(), monitor.ForwardCrossOuted, outed.Raw.Index)) {
+		return
+	}
+	coco := &monitor.Coco{
+		Typ:         monitor.ForwardCrossOuted,
+		From:        outed.P.From,
+		To:          outed.P.To,
+		FromToken:   outed.P.FromToken,
+		ToToken:     outed.P.ToToken,
+		FromChainId: outed.P.FromChainId,
+		ToChainId:   outed.P.ToChainId,
+		Amount:      outed.P.Amount,
+		Index:       outed.Raw.Index,
+		TxId:        outed.Raw.TxHash.String(),
+		BlockHeight: outed.Raw.BlockNumber,
+	}
+
+	m.logger.WithFields(logrus.Fields{
+		"from":          coco.From.String(),
+		"to":            coco.To.String(),
+		"from_chain_id": coco.FromChainId.String(),
+		"to_chain_id":   coco.ToChainId.String(),
+		"from_token":    coco.FromToken.String(),
+		"to_token":      coco.ToToken.String(),
+		"amount":        coco.Amount.String(),
+		"index":         coco.Index,
+		"txId":          outed.Raw.TxHash.String(),
+		"block_height":  outed.Raw.BlockNumber,
+		"removed":       outed.Raw.Removed,
+	}).Info("ForwardCrossOuted")
+
+	if outed.Raw.Removed {
+		return
+	}
+
+	m.cocoC <- coco
+	m.persistForwardCrossOutedBlockHeight(outed.Raw.TxHash.String(), outed.Raw.BlockNumber, coco)
 }
 
 func (m *Monitor) CrossIn(fromToken common.Address, from, to common.Address, fromChainID, toChainID, amount *big.Int, txId string) error {
@@ -527,6 +613,16 @@ func (m *Monitor) loadHeightFromStorage() {
 	}
 
 	// load block height
+	f := m.storage.Get(forwardCrossOutedHeightKey())
+	if f == nil {
+		m.forwardCrossOutedHeight = header.Number.Uint64() - m.minConfirms
+		m.persistForwardCrossOutedHeight(m.forwardCrossOutedHeight)
+	} else {
+		m.forwardCrossOutedHeight = binary.LittleEndian.Uint64(f)
+
+	}
+
+	// load block height
 	r := m.storage.Get(WithdrawedHeightKey())
 	if r == nil {
 		m.withdrawedHeight = header.Number.Uint64() - m.minConfirms
@@ -540,14 +636,19 @@ func (m *Monitor) loadHeightFromStorage() {
 		m.crossOutedHeight = m.config.CrossOutedHeight
 	}
 
+	if m.config.ForwardCrossOutedHeight != 0 {
+		m.forwardCrossOutedHeight = m.config.ForwardCrossOutedHeight
+	}
+
 	if m.config.WithdrawedHeight != 0 {
 		m.withdrawedHeight = m.config.WithdrawedHeight
 	}
 
 	m.logger.WithFields(logrus.Fields{
-		"crossOutedHeight": m.crossOutedHeight,
-		"WithdrawedHeight": m.withdrawedHeight,
-		"address":          m.address.String(),
+		"CrossOutedHeight":        m.crossOutedHeight,
+		"WithdrawedHeight":        m.withdrawedHeight,
+		"ForwardCrossOutedHeight": m.forwardCrossOutedHeight,
+		"address":                 m.address.String(),
 	}).Info("Subscribe")
 }
 
@@ -559,6 +660,10 @@ func WithdrawedHeightKey() []byte {
 	return []byte(fmt.Sprintf("withdrawedHeight"))
 }
 
+func forwardCrossOutedHeightKey() []byte {
+	return []byte(fmt.Sprintf("forwardCrossOutedHeightKey"))
+}
+
 func (m *Monitor) persistCrossOutedBlockHeight(txId string, height uint64, coco *monitor.Coco) {
 	m.persistCrossOutedHeight(height)
 	for {
@@ -566,6 +671,19 @@ func (m *Monitor) persistCrossOutedBlockHeight(txId string, height uint64, coco 
 			m.logger.WithFields(logrus.Fields{
 				"height": m.crossOutedHeight,
 			}).Info("Persist Cross Outed Height")
+			return
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+}
+
+func (m *Monitor) persistForwardCrossOutedBlockHeight(txId string, height uint64, coco *monitor.Coco) {
+	m.persistForwardCrossOutedHeight(height)
+	for {
+		if m.storage.Has(TxKey(txId, coco.Typ, coco.Index)) {
+			m.logger.WithFields(logrus.Fields{
+				"height": m.forwardCrossOutedHeight,
+			}).Info("Persist Forward Cross Outed Height")
 			return
 		}
 		time.Sleep(500 * time.Millisecond)
@@ -595,6 +713,13 @@ func (m *Monitor) persistCrossOutedHeight(height uint64) {
 	binary.LittleEndian.PutUint64(buf, height)
 	m.storage.Put(crossOutedHeightKey(), buf)
 	m.crossOutedHeight = height
+}
+
+func (m *Monitor) persistForwardCrossOutedHeight(height uint64) {
+	buf := make([]byte, 8)
+	binary.LittleEndian.PutUint64(buf, height)
+	m.storage.Put(forwardCrossOutedHeightKey(), buf)
+	m.forwardCrossOutedHeight = height
 }
 
 func (m *Monitor) persistWithdrawedHeight(height uint64) {

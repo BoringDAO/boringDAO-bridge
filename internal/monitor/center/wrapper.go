@@ -161,6 +161,28 @@ func (w *Wrapper) FilterCenterCrossOuted(opts *bind.FilterOpts) *center.TwoWayCe
 	return iterator
 }
 
+func (w *Wrapper) FilterForwardCrossOuted(opts *bind.FilterOpts) *center.TwoWayCenterForwardCrossOutedIterator {
+	var iterator *center.TwoWayCenterForwardCrossOutedIterator
+	var err error
+
+	if err := retry.Retry(func(attempt uint) error {
+		iterator, err = w.twoWay.FilterForwardCrossOuted(opts)
+
+		if err != nil {
+			w.logger.Warnf("FilterForwardCrossOuted: %s", err.Error())
+
+			if w.isNetworkError(err) {
+				w.switchToNextAddr()
+			}
+		}
+		return err
+	}, strategy.Wait(10*time.Second)); err != nil {
+		w.logger.Panic(err)
+	}
+
+	return iterator
+}
+
 func (w *Wrapper) FilterCrossInFailed(opts *bind.FilterOpts) *center.TwoWayCenterCrossInFailedIterator {
 	var iterator *center.TwoWayCenterCrossInFailedIterator
 	var err error

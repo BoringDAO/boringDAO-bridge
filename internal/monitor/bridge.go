@@ -8,6 +8,7 @@ import (
 
 const Deposited = 0
 const CrossOuted = 1
+const ForwardCrossOuted = 2
 const Withdrawed = 3
 
 type Coco struct {

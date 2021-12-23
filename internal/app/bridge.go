@@ -112,7 +112,6 @@ func (b *Bridge) listenEdgeCocoC() {
 			edge := b.mnts[coco.FromChainId.Uint64()]
 
 			b.logger.Infof("========> start handle %s to %s transaction...", edge.Name(), b.center.Name())
-			defer b.logger.Infof("========> end handle %s to %s transaction...", edge.Name(), b.center.Name())
 			if edge.HasTx(coco.TxId, coco) {
 				b.logger.WithField("tx", coco.TxId).Error("has handled the interchain event")
 				return
@@ -132,6 +131,7 @@ func (b *Bridge) listenEdgeCocoC() {
 				b.logger.Panic(err)
 			}
 			edge.PutTxID(coco.TxId, coco)
+			b.logger.Infof("========> end handle %s to %s transaction...", edge.Name(), b.center.Name())
 		case <-b.ctx.Done():
 			close(b.edgeCocoC)
 			return
@@ -146,7 +146,6 @@ func (b *Bridge) listenCenterCocoC() {
 			edge := b.mnts[coco.ToChainId.Uint64()]
 
 			b.logger.Infof("========> start handle %s to %s transaction...", b.center.Name(), edge.Name())
-			defer b.logger.Infof("========> end handle %s to %s transaction...", b.center.Name(), edge.Name())
 			if b.center.HasTx(coco.TxId, coco) {
 				b.logger.WithField("tx", coco.TxId).Error("has handled the interchain event")
 				return
@@ -155,6 +154,8 @@ func (b *Bridge) listenCenterCocoC() {
 			switch coco.Typ {
 			case monitor.CrossOuted:
 				err = edge.CrossIn(coco.FromToken, coco.ToToken, coco.From, coco.To, coco.FromChainId, coco.ToChainId, coco.Amount, fmt.Sprintf("%s#CrossIn", coco.TxId))
+			case monitor.ForwardCrossOuted:
+				err = edge.CrossIn(coco.FromToken, coco.ToToken, coco.From, coco.To, coco.FromChainId, coco.ToChainId, coco.Amount, fmt.Sprintf("%s#ForwardCrossOuted", coco.TxId))
 			case monitor.Withdrawed:
 				err = edge.CrossIn(coco.FromToken, coco.ToToken, coco.From, coco.To, coco.FromChainId, coco.ToChainId, coco.Amount, fmt.Sprintf("%s#Withdrawed", coco.TxId))
 			}
@@ -162,7 +163,7 @@ func (b *Bridge) listenCenterCocoC() {
 				b.logger.Panic(err)
 			}
 			b.center.PutTxID(coco.TxId, coco)
-
+			b.logger.Infof("========> end handle %s to %s transaction...", b.center.Name(), edge.Name())
 		case <-b.ctx.Done():
 			close(b.centerCocoC)
 			return

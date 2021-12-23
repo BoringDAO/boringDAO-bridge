@@ -9,7 +9,7 @@ title = "Bridge configuration file"
   chainID = 80001 # main 137, testnet 80001
   minConfirms = 1 # min confirms
   gasLimit = 1500000 # gas Limit
-  centerContract = "0xDA86F55fA146BeF97Da50f5f0e0471D608a13c91"
+  centerContract = "0x797051A08a1753b3E054DDC1245AD812DAe9050F"
 
 [[edges]]
   name = "bsc_test"
@@ -19,7 +19,7 @@ title = "Bridge configuration file"
   chainID = 97
   minConfirms = 1 # min confirms
   gasLimit = 1500000 # gas Limit
-  edgeContract = "0x9A5BCc71347DC5DdF7805917B22De6C08159B8Ad"
+  edgeContract = "0xFaf3aD46dA9670910e340073FFd31aA4D04B2f5a"
 
 [[edges]]
 name = "kovan_test"
@@ -29,8 +29,7 @@ addrs = [
 chainID = 42
 minConfirms = 1 # min confirms
 gasLimit = 1500000 # gas Limit
-edgeContract = "0x16126CA0A3bc65c98667bD26fe20073B710D9E09"
-depositedHeight= 28893667
+edgeContract = "0x15624E9d0442D1039C335BC1aeB5F6A876a9bb72"
 
 [log]
   level = "info"
