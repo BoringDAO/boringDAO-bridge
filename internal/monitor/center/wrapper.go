@@ -313,7 +313,18 @@ func (w *Wrapper) forwardCrossOut(fromToken common.Address, from, to common.Addr
 			return nil, common.Hash{}, fmt.Errorf("failed to retrieve account nonce: %v", err)
 		}
 	} else {
-		nonce = opts.Nonce.Uint64()
+		confirmNonce, err := w.ethClient.NonceAt(ensureContext(opts.Context), opts.From, nil)
+		if err != nil {
+			return nil, common.Hash{}, fmt.Errorf("failed to retrieve account nonce: %v", err)
+		}
+		if confirmNonce >= opts.Nonce.Uint64() {
+			nonce, err = w.ethClient.PendingNonceAt(ensureContext(opts.Context), opts.From)
+			if err != nil {
+				return nil, common.Hash{}, fmt.Errorf("failed to retrieve account nonce: %v", err)
+			}
+		} else {
+			nonce = opts.Nonce.Uint64()
+		}
 	}
 
 	// Create the transaction, sign it and schedule it for execution
@@ -400,7 +411,18 @@ func (w *Wrapper) crossIn(fromToken common.Address, from, to common.Address, fro
 			return nil, common.Hash{}, fmt.Errorf("failed to retrieve account nonce: %v", err)
 		}
 	} else {
-		nonce = opts.Nonce.Uint64()
+		confirmNonce, err := w.ethClient.NonceAt(ensureContext(opts.Context), opts.From, nil)
+		if err != nil {
+			return nil, common.Hash{}, fmt.Errorf("failed to retrieve account nonce: %v", err)
+		}
+		if confirmNonce >= opts.Nonce.Uint64() {
+			nonce, err = w.ethClient.PendingNonceAt(ensureContext(opts.Context), opts.From)
+			if err != nil {
+				return nil, common.Hash{}, fmt.Errorf("failed to retrieve account nonce: %v", err)
+			}
+		} else {
+			nonce = opts.Nonce.Uint64()
+		}
 	}
 
 	// Create the transaction, sign it and schedule it for execution
@@ -488,7 +510,18 @@ func (w *Wrapper) issue(fromToken, toToken common.Address, from, to common.Addre
 			return nil, common.Hash{}, fmt.Errorf("failed to retrieve account nonce: %v", err)
 		}
 	} else {
-		nonce = opts.Nonce.Uint64()
+		confirmNonce, err := w.ethClient.NonceAt(ensureContext(opts.Context), opts.From, nil)
+		if err != nil {
+			return nil, common.Hash{}, fmt.Errorf("failed to retrieve account nonce: %v", err)
+		}
+		if confirmNonce >= opts.Nonce.Uint64() {
+			nonce, err = w.ethClient.PendingNonceAt(ensureContext(opts.Context), opts.From)
+			if err != nil {
+				return nil, common.Hash{}, fmt.Errorf("failed to retrieve account nonce: %v", err)
+			}
+		} else {
+			nonce = opts.Nonce.Uint64()
+		}
 	}
 
 	// Create the transaction, sign it and schedule it for execution
