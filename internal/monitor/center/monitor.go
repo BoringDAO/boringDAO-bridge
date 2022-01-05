@@ -380,7 +380,7 @@ func (m *Monitor) CrossIn(fromToken common.Address, from, to common.Address, fro
 
 	for {
 		price := m.wrapper.SuggestGasPrice(context.TODO())
-		if price.Cmp(m.wrapper.session.TransactOpts.GasPrice) != 1 {
+		if m.wrapper.session.TransactOpts.GasPrice != nil && price.Cmp(m.wrapper.session.TransactOpts.GasPrice) != 1 {
 			price = decimal.NewFromBigInt(m.wrapper.session.TransactOpts.GasPrice, 0).Add(decimal.NewFromFloat(1)).BigInt()
 		}
 		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
@@ -442,7 +442,7 @@ func (m *Monitor) Issue(fromToken, toToken common.Address, from, to common.Addre
 
 	for {
 		price := m.wrapper.SuggestGasPrice(context.TODO())
-		if price.Cmp(m.wrapper.session.TransactOpts.GasPrice) != 1 {
+		if m.wrapper.session.TransactOpts.GasPrice != nil && price.Cmp(m.wrapper.session.TransactOpts.GasPrice) != 1 {
 			price = decimal.NewFromBigInt(m.wrapper.session.TransactOpts.GasPrice, 0).Add(decimal.NewFromFloat(1)).BigInt()
 		}
 		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
@@ -504,7 +504,7 @@ func (m *Monitor) RollbackCrossIn(fromToken, toToken common.Address, from, to co
 
 	for {
 		price := m.wrapper.SuggestGasPrice(context.TODO())
-		if price.Cmp(m.wrapper.session.TransactOpts.GasPrice) != 1 {
+		if m.wrapper.session.TransactOpts.GasPrice != nil && price.Cmp(m.wrapper.session.TransactOpts.GasPrice) != 1 {
 			price = decimal.NewFromBigInt(m.wrapper.session.TransactOpts.GasPrice, 0).Add(decimal.NewFromFloat(1)).BigInt()
 		}
 		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
@@ -565,7 +565,7 @@ func (m *Monitor) ForwardCrossOut(fromToken common.Address, from, to common.Addr
 
 	for {
 		price := m.wrapper.SuggestGasPrice(context.TODO())
-		if price.Cmp(m.wrapper.session.TransactOpts.GasPrice) != 1 {
+		if m.wrapper.session.TransactOpts.GasPrice != nil && price.Cmp(m.wrapper.session.TransactOpts.GasPrice) != 1 {
 			price = decimal.NewFromBigInt(m.wrapper.session.TransactOpts.GasPrice, 0).Add(decimal.NewFromFloat(1)).BigInt()
 		}
 		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
