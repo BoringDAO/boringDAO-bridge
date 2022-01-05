@@ -292,6 +292,9 @@ func (m *Monitor) CrossIn(fromToken, toToken common.Address, from, to common.Add
 
 	for {
 		price := m.wrapper.SuggestGasPrice(context.TODO())
+		if price.Cmp(m.wrapper.session.TransactOpts.GasPrice) != 1 {
+			price = decimal.NewFromBigInt(m.wrapper.session.TransactOpts.GasPrice, 0).Add(decimal.NewFromFloat(1)).BigInt()
+		}
 		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
 		if m.wrapper.session.TransactOpts.GasPrice == nil ||
 			gasPrice.BigInt().Cmp(m.wrapper.session.TransactOpts.GasPrice) == 1 {
