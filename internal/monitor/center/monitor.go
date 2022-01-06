@@ -407,6 +407,10 @@ func (m *Monitor) CrossIn(fromToken common.Address, from, to common.Address, fro
 	if receipt.Status == 1 {
 		m.logger.WithField("tx_hash", receipt.TxHash.String()).Info("CrossIn success")
 	} else {
+		if unlocked := m.wrapper.TxHandled(txId); unlocked {
+			m.logger.Infof("find TxHandled txId:%s", txId)
+			return nil
+		}
 		return fmt.Errorf("crossin fail:%s", receipt.TxHash.String())
 	}
 	return nil
@@ -469,6 +473,10 @@ func (m *Monitor) Issue(fromToken, toToken common.Address, from, to common.Addre
 	if receipt.Status == 1 {
 		m.logger.WithField("tx_hash", receipt.TxHash.String()).Info("Issue success")
 	} else {
+		if unlocked := m.wrapper.TxHandled(txId); unlocked {
+			m.logger.Infof("find TxHandled txId:%s", txId)
+			return nil
+		}
 		return fmt.Errorf("issue fail:%s", receipt.TxHash.String())
 	}
 	return nil
@@ -531,6 +539,10 @@ func (m *Monitor) RollbackCrossIn(fromToken, toToken common.Address, from, to co
 	if receipt.Status == 1 {
 		m.logger.WithField("tx_hash", receipt.TxHash.String()).Info("RollbackCrossIn success")
 	} else {
+		if unlocked := m.wrapper.TxHandled(txId); unlocked {
+			m.logger.Infof("find TxHandled txId:%s", txId)
+			return nil
+		}
 		return fmt.Errorf("RollbackCrossIn fail:%s", receipt.TxHash.String())
 	}
 	return nil
@@ -592,6 +604,10 @@ func (m *Monitor) ForwardCrossOut(fromToken common.Address, from, to common.Addr
 	if receipt.Status == 1 {
 		m.logger.WithField("tx_hash", receipt.TxHash.String()).Info("ForwardCrossOut success")
 	} else {
+		if unlocked := m.wrapper.TxHandled(txId); unlocked {
+			m.logger.Infof("find TxHandled txId:%s", txId)
+			return nil
+		}
 		return fmt.Errorf("forwardCrossOut fail:%s", receipt.TxHash.String())
 	}
 	return nil

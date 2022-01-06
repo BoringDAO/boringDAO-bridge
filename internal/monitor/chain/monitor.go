@@ -319,7 +319,11 @@ func (m *Monitor) CrossIn(fromToken, toToken common.Address, from, to common.Add
 	if receipt.Status == 1 {
 		m.logger.WithField("tx_hash", receipt.TxHash.String()).Info("CrossIn success")
 	} else {
-		return fmt.Errorf("unlock fail:%s", receipt.TxHash.String())
+		if unlocked := m.wrapper.TxHandled(txId); unlocked {
+			m.logger.Infof("find TxHandled txId:%s", txId)
+			return nil
+		}
+		return fmt.Errorf("CrossIn fail:%s", receipt.TxHash.String())
 	}
 	return nil
 }
