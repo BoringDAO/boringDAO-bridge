@@ -39,6 +39,7 @@ type Monitor struct {
 	mut                     sync.Mutex
 	ctx                     context.Context
 	cancel                  context.CancelFunc
+	gasFeeRate              float64
 }
 
 func New(repoRoot string, config *repo.CenterConfig, logger logrus.FieldLogger) (*Monitor, error) {
@@ -65,11 +66,19 @@ func New(repoRoot string, config *repo.CenterConfig, logger logrus.FieldLogger) 
 		return nil, err
 	}
 
+	var gasFeeRate float64
+	if config.GasFeeRate < 1.5 {
+		gasFeeRate = 1.5
+	} else {
+		gasFeeRate = config.GasFeeRate
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &Monitor{
 		config:      config,
 		storage:     ethStorage,
+		gasFeeRate:  gasFeeRate,
 		address:     address,
 		wrapper:     wrapper,
 		centerAddr:  common.HexToAddress(config.CenterContract),
@@ -381,9 +390,9 @@ func (m *Monitor) CrossIn(fromToken common.Address, from, to common.Address, fro
 	for {
 		price := m.wrapper.SuggestGasPrice(context.TODO())
 		if m.wrapper.session.TransactOpts.GasPrice != nil && price.Cmp(m.wrapper.session.TransactOpts.GasPrice) != 1 {
-			price = decimal.NewFromBigInt(m.wrapper.session.TransactOpts.GasPrice, 0).Add(decimal.NewFromFloat(1)).BigInt()
+			price = decimal.NewFromBigInt(m.wrapper.session.TransactOpts.GasPrice, 0).Mul(decimal.NewFromFloat(1.1)).BigInt()
 		}
-		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
+		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(m.gasFeeRate))
 		if m.wrapper.session.TransactOpts.GasPrice == nil ||
 			gasPrice.BigInt().Cmp(m.wrapper.session.TransactOpts.GasPrice) == 1 {
 			m.wrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
@@ -447,9 +456,9 @@ func (m *Monitor) Issue(fromToken, toToken common.Address, from, to common.Addre
 	for {
 		price := m.wrapper.SuggestGasPrice(context.TODO())
 		if m.wrapper.session.TransactOpts.GasPrice != nil && price.Cmp(m.wrapper.session.TransactOpts.GasPrice) != 1 {
-			price = decimal.NewFromBigInt(m.wrapper.session.TransactOpts.GasPrice, 0).Add(decimal.NewFromFloat(1)).BigInt()
+			price = decimal.NewFromBigInt(m.wrapper.session.TransactOpts.GasPrice, 0).Mul(decimal.NewFromFloat(1.1)).BigInt()
 		}
-		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
+		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(m.gasFeeRate))
 		if m.wrapper.session.TransactOpts.GasPrice == nil ||
 			gasPrice.BigInt().Cmp(m.wrapper.session.TransactOpts.GasPrice) == 1 {
 			m.wrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
@@ -513,9 +522,9 @@ func (m *Monitor) RollbackCrossIn(fromToken, toToken common.Address, from, to co
 	for {
 		price := m.wrapper.SuggestGasPrice(context.TODO())
 		if m.wrapper.session.TransactOpts.GasPrice != nil && price.Cmp(m.wrapper.session.TransactOpts.GasPrice) != 1 {
-			price = decimal.NewFromBigInt(m.wrapper.session.TransactOpts.GasPrice, 0).Add(decimal.NewFromFloat(1)).BigInt()
+			price = decimal.NewFromBigInt(m.wrapper.session.TransactOpts.GasPrice, 0).Mul(decimal.NewFromFloat(1.1)).BigInt()
 		}
-		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
+		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(m.gasFeeRate))
 		if m.wrapper.session.TransactOpts.GasPrice == nil ||
 			gasPrice.BigInt().Cmp(m.wrapper.session.TransactOpts.GasPrice) == 1 {
 			m.wrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
@@ -578,9 +587,9 @@ func (m *Monitor) ForwardCrossOut(fromToken common.Address, from, to common.Addr
 	for {
 		price := m.wrapper.SuggestGasPrice(context.TODO())
 		if m.wrapper.session.TransactOpts.GasPrice != nil && price.Cmp(m.wrapper.session.TransactOpts.GasPrice) != 1 {
-			price = decimal.NewFromBigInt(m.wrapper.session.TransactOpts.GasPrice, 0).Add(decimal.NewFromFloat(1)).BigInt()
+			price = decimal.NewFromBigInt(m.wrapper.session.TransactOpts.GasPrice, 0).Mul(decimal.NewFromFloat(1.1)).BigInt()
 		}
-		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
+		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(m.gasFeeRate))
 		if m.wrapper.session.TransactOpts.GasPrice == nil ||
 			gasPrice.BigInt().Cmp(m.wrapper.session.TransactOpts.GasPrice) == 1 {
 			m.wrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()

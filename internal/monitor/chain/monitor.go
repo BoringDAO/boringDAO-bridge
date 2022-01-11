@@ -34,6 +34,7 @@ type Monitor struct {
 	storage          storage.Storage
 	config           *repo.EdgeConfig
 	minConfirms      uint64
+	gasFeeRate       float64
 	edgeAddr         common.Address
 	address          common.Address
 	mut              sync.Mutex
@@ -64,13 +65,19 @@ func New(repoRoot string, config *repo.EdgeConfig, logger logrus.FieldLogger) (m
 	if err != nil {
 		return nil, err
 	}
+	var gasFeeRate float64
+	if config.GasFeeRate < 1.2 {
+		gasFeeRate = 1.2
+	} else {
+		gasFeeRate = config.GasFeeRate
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-
 	return &Monitor{
 		config:      config,
 		storage:     ethStorage,
 		address:     address,
+		gasFeeRate:  gasFeeRate,
 		wrapper:     wrapper,
 		edgeAddr:    common.HexToAddress(config.EdgeContract),
 		minConfirms: uint64(minConfirms),
@@ -295,7 +302,7 @@ func (m *Monitor) CrossIn(fromToken, toToken common.Address, from, to common.Add
 		if m.wrapper.session.TransactOpts.GasPrice != nil && price.Cmp(m.wrapper.session.TransactOpts.GasPrice) != 1 {
 			price = decimal.NewFromBigInt(m.wrapper.session.TransactOpts.GasPrice, 0).Add(decimal.NewFromFloat(1)).BigInt()
 		}
-		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
+		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(m.gasFeeRate))
 		if m.wrapper.session.TransactOpts.GasPrice == nil ||
 			gasPrice.BigInt().Cmp(m.wrapper.session.TransactOpts.GasPrice) == 1 {
 			m.wrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()

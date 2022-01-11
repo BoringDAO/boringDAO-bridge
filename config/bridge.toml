@@ -9,6 +9,7 @@ title = "Bridge configuration file"
   chainID = 80001 # main 137, testnet 80001
   minConfirms = 1 # min confirms
   gasLimit = 1500000 # gas Limit
+  gasFeeRate = 1.8
   centerContract = "0x797051A08a1753b3E054DDC1245AD812DAe9050F"
 
 [[edges]]
@@ -19,6 +20,7 @@ title = "Bridge configuration file"
   chainID = 97
   minConfirms = 1 # min confirms
   gasLimit = 1500000 # gas Limit
+  gasFeeRate = 1.2
   edgeContract = "0xFaf3aD46dA9670910e340073FFd31aA4D04B2f5a"
 
 [[edges]]

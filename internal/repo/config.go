@@ -44,6 +44,7 @@ type CenterConfig struct {
 	MinConfirms             uint64   `toml:"minConfirms" json:"minConfirms"`
 	PrivKey                 string   `toml:"privKey" json:"privKey"`
 	GasLimit                uint64   `toml:"gasLimit" json:"gasLimit"`
+	GasFeeRate              float64  `toml:"gasFeeRate" json:"gasFeeRate"`
 	WithdrawedHeight        uint64   `mapstructure:"withdrawedHeight" json:"withdrawedHeight"`
 	CrossOutedHeight        uint64   `mapstructure:"crossOutedHeight" json:"crossOutedHeight"`
 	ForwardCrossOutedHeight uint64   `mapstructure:"forwardCrossOutedHeight" json:"forwardCrossOutedHeight"`
@@ -57,6 +58,7 @@ type EdgeConfig struct {
 	MinConfirms         uint64   `toml:"minConfirms" json:"minConfirms"`
 	PrivKey             string   `toml:"privKey" json:"privKey"`
 	GasLimit            uint64   `toml:"gasLimit" json:"gasLimit"`
+	GasFeeRate          float64  `toml:"gasFeeRate" json:"gasFeeRate"`
 	DepositedHeight     uint64   `mapstructure:"depositedHeight" json:"depositedHeight"`
 	CrossOutedHeight    uint64   `mapstructure:"crossOutedHeight" json:"crossOutedHeight"`
 	CrossInFailedHeight uint64   `mapstructure:"crossInFailedHeight" json:"crossInFailedHeight"`
