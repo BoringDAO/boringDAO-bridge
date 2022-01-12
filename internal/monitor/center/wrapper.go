@@ -24,7 +24,6 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/ethereum/go-ethereum/rpc"
-	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 )
 
@@ -252,9 +251,9 @@ func (w *Wrapper) ForwardCrossOut(fromToken common.Address, from, to common.Addr
 	var hash common.Hash
 
 	if err := retry.Retry(func(attempt uint) error {
-		price := w.SuggestGasPrice(context.TODO())
-		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
-		w.session.TransactOpts.GasPrice = gasPrice.BigInt()
+		//price := w.SuggestGasPrice(context.TODO())
+		//gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
+		//w.session.TransactOpts.GasPrice = gasPrice.BigInt()
 
 		var newHash common.Hash
 		tx, newHash, err = w.forwardCrossOut(fromToken, from, to, fromChainID, toChainID, amount, txid)
@@ -317,7 +316,7 @@ func (w *Wrapper) forwardCrossOut(fromToken common.Address, from, to common.Addr
 		if err != nil {
 			return nil, common.Hash{}, fmt.Errorf("failed to retrieve account nonce: %v", err)
 		}
-		if confirmNonce >= opts.Nonce.Uint64() {
+		if confirmNonce > opts.Nonce.Uint64() {
 			nonce, err = w.ethClient.PendingNonceAt(ensureContext(opts.Context), opts.From)
 			if err != nil {
 				return nil, common.Hash{}, fmt.Errorf("failed to retrieve account nonce: %v", err)
@@ -350,9 +349,9 @@ func (w *Wrapper) CrossIn(fromToken common.Address, from, to common.Address, fro
 	var hash common.Hash
 
 	if err := retry.Retry(func(attempt uint) error {
-		price := w.SuggestGasPrice(context.TODO())
-		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
-		w.session.TransactOpts.GasPrice = gasPrice.BigInt()
+		//price := w.SuggestGasPrice(context.TODO())
+		//gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
+		//w.session.TransactOpts.GasPrice = gasPrice.BigInt()
 
 		var newHash common.Hash
 		tx, newHash, err = w.crossIn(fromToken, from, to, fromChainID, toChainID, amount, txid)
@@ -415,7 +414,7 @@ func (w *Wrapper) crossIn(fromToken common.Address, from, to common.Address, fro
 		if err != nil {
 			return nil, common.Hash{}, fmt.Errorf("failed to retrieve account nonce: %v", err)
 		}
-		if confirmNonce >= opts.Nonce.Uint64() {
+		if confirmNonce > opts.Nonce.Uint64() {
 			nonce, err = w.ethClient.PendingNonceAt(ensureContext(opts.Context), opts.From)
 			if err != nil {
 				return nil, common.Hash{}, fmt.Errorf("failed to retrieve account nonce: %v", err)
@@ -448,9 +447,9 @@ func (w *Wrapper) Issue(fromToken, toToken common.Address, from, to common.Addre
 	var hash common.Hash
 
 	if err := retry.Retry(func(attempt uint) error {
-		price := w.SuggestGasPrice(context.TODO())
-		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
-		w.session.TransactOpts.GasPrice = gasPrice.BigInt()
+		//price := w.SuggestGasPrice(context.TODO())
+		//gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
+		//w.session.TransactOpts.GasPrice = gasPrice.BigInt()
 
 		var newHash common.Hash
 		tx, newHash, err = w.issue(fromToken, toToken, from, to, fromChainID, toChainID, amount, txid)
@@ -514,7 +513,7 @@ func (w *Wrapper) issue(fromToken, toToken common.Address, from, to common.Addre
 		if err != nil {
 			return nil, common.Hash{}, fmt.Errorf("failed to retrieve account nonce: %v", err)
 		}
-		if confirmNonce >= opts.Nonce.Uint64() {
+		if confirmNonce > opts.Nonce.Uint64() {
 			nonce, err = w.ethClient.PendingNonceAt(ensureContext(opts.Context), opts.From)
 			if err != nil {
 				return nil, common.Hash{}, fmt.Errorf("failed to retrieve account nonce: %v", err)
@@ -547,9 +546,9 @@ func (w *Wrapper) RollbackCrossIn(fromToken, toToken common.Address, from, to co
 	var hash common.Hash
 
 	if err := retry.Retry(func(attempt uint) error {
-		price := w.SuggestGasPrice(context.TODO())
-		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
-		w.session.TransactOpts.GasPrice = gasPrice.BigInt()
+		//price := w.SuggestGasPrice(context.TODO())
+		//gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
+		//w.session.TransactOpts.GasPrice = gasPrice.BigInt()
 
 		var newHash common.Hash
 		tx, newHash, err = w.rollbackCrossIn(fromToken, toToken, from, to, fromChainID, toChainID, amount, txid)
