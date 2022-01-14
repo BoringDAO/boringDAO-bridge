@@ -105,7 +105,7 @@ func (m *Monitor) Stop() error {
 }
 
 func (m *Monitor) listenWithdrawedEvent() {
-	ticker := time.NewTicker(20 * time.Second)
+	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
 	start := m.withdrawedHeight
@@ -122,13 +122,23 @@ func (m *Monitor) listenWithdrawedEvent() {
 			if num < m.minConfirms || end < start {
 				continue
 			}
-			if end >= start+300 {
-				end = start + 300
+			if end >= start+1000 {
+				end = start + 1000
 			}
+
 			filter := m.wrapper.FilterWithdrawed(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
 			for filter.Next() {
 				m.handleWithdrawed(filter.Event)
 				hasEvent = true
+			}
+			time.Sleep(3 * time.Second)
+			// check again
+			if !hasEvent {
+				filter := m.wrapper.FilterWithdrawed(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
+				for filter.Next() {
+					m.handleWithdrawed(filter.Event)
+					hasEvent = true
+				}
 			}
 
 			m.logger.WithFields(logrus.Fields{"start": start, "end": end, "current": num}).Infof("FilterWithdrawed")
@@ -145,7 +155,7 @@ func (m *Monitor) listenWithdrawedEvent() {
 }
 
 func (m *Monitor) listenCenterCrossOutedEvent() {
-	ticker := time.NewTicker(20 * time.Second)
+	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
 	start := m.crossOutedHeight
@@ -162,13 +172,22 @@ func (m *Monitor) listenCenterCrossOutedEvent() {
 			if num < m.minConfirms || end < start {
 				continue
 			}
-			if end >= start+300 {
-				end = start + 300
+			if end >= start+1000 {
+				end = start + 1000
 			}
 			filter := m.wrapper.FilterCenterCrossOuted(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
 			for filter.Next() {
 				m.handleCenterCrossOuted(filter.Event)
 				hasEvent = true
+			}
+			time.Sleep(3 * time.Second)
+			// check again
+			if !hasEvent {
+				filter := m.wrapper.FilterCenterCrossOuted(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
+				for filter.Next() {
+					m.handleCenterCrossOuted(filter.Event)
+					hasEvent = true
+				}
 			}
 
 			m.logger.WithFields(logrus.Fields{"start": start, "end": end, "current": num}).Infof("FilterCenterCrossOuted")
@@ -185,7 +204,7 @@ func (m *Monitor) listenCenterCrossOutedEvent() {
 }
 
 func (m *Monitor) listenForwardCrossOutedEvent() {
-	ticker := time.NewTicker(20 * time.Second)
+	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
 	start := m.forwardCrossOutedHeight
@@ -202,13 +221,22 @@ func (m *Monitor) listenForwardCrossOutedEvent() {
 			if num < m.minConfirms || end < start {
 				continue
 			}
-			if end >= start+300 {
-				end = start + 300
+			if end >= start+1000 {
+				end = start + 1000
 			}
 			filter := m.wrapper.FilterForwardCrossOuted(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
 			for filter.Next() {
 				m.handleForwardCrossOuted(filter.Event)
 				hasEvent = true
+			}
+			time.Sleep(3 * time.Second)
+			// check again
+			if !hasEvent {
+				filter := m.wrapper.FilterForwardCrossOuted(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
+				for filter.Next() {
+					m.handleForwardCrossOuted(filter.Event)
+					hasEvent = true
+				}
 			}
 
 			m.logger.WithFields(logrus.Fields{"start": start, "end": end, "current": num}).Infof("FilterForwardCrossOuted")
