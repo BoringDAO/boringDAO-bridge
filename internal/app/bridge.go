@@ -20,14 +20,14 @@ import (
 )
 
 type Bridge struct {
-	repo        *repo.Repo
-	storage     storage.Storage
-	mnts        map[uint64]monitor.Mnt
-	center      *center_chain.Monitor
-	logger      logrus.FieldLogger
-	edgeCocoC   chan *monitor.Coco
-	centerCocoC chan *monitor.Coco
-	mux         sync.Mutex
+	repo      *repo.Repo
+	storage   storage.Storage
+	mnts      map[uint64]monitor.Mnt
+	center    *center_chain.Monitor
+	logger    logrus.FieldLogger
+	edgeCocoC chan *monitor.Coco
+	mntCocoC  map[uint64]chan *monitor.Coco
+	mux       sync.Mutex
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -41,12 +41,14 @@ func New(repoRoot *repo.Repo) (*Bridge, error) {
 	}
 
 	mnts := make(map[uint64]monitor.Mnt)
+	mntCocoC := make(map[uint64]chan *monitor.Coco)
 	for _, config := range repoRoot.Config.Edges {
 		mnt, err := chain.New(repoRoot.Config.RepoRoot, config, loggers.Logger(config.Name))
 		if err != nil {
 			return nil, err
 		}
 		mnts[config.ChainID] = mnt
+		mntCocoC[config.ChainID] = make(chan *monitor.Coco, 1024)
 	}
 
 	center, err := center_chain.New(repoRoot.Config.RepoRoot, repoRoot.Config.Center, loggers.Logger(repoRoot.Config.Center.Name))
@@ -56,15 +58,15 @@ func New(repoRoot *repo.Repo) (*Bridge, error) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Bridge{
-		repo:        repoRoot,
-		mnts:        mnts,
-		center:      center,
-		storage:     boringStorage,
-		edgeCocoC:   make(chan *monitor.Coco),
-		centerCocoC: make(chan *monitor.Coco),
-		logger:      loggers.Logger(loggers.APP),
-		ctx:         ctx,
-		cancel:      cancel,
+		repo:      repoRoot,
+		mnts:      mnts,
+		center:    center,
+		storage:   boringStorage,
+		edgeCocoC: make(chan *monitor.Coco, 1024),
+		mntCocoC:  mntCocoC,
+		logger:    loggers.Logger(loggers.APP),
+		ctx:       ctx,
+		cancel:    cancel,
 	}, nil
 }
 
@@ -88,13 +90,14 @@ func (b *Bridge) Start() error {
 
 	go func() {
 		for coco := range b.center.HandleCocoC() {
-			b.centerCocoC <- coco
+			b.mntCocoC[coco.ToChainId.Uint64()] <- coco
 		}
 	}()
 
 	go b.listenEdgeCocoC()
-	go b.listenCenterCocoC()
-
+	for chainId, _ := range b.mntCocoC {
+		go b.listenCenterCocoC(chainId)
+	}
 	b.printLogo()
 
 	return nil
@@ -139,10 +142,10 @@ func (b *Bridge) listenEdgeCocoC() {
 	}
 }
 
-func (b *Bridge) listenCenterCocoC() {
+func (b *Bridge) listenCenterCocoC(chainId uint64) {
 	for {
 		select {
-		case coco := <-b.centerCocoC:
+		case coco := <-b.mntCocoC[chainId]:
 			edge := b.mnts[coco.ToChainId.Uint64()]
 
 			b.logger.Infof("========> start handle %s to %s transaction...", b.center.Name(), edge.Name())
@@ -165,7 +168,7 @@ func (b *Bridge) listenCenterCocoC() {
 			b.center.PutTxID(coco.TxId, coco)
 			b.logger.Infof("========> end handle %s to %s transaction...", b.center.Name(), edge.Name())
 		case <-b.ctx.Done():
-			close(b.centerCocoC)
+			close(b.mntCocoC[chainId])
 			return
 		}
 	}

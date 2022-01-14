@@ -647,7 +647,7 @@ func (w *Wrapper) TransactionReceiptsLimitedRetry(ctx context.Context, txHashes 
 			}
 		}
 		return err
-	}, strategy.Wait(10*time.Second), strategy.Limit(30)); err != nil {
+	}, strategy.Wait(10*time.Second), strategy.Limit(9)); err != nil {
 		w.logger.Warnf("retry TransactionReceipt: %s", err.Error())
 	}
 

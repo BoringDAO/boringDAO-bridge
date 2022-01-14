@@ -393,6 +393,9 @@ func (m *Monitor) CrossIn(fromToken common.Address, from, to common.Address, fro
 			price = decimal.NewFromBigInt(m.wrapper.session.TransactOpts.GasPrice, 0).Mul(decimal.NewFromFloat(1.1)).BigInt()
 		}
 		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(m.gasFeeRate))
+		if gasPrice.GreaterThan(decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(5))) {
+			gasPrice = decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(5))
+		}
 		if m.wrapper.session.TransactOpts.GasPrice == nil ||
 			gasPrice.BigInt().Cmp(m.wrapper.session.TransactOpts.GasPrice) == 1 {
 			m.wrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
@@ -459,6 +462,9 @@ func (m *Monitor) Issue(fromToken, toToken common.Address, from, to common.Addre
 			price = decimal.NewFromBigInt(m.wrapper.session.TransactOpts.GasPrice, 0).Mul(decimal.NewFromFloat(1.1)).BigInt()
 		}
 		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(m.gasFeeRate))
+		if gasPrice.GreaterThan(decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(5))) {
+			gasPrice = decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(5))
+		}
 		if m.wrapper.session.TransactOpts.GasPrice == nil ||
 			gasPrice.BigInt().Cmp(m.wrapper.session.TransactOpts.GasPrice) == 1 {
 			m.wrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
@@ -590,6 +596,9 @@ func (m *Monitor) ForwardCrossOut(fromToken common.Address, from, to common.Addr
 			price = decimal.NewFromBigInt(m.wrapper.session.TransactOpts.GasPrice, 0).Mul(decimal.NewFromFloat(1.1)).BigInt()
 		}
 		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(m.gasFeeRate))
+		if gasPrice.GreaterThan(decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(5))) {
+			gasPrice = decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(5))
+		}
 		if m.wrapper.session.TransactOpts.GasPrice == nil ||
 			gasPrice.BigInt().Cmp(m.wrapper.session.TransactOpts.GasPrice) == 1 {
 			m.wrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
