@@ -712,41 +712,41 @@ func forwardCrossOutedHeightKey() []byte {
 
 func (m *Monitor) persistCrossOutedBlockHeight(txId string, height uint64, coco *monitor.Coco) {
 	m.persistCrossOutedHeight(height)
-	for {
-		if m.storage.Has(TxKey(txId, coco.Typ, coco.Index)) {
-			m.logger.WithFields(logrus.Fields{
-				"height": m.crossOutedHeight,
-			}).Info("Persist Cross Outed Height")
-			return
-		}
-		time.Sleep(500 * time.Millisecond)
-	}
+	//for {
+	//	if m.storage.Has(TxKey(txId, coco.Typ, coco.Index)) {
+	//		m.logger.WithFields(logrus.Fields{
+	//			"height": m.crossOutedHeight,
+	//		}).Info("Persist Cross Outed Height")
+	//		return
+	//	}
+	//	time.Sleep(500 * time.Millisecond)
+	//}
 }
 
 func (m *Monitor) persistForwardCrossOutedBlockHeight(txId string, height uint64, coco *monitor.Coco) {
 	m.persistForwardCrossOutedHeight(height)
-	for {
-		if m.storage.Has(TxKey(txId, coco.Typ, coco.Index)) {
-			m.logger.WithFields(logrus.Fields{
-				"height": m.forwardCrossOutedHeight,
-			}).Info("Persist Forward Cross Outed Height")
-			return
-		}
-		time.Sleep(500 * time.Millisecond)
-	}
+	//for {
+	//	if m.storage.Has(TxKey(txId, coco.Typ, coco.Index)) {
+	//		m.logger.WithFields(logrus.Fields{
+	//			"height": m.forwardCrossOutedHeight,
+	//		}).Info("Persist Forward Cross Outed Height")
+	//		return
+	//	}
+	//	time.Sleep(500 * time.Millisecond)
+	//}
 }
 
 func (m *Monitor) persistWithdrawedBlockHeight(txId string, height uint64, coco *monitor.Coco) {
 	m.persistWithdrawedHeight(height)
-	for {
-		if m.storage.Has(TxKey(txId, coco.Typ, coco.Index)) {
-			m.logger.WithFields(logrus.Fields{
-				"height": m.withdrawedHeight,
-			}).Info("Persist Withdrawed Height")
-			return
-		}
-		time.Sleep(500 * time.Millisecond)
-	}
+	//for {
+	//	if m.storage.Has(TxKey(txId, coco.Typ, coco.Index)) {
+	//		m.logger.WithFields(logrus.Fields{
+	//			"height": m.withdrawedHeight,
+	//		}).Info("Persist Withdrawed Height")
+	//		return
+	//	}
+	//	time.Sleep(500 * time.Millisecond)
+	//}
 
 }
 
