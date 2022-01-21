@@ -128,6 +128,16 @@ func (m *Monitor) listenDepositedEvent() {
 				hasEvent = true
 			}
 
+			time.Sleep(3 * time.Second)
+			// check again
+			if !hasEvent {
+				filter := m.wrapper.FilterDeposited(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
+				for filter.Next() {
+					m.handleDeposited(filter.Event)
+					hasEvent = true
+				}
+			}
+
 			m.logger.WithFields(logrus.Fields{"start": start, "end": end, "current": num}).Infof("FilterDeposited")
 			start = end + 1
 
@@ -166,6 +176,16 @@ func (m *Monitor) listenCrossOutedEvent() {
 			for filter.Next() {
 				m.handleCrossOuted(filter.Event)
 				hasEvent = true
+			}
+
+			time.Sleep(3 * time.Second)
+			// check again
+			if !hasEvent {
+				filter := m.wrapper.FilterCrossOuted(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
+				for filter.Next() {
+					m.handleCrossOuted(filter.Event)
+					hasEvent = true
+				}
 			}
 
 			m.logger.WithFields(logrus.Fields{"start": start, "end": end, "current": num}).Infof("FilterCrossOuted")
