@@ -73,11 +73,13 @@ func New(repoRoot *repo.Repo) (*Bridge, error) {
 func (b *Bridge) Start() error {
 	for chainID, mnt := range b.mnts {
 		mnt := mnt
-		if err := mnt.Start(); err != nil {
-			return err
-		}
-		b.logger.Infof("mnt %s for chain ID %d has started", mnt.Name(), chainID)
+		chainID := chainID
 		go func() {
+			if err := mnt.Start(); err != nil {
+				b.logger.Errorf("mnt %s start error:%w", mnt.Name(), err)
+				return
+			}
+			b.logger.Infof("mnt %s for chain ID %d has started", mnt.Name(), chainID)
 			for coco := range mnt.HandleCocoC() {
 				b.edgeCocoC <- coco
 			}
