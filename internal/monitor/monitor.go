@@ -136,6 +136,16 @@ func (m *Monitor) listenCrossOutEvent() {
 					m.cocoNum.Inc()
 				}
 			}
+			// filter again
+			if m.cocoNum.Load() == 0 {
+				filter := m.bridgeWrapper.FilterCrossOut(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
+				for filter.Next() {
+					res := m.handleCross(filter.Event, true)
+					if res {
+						m.cocoNum.Inc()
+					}
+				}
+			}
 			m.logger.Infof("finished filtering cross out event between block [%d, %d]", start, end)
 
 			start = end + 1
