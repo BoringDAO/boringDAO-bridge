@@ -25,6 +25,7 @@ type Config struct {
 	RepoRoot string            `json:"repo_root"`
 	Title    string            `json:"title"`
 	Token    map[string]string `json:"token"`
+	KeyFile  string            `json:"keyFile"`
 	Bridges  []*BridgeConfig   `json:"bridges"`
 	Log      `json:"log"`
 }

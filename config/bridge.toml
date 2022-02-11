@@ -1,5 +1,6 @@
 title = "Bridge configuration file"
 
+keyFile = ""
 
 [token]
   "0x55FB3193F6e42D6753691c8aA38800B2753FB7d0" = "42"
