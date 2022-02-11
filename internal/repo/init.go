@@ -1,9 +1,14 @@
 package repo
 
 import (
+	"bufio"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
+
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/boringdao/bridge/pkg/kit/fileutil"
 	"github.com/gobuffalo/packd"
@@ -36,4 +41,22 @@ func Initialize(repoRoot string) error {
 
 func Initialized(repoRoot string) bool {
 	return fileutil.Exist(filepath.Join(repoRoot, configName))
+}
+
+func ReadEvmAddress(msg string) string {
+	for {
+		fmt.Print(msg)
+		addr := readInput()
+		if strings.Compare(common.HexToAddress(addr).String(), addr) != 0 {
+			fmt.Println("invalid evm address, please try again")
+		} else {
+			return addr
+		}
+	}
+}
+
+func readInput() string {
+	input := bufio.NewScanner(os.Stdin)
+	input.Scan()
+	return input.Text()
 }

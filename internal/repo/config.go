@@ -25,6 +25,7 @@ type Config struct {
 	RepoRoot string        `json:"repo_root"`
 	Title    string        `json:"title"`
 	Edges    []*EdgeConfig `json:"edges"`
+	KeyFile  string        `json:"keyFile"`
 	Center   *CenterConfig `json:"center"`
 	Log      `json:"log"`
 }

@@ -1,5 +1,6 @@
 title = "Bridge configuration file"
 
+keyFile = ""
 
 [center]
   name = "matic_test"

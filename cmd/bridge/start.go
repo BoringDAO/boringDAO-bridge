@@ -2,16 +2,21 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
 
+	"github.com/ethereum/go-ethereum/accounts/keystore"
+
 	"github.com/boringdao/bridge/internal/app"
 	"github.com/boringdao/bridge/internal/loggers"
 	"github.com/boringdao/bridge/internal/repo"
+	"github.com/boringdao/bridge/pkg/kit/fileutil"
 	"github.com/boringdao/bridge/pkg/kit/hexutil"
 	"github.com/boringdao/bridge/pkg/kit/log"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -55,7 +60,7 @@ func start(ctx *cli.Context) error {
 
 	loggers.Initialize(repo.Config)
 
-	ethKey, err := ethKey()
+	ethKey, err := ethKey(repo)
 	if err != nil {
 		return err
 	}
@@ -82,14 +87,43 @@ func start(ctx *cli.Context) error {
 	return nil
 }
 
-func ethKey() (string, error) {
-	key, err := gopass.GetPasswdPrompt("Please input bridge private key: ", true, os.Stdin, os.Stdout)
-	priv, err := crypto.ToECDSA(hexutil.Decode(string(key)))
-	if err != nil || priv == nil {
-		return "", fmt.Errorf("eth private key format error:%w", err)
-	}
+func ethKey(rep *repo.Repo) (string, error) {
+	if rep.Config.KeyFile == "" {
+		key, err := gopass.GetPasswdPrompt("Please input eth/bridge private key: ", true, os.Stdin, os.Stdout)
+		priv, err := crypto.ToECDSA(hexutil.Decode(string(key)))
+		if err != nil || priv == nil {
+			return "", fmt.Errorf("eth private key format error:%w", err)
+		}
 
-	return string(key), nil
+		addr := repo.ReadEvmAddress("Please input the address of your private key:")
+		keyAddr := crypto.PubkeyToAddress(priv.PublicKey).String()
+
+		if strings.Compare(addr, keyAddr) != 0 {
+			return "", fmt.Errorf("the address cannot match the private key, please check and try again")
+		}
+
+		return string(key), nil
+	}
+	keyFile := filepath.Join(rep.Config.RepoRoot, rep.Config.KeyFile)
+	if !fileutil.Exist(keyFile) {
+		return "", fmt.Errorf("%s not exists", keyFile)
+	}
+	keyData, err := ioutil.ReadFile(keyFile)
+	if err != nil {
+		return "", err
+	}
+	passwork, _ := gopass.GetPasswdPrompt("Please input eth/bridge keyfile password: ", true, os.Stdin, os.Stdout)
+	key, err := keystore.DecryptKey(keyData, string(passwork))
+	if err != nil {
+		return "", err
+	}
+	addr := repo.ReadEvmAddress("Please input the address of your private key:")
+	keyAddr := crypto.PubkeyToAddress(key.PrivateKey.PublicKey).String()
+
+	if strings.Compare(addr, keyAddr) != 0 {
+		return "", fmt.Errorf("the address cannot match the private key, please check and try again")
+	}
+	return hexutil.Encode(crypto.FromECDSA(key.PrivateKey)), nil
 }
 
 func handleShutdown(bridge *app.Bridge, wg *sync.WaitGroup) {
