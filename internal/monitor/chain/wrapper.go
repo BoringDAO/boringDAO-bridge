@@ -9,11 +9,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/boringdao/bridge/pkg/repo"
+
 	"github.com/boringdao/bridge/internal/monitor/contracts/edge"
 
 	"github.com/Rican7/retry"
 	"github.com/Rican7/retry/strategy"
-	"github.com/boringdao/bridge/internal/repo"
 	"github.com/boringdao/bridge/pkg/kit/hexutil"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"

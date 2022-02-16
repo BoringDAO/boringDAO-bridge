@@ -10,10 +10,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/boringdao/bridge/pkg/bridge"
+	repo2 "github.com/boringdao/bridge/pkg/repo"
+
 	"github.com/boringdao/bridge/internal/monitor/contracts/edge"
 
-	"github.com/boringdao/bridge/internal/monitor"
-	"github.com/boringdao/bridge/internal/repo"
 	"github.com/boringdao/bridge/pkg/kit/hexutil"
 	"github.com/boringdao/bridge/pkg/storage"
 	"github.com/boringdao/bridge/pkg/storage/leveldb"
@@ -29,10 +30,10 @@ type Monitor struct {
 	depositedHeight  uint64
 	crossOutedHeight uint64
 	wrapper          *Wrapper
-	cocoC            chan *monitor.Coco
+	cocoC            chan *bridge.Coco
 	logger           logrus.FieldLogger
 	storage          storage.Storage
-	config           *repo.EdgeConfig
+	config           *repo2.EdgeConfig
 	minConfirms      uint64
 	gasFeeRate       float64
 	edgeAddr         common.Address
@@ -42,8 +43,8 @@ type Monitor struct {
 	cancel           context.CancelFunc
 }
 
-func New(repoRoot string, config *repo.EdgeConfig, logger logrus.FieldLogger) (monitor.Mnt, error) {
-	storagePath := repo.GetStoragePath(repoRoot, fmt.Sprintf("%s_%d", config.Name, config.ChainID))
+func New(repoRoot string, config *repo2.EdgeConfig, logger logrus.FieldLogger) (bridge.Mnt, error) {
+	storagePath := repo2.GetStoragePath(repoRoot, fmt.Sprintf("%s_%d", config.Name, config.ChainID))
 	ethStorage, err := leveldb.New(storagePath)
 	if err != nil {
 		return nil, err
@@ -81,7 +82,7 @@ func New(repoRoot string, config *repo.EdgeConfig, logger logrus.FieldLogger) (m
 		wrapper:     wrapper,
 		edgeAddr:    common.HexToAddress(config.EdgeContract),
 		minConfirms: uint64(minConfirms),
-		cocoC:       make(chan *monitor.Coco),
+		cocoC:       make(chan *bridge.Coco),
 		logger:      logger,
 		ctx:         ctx,
 		cancel:      cancel,
@@ -201,7 +202,7 @@ func (m *Monitor) listenCrossOutedEvent() {
 	}
 }
 
-func (m *Monitor) HandleCocoC() chan *monitor.Coco {
+func (m *Monitor) HandleCocoC() chan *bridge.Coco {
 	return m.cocoC
 }
 
@@ -210,27 +211,27 @@ func (m *Monitor) handleDeposited(lock *edge.TwoWayEdgeDeposited) {
 		return
 	}
 
-	if m.storage.Has(TxKey(lock.Raw.TxHash.String(), monitor.Deposited, lock.Raw.Index)) {
+	if m.storage.Has(TxKey(lock.Raw.TxHash.String(), bridge.Deposited, lock.Raw.Index)) {
 		return
 	}
-	coco := &monitor.Coco{
-		Typ:         monitor.Deposited,
-		From:        lock.From,
+	coco := &bridge.Coco{
+		Typ:         bridge.Deposited,
+		From:        lock.From.Hex(),
 		Amount:      lock.Amount,
 		FromChainId: lock.FromChainId,
-		FromToken:   lock.FromToken,
+		FromToken:   lock.FromToken.Hex(),
 		Index:       lock.Raw.Index,
 		TxId:        lock.Raw.TxHash.String(),
 		BlockHeight: lock.Raw.BlockNumber,
 	}
 
 	m.logger.WithFields(logrus.Fields{
-		"from":          coco.From.String(),
-		"to":            coco.To.String(),
+		"from":          coco.From,
+		"to":            coco.To,
 		"from_chain_id": coco.FromChainId.String(),
 		"to_chain_id":   coco.ToChainId.String(),
-		"from_token":    coco.FromToken.String(),
-		"to_token":      coco.ToToken.String(),
+		"from_token":    coco.FromToken,
+		"to_token":      coco.ToToken,
 		"amount":        coco.Amount.String(),
 		"index":         coco.Index,
 		"txId":          lock.Raw.TxHash.String(),
@@ -251,14 +252,14 @@ func (m *Monitor) handleCrossOuted(crossBurn *edge.TwoWayEdgeCrossOuted) {
 		return
 	}
 
-	if m.storage.Has(TxKey(crossBurn.Raw.TxHash.String(), monitor.CrossOuted, crossBurn.Raw.Index)) {
+	if m.storage.Has(TxKey(crossBurn.Raw.TxHash.String(), bridge.CrossOuted, crossBurn.Raw.Index)) {
 		return
 	}
-	coco := &monitor.Coco{
-		Typ:         monitor.CrossOuted,
-		From:        crossBurn.P.From,
-		To:          crossBurn.P.To,
-		FromToken:   crossBurn.P.FromToken,
+	coco := &bridge.Coco{
+		Typ:         bridge.CrossOuted,
+		From:        crossBurn.P.From.Hex(),
+		To:          crossBurn.P.To.Hex(),
+		FromToken:   crossBurn.P.FromToken.Hex(),
 		FromChainId: crossBurn.P.FromChainId,
 		ToChainId:   crossBurn.P.ToChainId,
 		Amount:      crossBurn.P.Amount,
@@ -268,12 +269,12 @@ func (m *Monitor) handleCrossOuted(crossBurn *edge.TwoWayEdgeCrossOuted) {
 	}
 
 	m.logger.WithFields(logrus.Fields{
-		"from":          coco.From.String(),
-		"to":            coco.To.String(),
+		"from":          coco.From,
+		"to":            coco.To,
 		"from_chain_id": coco.FromChainId.String(),
 		"to_chain_id":   coco.ToChainId.String(),
-		"from_token":    coco.FromToken.String(),
-		"to_token":      coco.ToToken.String(),
+		"from_token":    coco.FromToken,
+		"to_token":      coco.ToToken,
 		"amount":        coco.Amount.String(),
 		"index":         coco.Index,
 		"txId":          crossBurn.Raw.TxHash.String(),
@@ -289,7 +290,7 @@ func (m *Monitor) handleCrossOuted(crossBurn *edge.TwoWayEdgeCrossOuted) {
 	m.persistCrossOutedBlockHeight(crossBurn.Raw.TxHash.String(), crossBurn.Raw.BlockNumber, coco)
 }
 
-func (m *Monitor) CrossIn(fromToken, toToken common.Address, from, to common.Address, fromChainID, toChainID, amount *big.Int, txId string) error {
+func (m *Monitor) CrossIn(fromToken, toToken, from, to string, fromChainID, toChainID, amount *big.Int, txId string) error {
 	unlocked := m.wrapper.TxHandled(txId)
 	if unlocked {
 		m.logger.Infof("find TxHandled txId:%s", txId)
@@ -298,10 +299,10 @@ func (m *Monitor) CrossIn(fromToken, toToken common.Address, from, to common.Add
 
 	m.logger.WithFields(logrus.Fields{
 		"tx_id":       txId,
-		"from_token":  fromToken.String(),
-		"to_token":    toToken.String(),
-		"from":        from.String(),
-		"to":          to.String(),
+		"from_token":  fromToken,
+		"to_token":    toToken,
+		"from":        from,
+		"to":          to,
 		"fromChainId": fromChainID.String(),
 		"toChainId":   toChainID.String(),
 		"amount":      amount.String(),
@@ -331,7 +332,7 @@ func (m *Monitor) CrossIn(fromToken, toToken common.Address, from, to common.Add
 			m.wrapper.session.TransactOpts.GasPrice = gasPrice.BigInt()
 
 			var hash common.Hash
-			transaction, hash = m.wrapper.CrossIn(fromToken, toToken, from, to, fromChainID, toChainID, amount, txId)
+			transaction, hash = m.wrapper.CrossIn(common.HexToAddress(fromToken), common.HexToAddress(toToken), common.HexToAddress(from), common.HexToAddress(to), fromChainID, toChainID, amount, txId)
 			if transaction != nil {
 				m.wrapper.session.TransactOpts.Nonce = big.NewInt(int64(transaction.Nonce()))
 				hashes = append(hashes, hash)
@@ -418,7 +419,7 @@ func crossInFailedHeightKey() []byte {
 	return []byte(fmt.Sprintf("crossInFailedHeight"))
 }
 
-func (m *Monitor) persistDepositedBlockHeight(txId string, height uint64, coco *monitor.Coco) {
+func (m *Monitor) persistDepositedBlockHeight(txId string, height uint64, coco *bridge.Coco) {
 	m.persistDepositedHeight(height)
 	for {
 		if m.storage.Has(TxKey(txId, coco.Typ, coco.Index)) {
@@ -431,7 +432,7 @@ func (m *Monitor) persistDepositedBlockHeight(txId string, height uint64, coco *
 	}
 }
 
-func (m *Monitor) persistCrossOutedBlockHeight(txId string, height uint64, coco *monitor.Coco) {
+func (m *Monitor) persistCrossOutedBlockHeight(txId string, height uint64, coco *bridge.Coco) {
 	m.persistCrossOutedHeight(height)
 	for {
 		if m.storage.Has(TxKey(txId, coco.Typ, coco.Index)) {
@@ -444,7 +445,7 @@ func (m *Monitor) persistCrossOutedBlockHeight(txId string, height uint64, coco 
 	}
 }
 
-func (m *Monitor) HasTx(txId string, coco *monitor.Coco) bool {
+func (m *Monitor) HasTx(txId string, coco *bridge.Coco) bool {
 	return m.storage.Has(TxKey(txId, coco.Typ, coco.Index))
 }
 
@@ -466,7 +467,7 @@ func TxKey(hash string, typ int, idx uint) []byte {
 	return []byte(fmt.Sprintf("tx-%d-%s-%d", typ, hash, idx))
 }
 
-func (m *Monitor) PutTxID(txId string, coco *monitor.Coco) {
+func (m *Monitor) PutTxID(txId string, coco *bridge.Coco) {
 	data, err := json.Marshal(&coco)
 	if err != nil {
 		m.logger.Error(err)

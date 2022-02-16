@@ -64,6 +64,7 @@ type EdgeConfig struct {
 	CrossOutedHeight    uint64   `mapstructure:"crossOutedHeight" json:"crossOutedHeight"`
 	CrossInFailedHeight uint64   `mapstructure:"crossInFailedHeight" json:"crossInFailedHeight"`
 	EdgeContract        string   `toml:"EdgeContract" json:"EdgeContract"`
+	Plugin              string   `toml:"plugin" json:"plugin"`
 }
 
 func (c *Config) Bytes() ([]byte, error) {

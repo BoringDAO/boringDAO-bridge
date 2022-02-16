@@ -10,9 +10,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/boringdao/bridge/internal/monitor"
+	"github.com/boringdao/bridge/pkg/bridge"
+	repo2 "github.com/boringdao/bridge/pkg/repo"
+
 	"github.com/boringdao/bridge/internal/monitor/contracts/center"
-	"github.com/boringdao/bridge/internal/repo"
 	"github.com/boringdao/bridge/pkg/kit/hexutil"
 	"github.com/boringdao/bridge/pkg/storage"
 	"github.com/boringdao/bridge/pkg/storage/leveldb"
@@ -29,10 +30,10 @@ type Monitor struct {
 	forwardCrossOutedHeight uint64
 	withdrawedHeight        uint64
 	wrapper                 *Wrapper
-	cocoC                   chan *monitor.Coco
+	cocoC                   chan *bridge.Coco
 	logger                  logrus.FieldLogger
 	storage                 storage.Storage
-	config                  *repo.CenterConfig
+	config                  *repo2.CenterConfig
 	minConfirms             uint64
 	centerAddr              common.Address
 	address                 common.Address
@@ -42,8 +43,8 @@ type Monitor struct {
 	gasFeeRate              float64
 }
 
-func New(repoRoot string, config *repo.CenterConfig, logger logrus.FieldLogger) (*Monitor, error) {
-	storagePath := repo.GetStoragePath(repoRoot, fmt.Sprintf("%s_%d", config.Name, config.ChainID))
+func New(repoRoot string, config *repo2.CenterConfig, logger logrus.FieldLogger) (*Monitor, error) {
+	storagePath := repo2.GetStoragePath(repoRoot, fmt.Sprintf("%s_%d", config.Name, config.ChainID))
 	ethStorage, err := leveldb.New(storagePath)
 	if err != nil {
 		return nil, err
@@ -83,7 +84,7 @@ func New(repoRoot string, config *repo.CenterConfig, logger logrus.FieldLogger) 
 		wrapper:     wrapper,
 		centerAddr:  common.HexToAddress(config.CenterContract),
 		minConfirms: uint64(minConfirms),
-		cocoC:       make(chan *monitor.Coco),
+		cocoC:       make(chan *bridge.Coco),
 		logger:      logger,
 		ctx:         ctx,
 		cancel:      cancel,
@@ -252,7 +253,7 @@ func (m *Monitor) listenForwardCrossOutedEvent() {
 	}
 }
 
-func (m *Monitor) HandleCocoC() chan *monitor.Coco {
+func (m *Monitor) HandleCocoC() chan *bridge.Coco {
 	return m.cocoC
 }
 
@@ -261,15 +262,15 @@ func (m *Monitor) handleWithdrawed(withdrawed *center.TwoWayCenterWithdrawed) {
 		return
 	}
 
-	if m.storage.Has(TxKey(withdrawed.Raw.TxHash.String(), monitor.Withdrawed, withdrawed.Raw.Index)) {
+	if m.storage.Has(TxKey(withdrawed.Raw.TxHash.String(), bridge.Withdrawed, withdrawed.Raw.Index)) {
 		return
 	}
-	coco := &monitor.Coco{
-		Typ:         monitor.Withdrawed,
-		From:        withdrawed.P.From,
-		To:          withdrawed.P.To,
-		FromToken:   withdrawed.P.FromToken,
-		ToToken:     withdrawed.P.ToToken,
+	coco := &bridge.Coco{
+		Typ:         bridge.Withdrawed,
+		From:        withdrawed.P.From.Hex(),
+		To:          withdrawed.P.To.Hex(),
+		FromToken:   withdrawed.P.FromToken.Hex(),
+		ToToken:     withdrawed.P.ToToken.Hex(),
 		FromChainId: withdrawed.P.FromChainId,
 		ToChainId:   withdrawed.P.ToChainId,
 		Amount:      withdrawed.P.Amount,
@@ -279,12 +280,12 @@ func (m *Monitor) handleWithdrawed(withdrawed *center.TwoWayCenterWithdrawed) {
 	}
 
 	m.logger.WithFields(logrus.Fields{
-		"from":          coco.From.String(),
-		"to":            coco.To.String(),
+		"from":          coco.From,
+		"to":            coco.To,
 		"from_chain_id": coco.FromChainId.String(),
 		"to_chain_id":   coco.ToChainId.String(),
-		"from_token":    coco.FromToken.String(),
-		"to_token":      coco.ToToken.String(),
+		"from_token":    coco.FromToken,
+		"to_token":      coco.ToToken,
 		"amount":        coco.Amount.String(),
 		"index":         coco.Index,
 		"txId":          withdrawed.Raw.TxHash.String(),
@@ -305,15 +306,15 @@ func (m *Monitor) handleCenterCrossOuted(outed *center.TwoWayCenterCrossOuted) {
 		return
 	}
 
-	if m.storage.Has(TxKey(outed.Raw.TxHash.String(), monitor.CrossOuted, outed.Raw.Index)) {
+	if m.storage.Has(TxKey(outed.Raw.TxHash.String(), bridge.CrossOuted, outed.Raw.Index)) {
 		return
 	}
-	coco := &monitor.Coco{
-		Typ:         monitor.CrossOuted,
-		From:        outed.P.From,
-		To:          outed.P.To,
-		FromToken:   outed.P.FromToken,
-		ToToken:     outed.P.ToToken,
+	coco := &bridge.Coco{
+		Typ:         bridge.CrossOuted,
+		From:        outed.P.From.Hex(),
+		To:          outed.P.To.Hex(),
+		FromToken:   outed.P.FromToken.Hex(),
+		ToToken:     outed.P.ToToken.Hex(),
 		FromChainId: outed.P.FromChainId,
 		ToChainId:   outed.P.ToChainId,
 		Amount:      outed.P.Amount,
@@ -323,12 +324,12 @@ func (m *Monitor) handleCenterCrossOuted(outed *center.TwoWayCenterCrossOuted) {
 	}
 
 	m.logger.WithFields(logrus.Fields{
-		"from":          coco.From.String(),
-		"to":            coco.To.String(),
+		"from":          coco.From,
+		"to":            coco.To,
 		"from_chain_id": coco.FromChainId.String(),
 		"to_chain_id":   coco.ToChainId.String(),
-		"from_token":    coco.FromToken.String(),
-		"to_token":      coco.ToToken.String(),
+		"from_token":    coco.FromToken,
+		"to_token":      coco.ToToken,
 		"amount":        coco.Amount.String(),
 		"index":         coco.Index,
 		"txId":          outed.Raw.TxHash.String(),
@@ -349,15 +350,15 @@ func (m *Monitor) handleForwardCrossOuted(outed *center.TwoWayCenterForwardCross
 		return
 	}
 
-	if m.storage.Has(TxKey(outed.Raw.TxHash.String(), monitor.ForwardCrossOuted, outed.Raw.Index)) {
+	if m.storage.Has(TxKey(outed.Raw.TxHash.String(), bridge.ForwardCrossOuted, outed.Raw.Index)) {
 		return
 	}
-	coco := &monitor.Coco{
-		Typ:         monitor.ForwardCrossOuted,
-		From:        outed.P.From,
-		To:          outed.P.To,
-		FromToken:   outed.P.FromToken,
-		ToToken:     outed.P.ToToken,
+	coco := &bridge.Coco{
+		Typ:         bridge.ForwardCrossOuted,
+		From:        outed.P.From.Hex(),
+		To:          outed.P.To.Hex(),
+		FromToken:   outed.P.FromToken.Hex(),
+		ToToken:     outed.P.ToToken.Hex(),
 		FromChainId: outed.P.FromChainId,
 		ToChainId:   outed.P.ToChainId,
 		Amount:      outed.P.Amount,
@@ -367,12 +368,12 @@ func (m *Monitor) handleForwardCrossOuted(outed *center.TwoWayCenterForwardCross
 	}
 
 	m.logger.WithFields(logrus.Fields{
-		"from":          coco.From.String(),
-		"to":            coco.To.String(),
+		"from":          coco.From,
+		"to":            coco.To,
 		"from_chain_id": coco.FromChainId.String(),
 		"to_chain_id":   coco.ToChainId.String(),
-		"from_token":    coco.FromToken.String(),
-		"to_token":      coco.ToToken.String(),
+		"from_token":    coco.FromToken,
+		"to_token":      coco.ToToken,
 		"amount":        coco.Amount.String(),
 		"index":         coco.Index,
 		"txId":          outed.Raw.TxHash.String(),
@@ -738,7 +739,7 @@ func forwardCrossOutedHeightKey() []byte {
 	return []byte(fmt.Sprintf("forwardCrossOutedHeightKey"))
 }
 
-func (m *Monitor) persistCrossOutedBlockHeight(txId string, height uint64, coco *monitor.Coco) {
+func (m *Monitor) persistCrossOutedBlockHeight(txId string, height uint64, coco *bridge.Coco) {
 	m.persistCrossOutedHeight(height)
 	//for {
 	//	if m.storage.Has(TxKey(txId, coco.Typ, coco.Index)) {
@@ -751,7 +752,7 @@ func (m *Monitor) persistCrossOutedBlockHeight(txId string, height uint64, coco 
 	//}
 }
 
-func (m *Monitor) persistForwardCrossOutedBlockHeight(txId string, height uint64, coco *monitor.Coco) {
+func (m *Monitor) persistForwardCrossOutedBlockHeight(txId string, height uint64, coco *bridge.Coco) {
 	m.persistForwardCrossOutedHeight(height)
 	//for {
 	//	if m.storage.Has(TxKey(txId, coco.Typ, coco.Index)) {
@@ -764,7 +765,7 @@ func (m *Monitor) persistForwardCrossOutedBlockHeight(txId string, height uint64
 	//}
 }
 
-func (m *Monitor) persistWithdrawedBlockHeight(txId string, height uint64, coco *monitor.Coco) {
+func (m *Monitor) persistWithdrawedBlockHeight(txId string, height uint64, coco *bridge.Coco) {
 	m.persistWithdrawedHeight(height)
 	//for {
 	//	if m.storage.Has(TxKey(txId, coco.Typ, coco.Index)) {
@@ -778,7 +779,7 @@ func (m *Monitor) persistWithdrawedBlockHeight(txId string, height uint64, coco 
 
 }
 
-func (m *Monitor) HasTx(txId string, coco *monitor.Coco) bool {
+func (m *Monitor) HasTx(txId string, coco *bridge.Coco) bool {
 	return m.storage.Has(TxKey(txId, coco.Typ, coco.Index))
 }
 
@@ -807,7 +808,7 @@ func TxKey(hash string, typ int, idx uint) []byte {
 	return []byte(fmt.Sprintf("tx-%d-%s-%d", typ, hash, idx))
 }
 
-func (m *Monitor) PutTxID(txId string, coco *monitor.Coco) {
+func (m *Monitor) PutTxID(txId string, coco *bridge.Coco) {
 	data, err := json.Marshal(&coco)
 	if err != nil {
 		m.logger.Error(err)

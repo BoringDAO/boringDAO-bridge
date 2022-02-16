@@ -1,8 +1,8 @@
 package loggers
 
 import (
-	"github.com/boringdao/bridge/internal/repo"
 	"github.com/boringdao/bridge/pkg/kit/log"
+	"github.com/boringdao/bridge/pkg/repo"
 	"github.com/sirupsen/logrus"
 )
 

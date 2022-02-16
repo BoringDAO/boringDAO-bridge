@@ -11,11 +11,12 @@ import (
 	"syscall"
 	"time"
 
+	repo2 "github.com/boringdao/bridge/pkg/repo"
+
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 
 	"github.com/boringdao/bridge/internal/app"
 	"github.com/boringdao/bridge/internal/loggers"
-	"github.com/boringdao/bridge/internal/repo"
 	"github.com/boringdao/bridge/pkg/kit/fileutil"
 	"github.com/boringdao/bridge/pkg/kit/hexutil"
 	"github.com/boringdao/bridge/pkg/kit/log"
@@ -35,12 +36,12 @@ var (
 func start(ctx *cli.Context) error {
 	fmt.Println(getVersion(true))
 
-	repoRoot, err := repo.PathRootWithDefault(ctx.GlobalString("repo"))
+	repoRoot, err := repo2.PathRootWithDefault(ctx.GlobalString("repo"))
 	if err != nil {
 		return err
 	}
 
-	repo, err := repo.Load(repoRoot)
+	repo, err := repo2.Load(repoRoot)
 	if err != nil {
 		return fmt.Errorf("repo load: %w", err)
 	}
@@ -87,7 +88,7 @@ func start(ctx *cli.Context) error {
 	return nil
 }
 
-func ethKey(rep *repo.Repo) (string, error) {
+func ethKey(rep *repo2.Repo) (string, error) {
 	if rep.Config.KeyFile == "" {
 		key, err := gopass.GetPasswdPrompt("Please input eth/bridge private key: ", true, os.Stdin, os.Stdout)
 		priv, err := crypto.ToECDSA(hexutil.Decode(string(key)))
@@ -95,7 +96,7 @@ func ethKey(rep *repo.Repo) (string, error) {
 			return "", fmt.Errorf("eth private key format error:%w", err)
 		}
 
-		addr := repo.ReadEvmAddress("Please input the address of your private key:")
+		addr := repo2.ReadEvmAddress("Please input the address of your private key:")
 		keyAddr := crypto.PubkeyToAddress(priv.PublicKey).String()
 
 		if strings.Compare(addr, keyAddr) != 0 {
@@ -117,7 +118,7 @@ func ethKey(rep *repo.Repo) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	addr := repo.ReadEvmAddress("Please input the address of your private key:")
+	addr := repo2.ReadEvmAddress("Please input the address of your private key:")
 	keyAddr := crypto.PubkeyToAddress(key.PrivateKey.PublicKey).String()
 
 	if strings.Compare(addr, keyAddr) != 0 {

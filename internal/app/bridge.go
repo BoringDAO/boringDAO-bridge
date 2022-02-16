@@ -4,8 +4,14 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"strings"
 	"sync"
 	"time"
+
+	"github.com/boringdao/bridge/pkg/bridge"
+	"github.com/boringdao/bridge/pkg/repo"
+
+	"github.com/ethereum/go-ethereum/common"
 
 	center_chain "github.com/boringdao/bridge/internal/monitor/center"
 	"github.com/common-nighthawk/go-figure"
@@ -13,7 +19,6 @@ import (
 	"github.com/boringdao/bridge/internal/loggers"
 	"github.com/boringdao/bridge/internal/monitor"
 	"github.com/boringdao/bridge/internal/monitor/chain"
-	"github.com/boringdao/bridge/internal/repo"
 	"github.com/boringdao/bridge/pkg/storage"
 	"github.com/boringdao/bridge/pkg/storage/leveldb"
 	"github.com/sirupsen/logrus"
@@ -22,11 +27,11 @@ import (
 type Bridge struct {
 	repo      *repo.Repo
 	storage   storage.Storage
-	mnts      map[uint64]monitor.Mnt
+	mnts      map[uint64]bridge.Mnt
 	center    *center_chain.Monitor
 	logger    logrus.FieldLogger
-	edgeCocoC chan *monitor.Coco
-	mntCocoC  map[uint64]chan *monitor.Coco
+	edgeCocoC chan *bridge.Coco
+	mntCocoC  map[uint64]chan *bridge.Coco
 	mux       sync.Mutex
 
 	ctx    context.Context
@@ -40,15 +45,24 @@ func New(repoRoot *repo.Repo) (*Bridge, error) {
 		return nil, err
 	}
 
-	mnts := make(map[uint64]monitor.Mnt)
-	mntCocoC := make(map[uint64]chan *monitor.Coco)
+	mnts := make(map[uint64]bridge.Mnt)
+	mntCocoC := make(map[uint64]chan *bridge.Coco)
 	for _, config := range repoRoot.Config.Edges {
-		mnt, err := chain.New(repoRoot.Config.RepoRoot, config, loggers.Logger(config.Name))
-		if err != nil {
-			return nil, err
+		var mnt bridge.Mnt
+		if strings.EqualFold(config.Name, "klaytn") {
+			mnt, err = monitor.New(repoRoot.Config.RepoRoot, config, loggers.Logger(config.Name))
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			mnt, err = chain.New(repoRoot.Config.RepoRoot, config, loggers.Logger(config.Name))
+			if err != nil {
+				return nil, err
+			}
 		}
+
 		mnts[config.ChainID] = mnt
-		mntCocoC[config.ChainID] = make(chan *monitor.Coco, 1024)
+		mntCocoC[config.ChainID] = make(chan *bridge.Coco, 1024)
 	}
 
 	center, err := center_chain.New(repoRoot.Config.RepoRoot, repoRoot.Config.Center, loggers.Logger(repoRoot.Config.Center.Name))
@@ -62,7 +76,7 @@ func New(repoRoot *repo.Repo) (*Bridge, error) {
 		mnts:      mnts,
 		center:    center,
 		storage:   boringStorage,
-		edgeCocoC: make(chan *monitor.Coco, 1024),
+		edgeCocoC: make(chan *bridge.Coco, 1024),
 		mntCocoC:  mntCocoC,
 		logger:    loggers.Logger(loggers.APP),
 		ctx:       ctx,
@@ -123,13 +137,13 @@ func (b *Bridge) listenEdgeCocoC() {
 			}
 			var err error
 			switch coco.Typ {
-			case monitor.Deposited:
-				err = b.center.Issue(coco.FromToken, coco.ToToken, coco.From, coco.From, coco.FromChainId, big.NewInt(int64(b.center.ChainId())), coco.Amount, fmt.Sprintf("%s#Deposited", coco.TxId))
-			case monitor.CrossOuted:
+			case bridge.Deposited:
+				err = b.center.Issue(common.HexToAddress(coco.FromToken), common.HexToAddress(coco.ToToken), common.HexToAddress(coco.From), common.HexToAddress(coco.From), coco.FromChainId, big.NewInt(int64(b.center.ChainId())), coco.Amount, fmt.Sprintf("%s#Deposited", coco.TxId))
+			case bridge.CrossOuted:
 				if coco.ToChainId.Uint64() == b.center.ChainId() {
-					err = b.center.CrossIn(coco.FromToken, coco.From, coco.To, coco.FromChainId, coco.ToChainId, coco.Amount, fmt.Sprintf("%s#CrossOuted", coco.TxId))
+					err = b.center.CrossIn(common.HexToAddress(coco.FromToken), common.HexToAddress(coco.From), common.HexToAddress(coco.To), coco.FromChainId, coco.ToChainId, coco.Amount, fmt.Sprintf("%s#CrossOuted", coco.TxId))
 				} else {
-					err = b.center.ForwardCrossOut(coco.FromToken, coco.From, coco.To, coco.FromChainId, coco.ToChainId, coco.Amount, fmt.Sprintf("%s#CrossOuted", coco.TxId))
+					err = b.center.ForwardCrossOut(common.HexToAddress(coco.FromToken), common.HexToAddress(coco.From), common.HexToAddress(coco.To), coco.FromChainId, coco.ToChainId, coco.Amount, fmt.Sprintf("%s#CrossOuted", coco.TxId))
 				}
 			}
 			if err != nil {
@@ -157,11 +171,11 @@ func (b *Bridge) listenCenterCocoC(chainId uint64) {
 			}
 			var err error
 			switch coco.Typ {
-			case monitor.CrossOuted:
+			case bridge.CrossOuted:
 				err = edge.CrossIn(coco.FromToken, coco.ToToken, coco.From, coco.To, coco.FromChainId, coco.ToChainId, coco.Amount, fmt.Sprintf("%s#CrossIn", coco.TxId))
-			case monitor.ForwardCrossOuted:
+			case bridge.ForwardCrossOuted:
 				err = edge.CrossIn(coco.FromToken, coco.ToToken, coco.From, coco.To, coco.FromChainId, coco.ToChainId, coco.Amount, fmt.Sprintf("%s#ForwardCrossOuted", coco.TxId))
-			case monitor.Withdrawed:
+			case bridge.Withdrawed:
 				err = edge.CrossIn(coco.FromToken, coco.ToToken, coco.From, coco.To, coco.FromChainId, coco.ToChainId, coco.Amount, fmt.Sprintf("%s#Withdrawed", coco.TxId))
 			}
 			if err != nil {
