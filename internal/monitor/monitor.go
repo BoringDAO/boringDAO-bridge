@@ -10,11 +10,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+
 	"github.com/boringdao/bridge/internal/repo"
 	"github.com/boringdao/bridge/pkg/storage"
 	"github.com/boringdao/bridge/pkg/storage/leveldb"
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/shopspring/decimal"
@@ -25,7 +26,7 @@ import (
 var _ IMonitor = (*Monitor)(nil)
 
 type Monitor struct {
-	bHeight       uint64
+	index         uint64
 	bridgeAbi     abi.ABI
 	crossOutC     chan *Coco
 	crossInC      chan *Coco
@@ -67,9 +68,9 @@ func New(repoRoot string, config *repo.BridgeConfig, token map[string]string, ch
 		storage:       storage,
 		bridgeWrapper: bw,
 		bridgeAbi:     borAbi,
-		crossOutC:     make(chan *Coco, 128),
-		crossInC:      make(chan *Coco, 128),
-		finishedC:     make(chan *Coco, 128),
+		crossOutC:     make(chan *Coco),
+		crossInC:      make(chan *Coco),
+		finishedC:     make(chan *Coco),
 		chainIDs:      chainIDs,
 		logger:        logger,
 		ctx:           ctx,
@@ -78,7 +79,7 @@ func New(repoRoot string, config *repo.BridgeConfig, token map[string]string, ch
 }
 
 func (m *Monitor) Start() error {
-	m.loadHeightFromStorage()
+	m.loadIndexFromStorage()
 
 	go m.listenCrossOutEvent()
 	go m.handleCrossInCocoC()
@@ -105,7 +106,6 @@ func (m *Monitor) ListenFinishedCocoC() chan *Coco {
 }
 
 func (m *Monitor) HandleFinishedCoco(coco *Coco) {
-	m.persistBHeight(coco.ToChainId.Uint64(), coco.BlockHeight)
 	m.putTxID(coco.TxId, coco)
 	m.cocoNum.Dec()
 }
@@ -114,50 +114,43 @@ func (m *Monitor) listenCrossOutEvent() {
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
-	start := m.bHeight
+	start := m.index
 
 	for {
 		select {
 		case <-ticker.C:
 			num := m.bridgeWrapper.BlockNumber(context.TODO())
 			end := num - m.config.MinConfirms
-			if end < start {
-				continue
-			}
+			hasEvent := false
 
-			if end-start > 300 {
-				end = start + 300
-			}
-
-			filter := m.bridgeWrapper.FilterCrossOut(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
-			for filter.Next() {
-				res := m.handleCross(filter.Event, true)
-				if res {
-					m.cocoNum.Inc()
+			index := m.bridgeWrapper.Index()
+			for i := start + 1; i <= index.Uint64(); i++ {
+				indexHeight := m.bridgeWrapper.IndexHeight(new(big.Int).SetUint64(i)).Uint64()
+				if indexHeight > end || indexHeight == 0 {
+					break
 				}
-			}
-			// filter again
-			if m.cocoNum.Load() == 0 {
-				filter := m.bridgeWrapper.FilterCrossOut(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
-				for filter.Next() {
-					res := m.handleCross(filter.Event, true)
-					if res {
-						m.cocoNum.Inc()
+				for !hasEvent {
+					j := i
+					filter := m.bridgeWrapper.FilterCrossOut(&bind.FilterOpts{Start: indexHeight, End: &indexHeight, Context: m.ctx})
+					for filter.Next() {
+						hasEvent = true
+						res := m.handleCross(filter.Event, j)
+						if res {
+							m.cocoNum.Inc()
+						}
+						for m.cocoNum.Load() != 0 {
+							time.Sleep(3 * time.Second)
+						}
+						m.persistIndex(j)
+						j++
+					}
+					if j > i+1 {
+						i = j
 					}
 				}
-			}
-			m.logger.Infof("finished filtering cross out event between block [%d, %d]", start, end)
 
-			start = end + 1
-
-			if m.cocoNum.Load() == 0 {
-				for _, chainID := range m.chainIDs {
-					if chainID == m.config.ChainID {
-						continue
-					}
-					m.persistBHeight(chainID, end)
-				}
 			}
+			m.logger.Infof("listenEvent index from [%d] to [%d]", start, index.Uint64())
 		case <-m.ctx.Done():
 			m.logger.Info("listenCrossOutEvent done")
 			return
@@ -192,7 +185,7 @@ func (m *Monitor) handleCrossInCocoC() {
 	}
 }
 
-func (m *Monitor) handleCross(crossOut *NBridgeCrossOut, isHistory bool) bool {
+func (m *Monitor) handleCross(crossOut *NBridgeCrossOut, index uint64) bool {
 	if !strings.EqualFold(crossOut.Raw.Address.String(), m.config.BridgeContract) {
 		m.logger.Warnf("ignore log with contract address: %s", crossOut.Raw.Address.String())
 		return false
@@ -208,7 +201,7 @@ func (m *Monitor) handleCross(crossOut *NBridgeCrossOut, isHistory bool) bool {
 	}
 
 	coco := &Coco{
-		IsHistory:     isHistory,
+		Index:         index,
 		OriginToken:   crossOut.OriginToken,
 		OriginChainId: crossOut.OriginChainId,
 		FromChainId:   crossOut.FromChainId,
@@ -228,6 +221,7 @@ func (m *Monitor) handleCross(crossOut *NBridgeCrossOut, isHistory bool) bool {
 		"From":          coco.From.String(),
 		"To":            coco.To.String(),
 		"Amount":        coco.Amount.String(),
+		"Index":         coco.Index,
 		"TxId":          crossOut.Raw.TxHash.String(),
 		"block_height":  crossOut.Raw.BlockNumber,
 		"removed":       crossOut.Raw.Removed,
@@ -236,18 +230,6 @@ func (m *Monitor) handleCross(crossOut *NBridgeCrossOut, isHistory bool) bool {
 	if crossOut.Raw.Removed {
 		return false
 	}
-
-	if !m.confirmEvent(crossOut.Raw) {
-		m.logger.WithFields(logrus.Fields{
-			"txId":         crossOut.Raw.TxHash.String(),
-			"FromChainId":  coco.FromChainId.String(),
-			"ToChainId":    coco.ToChainId.String(),
-			"block_height": crossOut.Raw.BlockNumber,
-		}).Info("CrossOut has not confirmed")
-		return false
-	}
-
-	m.logger.WithField("tx", crossOut.Raw.TxHash.String()).Info("confirmEvent")
 
 	m.crossOutC <- coco
 
@@ -373,53 +355,37 @@ func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
 	return nil, fmt.Errorf("not found CrossOut log in tx:%s", txId)
 }
 
-func (m *Monitor) loadHeightFromStorage() {
-	height := m.bridgeWrapper.BlockNumber(context.TODO())
-	m.bHeight = height - m.config.MinConfirms
-
-	for _, chainID := range m.chainIDs {
-		if chainID == m.config.ChainID {
-			continue
+func (m *Monitor) loadIndexFromStorage() {
+	if m.config.Index != 0 {
+		m.index = m.config.Index
+	} else {
+		buf := m.storage.Get(indexKey())
+		if buf != nil {
+			m.index = binary.LittleEndian.Uint64(buf)
+		} else {
+			m.index = 0
 		}
-		b := m.storage.Get(bHeightKey(chainID))
-		if b != nil {
-			height := binary.LittleEndian.Uint64(b)
-			if height < m.bHeight {
-				m.bHeight = height
-			}
-		}
-	}
-
-	if m.config.Height != 0 {
-		m.bHeight = m.config.Height
-	}
-
-	for _, chainID := range m.chainIDs {
-		if chainID == m.config.ChainID {
-			continue
-		}
-		m.persistBHeight(chainID, m.bHeight)
 	}
 
 	m.logger.WithFields(logrus.Fields{
-		"height":  m.bHeight,
+		"index":   m.index,
 		"chainID": m.config.ChainID,
 	}).Info("Subscribe")
 }
 
-func bHeightKey(chainID uint64) []byte {
-	return []byte(fmt.Sprintf("bHeight-%d", chainID))
+func indexKey() []byte {
+	return []byte(fmt.Sprintf("index"))
 }
 
 func (m *Monitor) HasTx(txId string) bool {
 	return m.storage.Has(TxKey(txId, m.config.ChainID))
 }
 
-func (m *Monitor) persistBHeight(chainID uint64, height uint64) {
+func (m *Monitor) persistIndex(index uint64) {
 	buf := make([]byte, 8)
-	binary.LittleEndian.PutUint64(buf, height)
-	m.storage.Put(bHeightKey(chainID), buf)
-	m.logger.Infof("handled cross out events before block %d on chain %d", height, chainID)
+	binary.LittleEndian.PutUint64(buf, index)
+	m.storage.Put(indexKey(), buf)
+	m.logger.Infof("handled cross out events Index %d", index)
 }
 
 func TxKey(hash string, chainID uint64) []byte {

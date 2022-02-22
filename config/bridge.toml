@@ -3,41 +3,42 @@ title = "Bridge configuration file"
 keyFile = ""
 
 [token]
-  "0x55FB3193F6e42D6753691c8aA38800B2753FB7d0" = "42"
+  "0xCc246259854B8c824371EFfF4eAe9A119fD48631" = "1666700000"
+  "0xb608b55b0F777e70F8e37a18F8Da6EC8AE667B33" = "1313161555"
 
 [[bridges]]
-  name = "eth"
+  name = "aurora_test"
   addrs = [
-    "https://kovan.infura.io/v3/788169d3033b492d81f858f69577bf63",
-    "https://eth-kovan.alchemyapi.io/v2/WNEqzHmY4jcmm_PNLDJLvZbrfkCFlFKj",
+    "https://testnet.aurora.dev",
+#    "https://eth-kovan.alchemyapi.io/v2/WNEqzHmY4jcmm_PNLDJLvZbrfkCFlFKj",
 #    "https://ropsten.infura.io/v3/3e8a2d2286964b62bc6b1d67c379badd",
 #    "https://eth-ropsten.alchemyapi.io/v2/K36BtEv6HiX4gn-b_XEB-l1mjqtm7FEI"
   ]
   minConfirms = 15 # min confirms
-  chainID = 42
+  chainID = 1313161555
   gasLimit = 1500000 # gas Limit
-  bridgeContract = "0x3386E1Af320A1298F6464F2832314D897a581F6c" # crosslock contract address
+  bridgeContract = "0xFd164af933a49594c6f3F9B210c753c2e9b5c6A2" # crosslock contract address
 
 [[bridges]]
-  name = "bsc"
+  name = "harmony_test"
   addrs = [
-    "https://data-seed-prebsc-1-s1.binance.org:8545",
-    "https://data-seed-prebsc-1-s1.binance.org:8545"
+    "https://api.s0.b.hmny.io",
+#    "https://data-seed-prebsc-1-s1.binance.org:8545"
   ]
-  chainID = 97 # bsc test
+  chainID = 1666700000 # bsc test
   minConfirms = 15 # min confirms
   gasLimit = 1500000 # gas Limit
-  bridgeContract = "0x16f5F844d9f24aE6601F69663491aC6b4f4f8a44" # bridge contract address
+  bridgeContract = "0xbBa69494e9812948349f31691C871A4aBA42D517" # bridge contract address
 
-  [[bridges]]
-  name = "matic"
-  addrs = [
-    "https://rpc-mumbai.maticvigil.com/"
-  ]
-  chainID = 80001 # okex chain test
-  minConfirms = 15 # min confirms
-  gasLimit = 1500000 # gas Limit
-  bridgeContract = "0xeF9B3B0c1663B1d6560736334E5A05ab03fBcDa6" # bridge contract address
+#  [[bridges]]
+#  name = "matic"
+#  addrs = [
+#    "https://rpc-mumbai.maticvigil.com/"
+#  ]
+#  chainID = 80001 # okex chain test
+#  minConfirms = 15 # min confirms
+#  gasLimit = 1500000 # gas Limit
+#  bridgeContract = "0xeF9B3B0c1663B1d6560736334E5A05ab03fBcDa6" # bridge contract address
 
 #[[bridges]]
 #  name = "okex"

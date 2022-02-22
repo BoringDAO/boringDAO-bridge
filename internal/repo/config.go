@@ -49,7 +49,7 @@ type BridgeConfig struct {
 	MinConfirms    uint64   `toml:"minConfirms" json:"minConfirms"`
 	PrivKey        string   `toml:"privKey" json:"privKey"`
 	GasLimit       uint64   `toml:"gasLimit" json:"gasLimit"`
-	Height         uint64   `toml:"height" json:"height"`
+	Index          uint64   `toml:"index" json:"index"`
 	BridgeContract string   `toml:"bridgeContract" json:"bridgeContract"`
 }
 
