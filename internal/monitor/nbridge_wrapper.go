@@ -107,6 +107,48 @@ func (bw *BridgeWrapper) BlockNumber(ctx context.Context) uint64 {
 	return number
 }
 
+func (bw *BridgeWrapper) Index() *big.Int {
+	var number *big.Int
+	var err error
+
+	if err := retry.Retry(func(attempt uint) error {
+		number, err = bw.session.EventIndex()
+		if err != nil {
+			bw.logger.Warnf("Index: %s", err.Error())
+
+			if bw.isNetworkError(err) {
+				bw.switchToNextAddr()
+			}
+		}
+		return err
+	}, strategy.Wait(10*time.Second)); err != nil {
+		bw.logger.Panic(err)
+	}
+
+	return number
+}
+
+func (bw *BridgeWrapper) IndexHeight(index *big.Int) *big.Int {
+	var number *big.Int
+	var err error
+
+	if err := retry.Retry(func(attempt uint) error {
+		number, err = bw.session.EventHeight(index)
+		if err != nil {
+			bw.logger.Warnf("BlockNumber: %s", err.Error())
+
+			if bw.isNetworkError(err) {
+				bw.switchToNextAddr()
+			}
+		}
+		return err
+	}, strategy.Wait(10*time.Second)); err != nil {
+		bw.logger.Panic(err)
+	}
+
+	return number
+}
+
 func (bw *BridgeWrapper) FilterCrossOut(opts *bind.FilterOpts) *NBridgeCrossOutIterator {
 	var iterator *NBridgeCrossOutIterator
 	var err error
