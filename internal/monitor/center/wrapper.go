@@ -117,6 +117,48 @@ func (w *Wrapper) HeaderByNumber(ctx context.Context, number *big.Int) *types.He
 	return header
 }
 
+func (w *Wrapper) Index(chainId *big.Int) *big.Int {
+	var header *big.Int
+	var err error
+
+	if err := retry.Retry(func(attempt uint) error {
+		header, err = w.session.EventIndex0(chainId)
+		if err != nil {
+			w.logger.Warnf("Index:[%d]: %s", chainId.Uint64(), err.Error())
+
+			if w.isNetworkError(err) {
+				w.switchToNextAddr()
+			}
+		}
+		return err
+	}, strategy.Wait(10*time.Second)); err != nil {
+		w.logger.Panic(err)
+	}
+
+	return header
+}
+
+func (w *Wrapper) IndexHeight(chainId, index *big.Int) *big.Int {
+	var header *big.Int
+	var err error
+
+	if err := retry.Retry(func(attempt uint) error {
+		header, err = w.session.EventHeights0(chainId, index)
+		if err != nil {
+			w.logger.Warnf("IndexHeight [%d]:[%d]: %s", chainId.Uint64(), index.Uint64(), err.Error())
+
+			if w.isNetworkError(err) {
+				w.switchToNextAddr()
+			}
+		}
+		return err
+	}, strategy.Wait(10*time.Second)); err != nil {
+		w.logger.Panic(err)
+	}
+
+	return header
+}
+
 func (w *Wrapper) FilterWithdrawed(opts *bind.FilterOpts) *center.TwoWayCenterWithdrawedIterator {
 	var iterator *center.TwoWayCenterWithdrawedIterator
 	var err error

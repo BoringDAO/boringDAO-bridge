@@ -40,10 +40,16 @@ func New(repoRoot *repo.Repo) (*Bridge, error) {
 		return nil, err
 	}
 
+	var chainIDs []uint64
+	for _, bConfig := range repoRoot.Config.Edges {
+		chainIDs = append(chainIDs, bConfig.ChainID)
+	}
+
 	mnts := make(map[uint64]monitor.Mnt)
 	mntCocoC := make(map[uint64]chan *monitor.Coco)
+
 	for _, config := range repoRoot.Config.Edges {
-		mnt, err := chain.New(repoRoot.Config.RepoRoot, config, loggers.Logger(config.Name))
+		mnt, err := chain.New(repoRoot.Config.RepoRoot, config, chainIDs, loggers.Logger(config.Name))
 		if err != nil {
 			return nil, err
 		}
@@ -51,7 +57,7 @@ func New(repoRoot *repo.Repo) (*Bridge, error) {
 		mntCocoC[config.ChainID] = make(chan *monitor.Coco, 1024)
 	}
 
-	center, err := center_chain.New(repoRoot.Config.RepoRoot, repoRoot.Config.Center, loggers.Logger(repoRoot.Config.Center.Name))
+	center, err := center_chain.New(repoRoot.Config.RepoRoot, repoRoot.Config.Center, chainIDs, loggers.Logger(repoRoot.Config.Center.Name))
 	if err != nil {
 		return nil, err
 	}

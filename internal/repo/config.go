@@ -39,31 +39,33 @@ type Log struct {
 }
 
 type CenterConfig struct {
-	Name                    string   `toml:"name" json:"name"`
-	Addrs                   []string `toml:"addrs" json:"addrs"`
-	ChainID                 uint64   `toml:"chainID" json:"chainID"`
-	MinConfirms             uint64   `toml:"minConfirms" json:"minConfirms"`
-	PrivKey                 string   `toml:"privKey" json:"privKey"`
-	GasLimit                uint64   `toml:"gasLimit" json:"gasLimit"`
-	GasFeeRate              float64  `toml:"gasFeeRate" json:"gasFeeRate"`
-	WithdrawedHeight        uint64   `mapstructure:"withdrawedHeight" json:"withdrawedHeight"`
-	CrossOutedHeight        uint64   `mapstructure:"crossOutedHeight" json:"crossOutedHeight"`
-	ForwardCrossOutedHeight uint64   `mapstructure:"forwardCrossOutedHeight" json:"forwardCrossOutedHeight"`
-	CenterContract          string   `toml:"centerContract" json:"centerContract"`
+	Name                    string            `toml:"name" json:"name"`
+	Addrs                   []string          `toml:"addrs" json:"addrs"`
+	ChainID                 uint64            `toml:"chainID" json:"chainID"`
+	MinConfirms             uint64            `toml:"minConfirms" json:"minConfirms"`
+	PrivKey                 string            `toml:"privKey" json:"privKey"`
+	GasLimit                uint64            `toml:"gasLimit" json:"gasLimit"`
+	GasFeeRate              float64           `toml:"gasFeeRate" json:"gasFeeRate"`
+	Index                   map[uint64]uint64 `toml:"index" json:"index"`
+	WithdrawedHeight        uint64            `mapstructure:"withdrawedHeight" json:"withdrawedHeight"`
+	CrossOutedHeight        uint64            `mapstructure:"crossOutedHeight" json:"crossOutedHeight"`
+	ForwardCrossOutedHeight uint64            `mapstructure:"forwardCrossOutedHeight" json:"forwardCrossOutedHeight"`
+	CenterContract          string            `toml:"centerContract" json:"centerContract"`
 }
 
 type EdgeConfig struct {
-	Name                string   `toml:"name" json:"name"`
-	Addrs               []string `toml:"addrs" json:"addrs"`
-	ChainID             uint64   `toml:"chainID" json:"chainID"`
-	MinConfirms         uint64   `toml:"minConfirms" json:"minConfirms"`
-	PrivKey             string   `toml:"privKey" json:"privKey"`
-	GasLimit            uint64   `toml:"gasLimit" json:"gasLimit"`
-	GasFeeRate          float64  `toml:"gasFeeRate" json:"gasFeeRate"`
-	DepositedHeight     uint64   `mapstructure:"depositedHeight" json:"depositedHeight"`
-	CrossOutedHeight    uint64   `mapstructure:"crossOutedHeight" json:"crossOutedHeight"`
-	CrossInFailedHeight uint64   `mapstructure:"crossInFailedHeight" json:"crossInFailedHeight"`
-	EdgeContract        string   `toml:"EdgeContract" json:"EdgeContract"`
+	Name                string            `toml:"name" json:"name"`
+	Addrs               []string          `toml:"addrs" json:"addrs"`
+	ChainID             uint64            `toml:"chainID" json:"chainID"`
+	MinConfirms         uint64            `toml:"minConfirms" json:"minConfirms"`
+	PrivKey             string            `toml:"privKey" json:"privKey"`
+	GasLimit            uint64            `toml:"gasLimit" json:"gasLimit"`
+	GasFeeRate          float64           `toml:"gasFeeRate" json:"gasFeeRate"`
+	Index               map[uint64]uint64 `toml:"index" json:"index"`
+	DepositedHeight     uint64            `mapstructure:"depositedHeight" json:"depositedHeight"`
+	CrossOutedHeight    uint64            `mapstructure:"crossOutedHeight" json:"crossOutedHeight"`
+	CrossInFailedHeight uint64            `mapstructure:"crossInFailedHeight" json:"crossInFailedHeight"`
+	EdgeContract        string            `toml:"EdgeContract" json:"EdgeContract"`
 }
 
 func (c *Config) Bytes() ([]byte, error) {

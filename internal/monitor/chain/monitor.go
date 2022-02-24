@@ -26,23 +26,23 @@ import (
 )
 
 type Monitor struct {
-	depositedHeight  uint64
-	crossOutedHeight uint64
-	wrapper          *Wrapper
-	cocoC            chan *monitor.Coco
-	logger           logrus.FieldLogger
-	storage          storage.Storage
-	config           *repo.EdgeConfig
-	minConfirms      uint64
-	gasFeeRate       float64
-	edgeAddr         common.Address
-	address          common.Address
-	mut              sync.Mutex
-	ctx              context.Context
-	cancel           context.CancelFunc
+	index       map[uint64]uint64
+	wrapper     *Wrapper
+	cocoC       chan *monitor.Coco
+	logger      logrus.FieldLogger
+	storage     storage.Storage
+	config      *repo.EdgeConfig
+	minConfirms uint64
+	gasFeeRate  float64
+	edgeAddr    common.Address
+	address     common.Address
+	mut         sync.Mutex
+	ctx         context.Context
+	cancel      context.CancelFunc
+	chainIds    []uint64
 }
 
-func New(repoRoot string, config *repo.EdgeConfig, logger logrus.FieldLogger) (monitor.Mnt, error) {
+func New(repoRoot string, config *repo.EdgeConfig, ds []uint64, logger logrus.FieldLogger) (monitor.Mnt, error) {
 	storagePath := repo.GetStoragePath(repoRoot, fmt.Sprintf("%s_%d", config.Name, config.ChainID))
 	ethStorage, err := leveldb.New(storagePath)
 	if err != nil {
@@ -74,11 +74,13 @@ func New(repoRoot string, config *repo.EdgeConfig, logger logrus.FieldLogger) (m
 
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Monitor{
+		index:       make(map[uint64]uint64),
 		config:      config,
 		storage:     ethStorage,
 		address:     address,
 		gasFeeRate:  gasFeeRate,
 		wrapper:     wrapper,
+		chainIds:    ds,
 		edgeAddr:    common.HexToAddress(config.EdgeContract),
 		minConfirms: uint64(minConfirms),
 		cocoC:       make(chan *monitor.Coco),
@@ -89,9 +91,8 @@ func New(repoRoot string, config *repo.EdgeConfig, logger logrus.FieldLogger) (m
 }
 
 func (m *Monitor) Start() error {
-	m.loadHeightFromStorage()
-	go m.listenDepositedEvent()
-	go m.listenCrossOutedEvent()
+	m.loadIndexFromStorage()
+	go m.listenEvent()
 	return nil
 }
 
@@ -101,101 +102,66 @@ func (m *Monitor) Stop() error {
 	return nil
 }
 
-func (m *Monitor) listenDepositedEvent() {
+func (m *Monitor) listenEvent() {
 	ticker := time.NewTicker(20 * time.Second)
 	defer ticker.Stop()
-
-	start := m.depositedHeight
 
 	for {
 		select {
 		case <-ticker.C:
-			hasEvent := false
 			num, err := m.fetchBlockNum()
 			if err != nil {
 				continue
 			}
-			end := num - m.minConfirms
-			if num < m.minConfirms || end < start {
-				continue
-			}
-			if end >= start+300 {
-				end = start + 300
-			}
-			filter := m.wrapper.FilterDeposited(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
-			for filter.Next() {
-				m.handleDeposited(filter.Event)
-				hasEvent = true
-			}
-
-			time.Sleep(3 * time.Second)
-			// check again
-			if !hasEvent {
-				filter := m.wrapper.FilterDeposited(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
-				for filter.Next() {
-					m.handleDeposited(filter.Event)
-					hasEvent = true
+			end := num - m.config.MinConfirms
+			hasEvent := false
+			for _, chainId := range m.chainIds {
+				start, ok := m.index[chainId]
+				if !ok {
+					m.logger.Warnf("ignore native chain:[%d]", chainId)
+					continue
 				}
-			}
-
-			m.logger.WithFields(logrus.Fields{"start": start, "end": end, "current": num}).Infof("FilterDeposited")
-			start = end + 1
-
-			if !hasEvent {
-				m.persistDepositedHeight(end)
+				chainBigInt := new(big.Int).SetUint64(chainId)
+				index := m.wrapper.Index(chainBigInt)
+				for i := start + 1; i <= index.Uint64(); i++ {
+					indexHeight := m.wrapper.IndexHeight(chainBigInt, new(big.Int).SetUint64(i)).Uint64()
+					if indexHeight > end || indexHeight == 0 {
+						break
+					}
+					for !hasEvent {
+						j := i
+						filter := m.wrapper.FilterDeposited(&bind.FilterOpts{Start: indexHeight, End: &indexHeight, Context: m.ctx})
+						for filter.Next() {
+							if chainId != m.config.ChainID {
+								continue
+							}
+							m.handleDeposited(filter.Event)
+							hasEvent = true
+						}
+						if !hasEvent {
+							filter := m.wrapper.FilterCrossOuted(&bind.FilterOpts{Start: indexHeight, End: &indexHeight, Context: m.ctx})
+							for filter.Next() {
+								if filter.Event.P.ToChainId.Uint64() != chainId {
+									continue
+								}
+								m.handleCrossOuted(filter.Event)
+								hasEvent = true
+							}
+						}
+						if hasEvent {
+							m.persistIndex(chainId, j)
+							m.index[chainId] = j
+							j++
+						}
+						if j > i+1 {
+							i = j
+						}
+					}
+				}
+				m.logger.Infof("listenEvent chainId:[%d], index from [%d] to [%d]", chainId, start, index.Uint64())
 			}
 		case <-m.ctx.Done():
 			m.logger.Info("CrossLockLockIterator done")
-			return
-		}
-	}
-}
-
-func (m *Monitor) listenCrossOutedEvent() {
-	ticker := time.NewTicker(20 * time.Second)
-	defer ticker.Stop()
-
-	start := m.crossOutedHeight
-
-	for {
-		select {
-		case <-ticker.C:
-			hasEvent := false
-			num, err := m.fetchBlockNum()
-			if err != nil {
-				continue
-			}
-			end := num - m.minConfirms
-			if num < m.minConfirms || end < start {
-				continue
-			}
-			if end >= start+300 {
-				end = start + 300
-			}
-			filter := m.wrapper.FilterCrossOuted(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
-			for filter.Next() {
-				m.handleCrossOuted(filter.Event)
-				hasEvent = true
-			}
-
-			time.Sleep(3 * time.Second)
-			// check again
-			if !hasEvent {
-				filter := m.wrapper.FilterCrossOuted(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
-				for filter.Next() {
-					m.handleCrossOuted(filter.Event)
-					hasEvent = true
-				}
-			}
-
-			m.logger.WithFields(logrus.Fields{"start": start, "end": end, "current": num}).Infof("FilterCrossOuted")
-			start = end + 1
-
-			if !hasEvent {
-				m.persistCrossOutedHeight(end)
-			}
-		case <-m.ctx.Done():
-			m.logger.Info("CrossBurn done")
 			return
 		}
 	}
@@ -243,7 +209,12 @@ func (m *Monitor) handleDeposited(lock *edge.TwoWayEdgeDeposited) {
 	}
 
 	m.cocoC <- coco
-	m.persistDepositedBlockHeight(lock.Raw.TxHash.String(), lock.Raw.BlockNumber, coco)
+	for {
+		if m.storage.Has(TxKey(coco.TxId, coco.Typ, coco.Index)) {
+			return
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
 }
 
 func (m *Monitor) handleCrossOuted(crossBurn *edge.TwoWayEdgeCrossOuted) {
@@ -286,7 +257,12 @@ func (m *Monitor) handleCrossOuted(crossBurn *edge.TwoWayEdgeCrossOuted) {
 	}
 
 	m.cocoC <- coco
-	m.persistCrossOutedBlockHeight(crossBurn.Raw.TxHash.String(), crossBurn.Raw.BlockNumber, coco)
+	for {
+		if m.storage.Has(TxKey(coco.TxId, coco.Typ, coco.Index)) {
+			return
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
 }
 
 func (m *Monitor) CrossIn(fromToken, toToken common.Address, from, to common.Address, fromChainID, toChainID, amount *big.Int, txId string) error {
@@ -367,99 +343,31 @@ func (m *Monitor) fetchBlockNum() (uint64, error) {
 	return header.Number.Uint64(), nil
 }
 
-func (m *Monitor) loadHeightFromStorage() {
-	var header *types.Header
-	header = m.wrapper.HeaderByNumber(context.TODO(), nil)
-
-	// load block height
-	b := m.storage.Get(depositedHeightKey())
-	if b == nil {
-		m.depositedHeight = header.Number.Uint64() - m.minConfirms
-		m.persistDepositedHeight(m.depositedHeight)
-	} else {
-		m.depositedHeight = binary.LittleEndian.Uint64(b)
-
-	}
-
-	// load block height
-	c := m.storage.Get(crossOutedHeightKey())
-	if c == nil {
-		m.crossOutedHeight = header.Number.Uint64() - m.minConfirms
-		m.persistCrossOutedHeight(m.crossOutedHeight)
-	} else {
-		m.crossOutedHeight = binary.LittleEndian.Uint64(c)
-
-	}
-
-	if m.config.DepositedHeight != 0 {
-		m.depositedHeight = m.config.DepositedHeight
-	}
-
-	if m.config.CrossOutedHeight != 0 {
-		m.crossOutedHeight = m.config.CrossOutedHeight
-	}
-
-	m.logger.WithFields(logrus.Fields{
-		"depositedHeight":  m.depositedHeight,
-		"crossOutedHeight": m.crossOutedHeight,
-		"address":          m.address.String(),
-	}).Info("Subscribe")
-}
-
-func depositedHeightKey() []byte {
-	return []byte(fmt.Sprintf("depositedHeight"))
-}
-
-func crossOutedHeightKey() []byte {
-	return []byte(fmt.Sprintf("crossOutedHeight"))
-}
-
-func crossInFailedHeightKey() []byte {
-	return []byte(fmt.Sprintf("crossInFailedHeight"))
-}
-
-func (m *Monitor) persistDepositedBlockHeight(txId string, height uint64, coco *monitor.Coco) {
-	m.persistDepositedHeight(height)
-	for {
-		if m.storage.Has(TxKey(txId, coco.Typ, coco.Index)) {
-			m.logger.WithFields(logrus.Fields{
-				"height": m.depositedHeight,
-			}).Info("Persist Deposited Height")
-			return
-		}
-		time.Sleep(500 * time.Millisecond)
-	}
-}
-
-func (m *Monitor) persistCrossOutedBlockHeight(txId string, height uint64, coco *monitor.Coco) {
-	m.persistCrossOutedHeight(height)
-	for {
-		if m.storage.Has(TxKey(txId, coco.Typ, coco.Index)) {
-			m.logger.WithFields(logrus.Fields{
-				"height": m.crossOutedHeight,
-			}).Info("Persist Cross Outed Height")
-			return
-		}
-		time.Sleep(500 * time.Millisecond)
-	}
-}
-
 func (m *Monitor) HasTx(txId string, coco *monitor.Coco) bool {
 	return m.storage.Has(TxKey(txId, coco.Typ, coco.Index))
 }
 
-func (m *Monitor) persistDepositedHeight(height uint64) {
-	buf := make([]byte, 8)
-	binary.LittleEndian.PutUint64(buf, height)
-	m.storage.Put(depositedHeightKey(), buf)
-	m.depositedHeight = height
+func indexKey(chainId uint64) []byte {
+	return []byte(fmt.Sprintf("index-%d", chainId))
 }
 
-func (m *Monitor) persistCrossOutedHeight(height uint64) {
-	buf := make([]byte, 8)
-	binary.LittleEndian.PutUint64(buf, height)
-	m.storage.Put(crossOutedHeightKey(), buf)
-	m.crossOutedHeight = height
+func (m *Monitor) loadIndexFromStorage() {
+	if m.config.Index != nil && len(m.config.Index) != 0 {
+		m.index = m.config.Index
+	} else {
+		for _, chainId := range m.chainIds {
+			buf := m.storage.Get(indexKey(chainId))
+			if buf != nil {
+				m.index[chainId] = binary.LittleEndian.Uint64(buf)
+			} else {
+				m.index[chainId] = 0
+			}
+		}
+	}
+	m.logger.WithFields(logrus.Fields{
+		"index":   m.index,
+		"chainID": m.config.ChainID,
+	}).Info("Subscribe")
 }
 
 func TxKey(hash string, typ int, idx uint) []byte {
@@ -479,4 +387,11 @@ func (m *Monitor) MntLock() {
 }
 func (m *Monitor) MntUnlock() {
 	m.mut.Unlock()
+}
+
+func (m *Monitor) persistIndex(chainId, index uint64) {
+	buf := make([]byte, 8)
+	binary.LittleEndian.PutUint64(buf, index)
+	m.storage.Put(indexKey(chainId), buf)
+	m.logger.Infof("handled cross out events ChainId:[%d] Index:[%d]", chainId, index)
 }
