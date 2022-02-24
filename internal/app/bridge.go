@@ -3,8 +3,11 @@ package app
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
+
+	"github.com/boringdao/bridge/internal/monitor/aurora"
 
 	"github.com/boringdao/bridge/internal/monitor"
 
@@ -41,11 +44,20 @@ func New(repoRoot *repo.Repo) (*Bridge, error) {
 	monitors := make(map[uint64]monitor.IMonitor)
 
 	for _, bConfig := range repoRoot.Config.Bridges {
-		monitor, err := monitor.New(repoRoot.Config.RepoRoot, bConfig, repoRoot.Config.Token, chainIDs, loggers.Logger(bConfig.Name))
-		if err != nil {
-			return nil, err
+		if strings.Contains(bConfig.Name, "aurora") {
+			mnt, err := aurora.New(repoRoot.Config.RepoRoot, bConfig, repoRoot.Config.Token, chainIDs, loggers.Logger(bConfig.Name))
+			if err != nil {
+				return nil, err
+			}
+			monitors[bConfig.ChainID] = mnt
+		} else {
+			mnt, err := monitor.New(repoRoot.Config.RepoRoot, bConfig, repoRoot.Config.Token, chainIDs, loggers.Logger(bConfig.Name))
+			if err != nil {
+				return nil, err
+			}
+			monitors[bConfig.ChainID] = mnt
 		}
-		monitors[bConfig.ChainID] = monitor
+
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
