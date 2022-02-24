@@ -3,15 +3,12 @@ package app
 import (
 	"context"
 	"fmt"
-	"strings"
 	"sync"
 	"time"
 
-	"github.com/boringdao/bridge/internal/monitor/aurora"
-
-	"github.com/boringdao/bridge/internal/monitor"
-
 	"github.com/boringdao/bridge/internal/loggers"
+	"github.com/boringdao/bridge/internal/monitor"
+	"github.com/boringdao/bridge/internal/monitor/filter"
 	"github.com/boringdao/bridge/internal/repo"
 	"github.com/boringdao/bridge/pkg/storage"
 	"github.com/boringdao/bridge/pkg/storage/leveldb"
@@ -44,8 +41,8 @@ func New(repoRoot *repo.Repo) (*Bridge, error) {
 	monitors := make(map[uint64]monitor.IMonitor)
 
 	for _, bConfig := range repoRoot.Config.Bridges {
-		if strings.Contains(bConfig.Name, "aurora") {
-			mnt, err := aurora.New(repoRoot.Config.RepoRoot, bConfig, repoRoot.Config.Token, chainIDs, loggers.Logger(bConfig.Name))
+		if bConfig.IsFilter {
+			mnt, err := filter.New(repoRoot.Config.RepoRoot, bConfig, repoRoot.Config.Token, chainIDs, loggers.Logger(bConfig.Name))
 			if err != nil {
 				return nil, err
 			}

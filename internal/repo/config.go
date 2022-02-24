@@ -43,6 +43,7 @@ type Token struct {
 }
 
 type BridgeConfig struct {
+	IsFilter       bool              `toml:"isFilter" json:"isFilter"`
 	Name           string            `toml:"name" json:"name"`
 	Addrs          []string          `toml:"addrs" json:"addrs"`
 	ChainID        uint64            `toml:"chainID" json:"chainID"`

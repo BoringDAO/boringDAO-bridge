@@ -1,4 +1,4 @@
-package aurora
+package filter
 
 import (
 	"bytes"

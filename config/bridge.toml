@@ -7,6 +7,7 @@ keyFile = ""
   "0xb608b55b0F777e70F8e37a18F8Da6EC8AE667B33" = "1313161555"
 
 [[bridges]]
+  isFilter = true
   name = "aurora_test"
   addrs = [
     "https://testnet.aurora.dev",
