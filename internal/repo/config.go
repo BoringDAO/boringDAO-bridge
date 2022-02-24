@@ -43,14 +43,14 @@ type Token struct {
 }
 
 type BridgeConfig struct {
-	Name           string   `toml:"name" json:"name"`
-	Addrs          []string `toml:"addrs" json:"addrs"`
-	ChainID        uint64   `toml:"chainID" json:"chainID"`
-	MinConfirms    uint64   `toml:"minConfirms" json:"minConfirms"`
-	PrivKey        string   `toml:"privKey" json:"privKey"`
-	GasLimit       uint64   `toml:"gasLimit" json:"gasLimit"`
-	Index          uint64   `toml:"index" json:"index"`
-	BridgeContract string   `toml:"bridgeContract" json:"bridgeContract"`
+	Name           string            `toml:"name" json:"name"`
+	Addrs          []string          `toml:"addrs" json:"addrs"`
+	ChainID        uint64            `toml:"chainID" json:"chainID"`
+	MinConfirms    uint64            `toml:"minConfirms" json:"minConfirms"`
+	PrivKey        string            `toml:"privKey" json:"privKey"`
+	GasLimit       uint64            `toml:"gasLimit" json:"gasLimit"`
+	Index          map[uint64]uint64 `toml:"index" json:"index"`
+	BridgeContract string            `toml:"bridgeContract" json:"bridgeContract"`
 }
 
 func (c *Config) Bytes() ([]byte, error) {

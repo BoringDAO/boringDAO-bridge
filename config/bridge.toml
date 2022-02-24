@@ -17,7 +17,7 @@ keyFile = ""
   minConfirms = 15 # min confirms
   chainID = 1313161555
   gasLimit = 1500000 # gas Limit
-  bridgeContract = "0xFd164af933a49594c6f3F9B210c753c2e9b5c6A2" # crosslock contract address
+  bridgeContract = "0x5A9AbDe26C31B0F38975901f84e558204c98f44D" # crosslock contract address
 
 [[bridges]]
   name = "harmony_test"
@@ -28,7 +28,7 @@ keyFile = ""
   chainID = 1666700000 # bsc test
   minConfirms = 15 # min confirms
   gasLimit = 1500000 # gas Limit
-  bridgeContract = "0xbBa69494e9812948349f31691C871A4aBA42D517" # bridge contract address
+  bridgeContract = "0x9926bDc075434CDA3a32e7BA4FbC39e6174d286D" # bridge contract address
 
 #  [[bridges]]
 #  name = "matic"

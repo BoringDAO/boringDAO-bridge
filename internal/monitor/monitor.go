@@ -26,7 +26,7 @@ import (
 var _ IMonitor = (*Monitor)(nil)
 
 type Monitor struct {
-	index         uint64
+	index         map[uint64]uint64
 	bridgeAbi     abi.ABI
 	crossOutC     chan *Coco
 	crossInC      chan *Coco
@@ -72,6 +72,7 @@ func New(repoRoot string, config *repo.BridgeConfig, token map[string]string, ch
 		crossInC:      make(chan *Coco),
 		finishedC:     make(chan *Coco),
 		chainIDs:      chainIDs,
+		index:         make(map[uint64]uint64),
 		logger:        logger,
 		ctx:           ctx,
 		cancel:        cancel,
@@ -114,43 +115,53 @@ func (m *Monitor) listenCrossOutEvent() {
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
-	start := m.index
-
 	for {
 		select {
 		case <-ticker.C:
 			num := m.bridgeWrapper.BlockNumber(context.TODO())
 			end := num - m.config.MinConfirms
 			hasEvent := false
-
-			index := m.bridgeWrapper.Index()
-			for i := start + 1; i <= index.Uint64(); i++ {
-				indexHeight := m.bridgeWrapper.IndexHeight(new(big.Int).SetUint64(i)).Uint64()
-				if indexHeight > end || indexHeight == 0 {
-					break
+			for _, chainId := range m.chainIDs {
+				start, ok := m.index[chainId]
+				if !ok {
+					m.logger.Warnf("ignore native chain:[%d]", chainId)
+					continue
 				}
-				for !hasEvent {
-					j := i
-					filter := m.bridgeWrapper.FilterCrossOut(&bind.FilterOpts{Start: indexHeight, End: &indexHeight, Context: m.ctx})
-					for filter.Next() {
-						hasEvent = true
-						res := m.handleCross(filter.Event, j)
-						if res {
-							m.cocoNum.Inc()
-						}
-						for m.cocoNum.Load() != 0 {
-							time.Sleep(3 * time.Second)
-						}
-						m.persistIndex(j)
-						j++
+				chainBigInt := new(big.Int).SetUint64(chainId)
+				index := m.bridgeWrapper.Index(chainBigInt)
+				for i := start + 1; i <= index.Uint64(); i++ {
+					indexHeight := m.bridgeWrapper.IndexHeight(chainBigInt, new(big.Int).SetUint64(i)).Uint64()
+					if indexHeight > end || indexHeight == 0 {
+						break
 					}
-					if j > i+1 {
-						i = j
+					for !hasEvent {
+						j := i
+						filter := m.bridgeWrapper.FilterCrossOut(&bind.FilterOpts{Start: indexHeight, End: &indexHeight, Context: m.ctx})
+						for filter.Next() {
+							if filter.Event.ToChainId.Uint64() != chainId {
+								continue
+							}
+							hasEvent = true
+							res := m.handleCross(filter.Event, j)
+							if res {
+								m.cocoNum.Inc()
+							}
+							for m.cocoNum.Load() != 0 {
+								time.Sleep(3 * time.Second)
+							}
+							m.persistIndex(chainId, j)
+							m.index[chainId] = j
+							j++
+						}
+						if j > i+1 {
+							i = j
+						}
 					}
-				}
 
+				}
+				m.logger.Infof("listenEvent chainId:[%d], index from [%d] to [%d]", chainId, start, index.Uint64())
 			}
-			m.logger.Infof("listenEvent index from [%d] to [%d]", start, index.Uint64())
+
 		case <-m.ctx.Done():
 			m.logger.Info("listenCrossOutEvent done")
 			return
@@ -356,36 +367,38 @@ func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
 }
 
 func (m *Monitor) loadIndexFromStorage() {
-	if m.config.Index != 0 {
+	if m.config.Index != nil && len(m.config.Index) != 0 {
 		m.index = m.config.Index
 	} else {
-		buf := m.storage.Get(indexKey())
-		if buf != nil {
-			m.index = binary.LittleEndian.Uint64(buf)
-		} else {
-			m.index = 0
+		for _, chainId := range m.chainIDs {
+			buf := m.storage.Get(indexKey(chainId))
+			if buf != nil {
+				m.index[chainId] = binary.LittleEndian.Uint64(buf)
+			} else {
+				m.index[chainId] = 0
+			}
 		}
-	}
 
+	}
 	m.logger.WithFields(logrus.Fields{
 		"index":   m.index,
 		"chainID": m.config.ChainID,
 	}).Info("Subscribe")
 }
 
-func indexKey() []byte {
-	return []byte(fmt.Sprintf("index"))
+func indexKey(chainId uint64) []byte {
+	return []byte(fmt.Sprintf("index-%d", chainId))
 }
 
 func (m *Monitor) HasTx(txId string) bool {
 	return m.storage.Has(TxKey(txId, m.config.ChainID))
 }
 
-func (m *Monitor) persistIndex(index uint64) {
+func (m *Monitor) persistIndex(chainId, index uint64) {
 	buf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(buf, index)
-	m.storage.Put(indexKey(), buf)
-	m.logger.Infof("handled cross out events Index %d", index)
+	m.storage.Put(indexKey(chainId), buf)
+	m.logger.Infof("handled cross out events ChainId:[%d] Index:[%d]", chainId, index)
 }
 
 func TxKey(hash string, chainID uint64) []byte {

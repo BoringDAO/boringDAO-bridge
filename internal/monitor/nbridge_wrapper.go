@@ -107,14 +107,14 @@ func (bw *BridgeWrapper) BlockNumber(ctx context.Context) uint64 {
 	return number
 }
 
-func (bw *BridgeWrapper) Index() *big.Int {
+func (bw *BridgeWrapper) Index(chainId *big.Int) *big.Int {
 	var number *big.Int
 	var err error
 
 	if err := retry.Retry(func(attempt uint) error {
-		number, err = bw.session.EventIndex()
+		number, err = bw.session.EventIndex0(chainId)
 		if err != nil {
-			bw.logger.Warnf("Index: %s", err.Error())
+			bw.logger.Warnf("Index[%d]: %s", chainId.Uint64(), err.Error())
 
 			if bw.isNetworkError(err) {
 				bw.switchToNextAddr()
@@ -128,14 +128,14 @@ func (bw *BridgeWrapper) Index() *big.Int {
 	return number
 }
 
-func (bw *BridgeWrapper) IndexHeight(index *big.Int) *big.Int {
+func (bw *BridgeWrapper) IndexHeight(chainId, index *big.Int) *big.Int {
 	var number *big.Int
 	var err error
 
 	if err := retry.Retry(func(attempt uint) error {
-		number, err = bw.session.EventHeight(index)
+		number, err = bw.session.EventHeights0(chainId, index)
 		if err != nil {
-			bw.logger.Warnf("BlockNumber: %s", err.Error())
+			bw.logger.Warnf("IndexHeight[%d][%d]: %s", chainId.Uint64(), index.Uint64(), err.Error())
 
 			if bw.isNetworkError(err) {
 				bw.switchToNextAddr()
