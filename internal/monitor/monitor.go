@@ -367,19 +367,21 @@ func (m *Monitor) GetLockLog(txId string) (*Coco, error) {
 }
 
 func (m *Monitor) loadIndexFromStorage() {
-	if m.config.Index != nil && len(m.config.Index) != 0 {
-		m.index = m.config.Index
-	} else {
-		for _, chainId := range m.chainIDs {
-			buf := m.storage.Get(indexKey(chainId))
-			if buf != nil {
-				m.index[chainId] = binary.LittleEndian.Uint64(buf)
-			} else {
-				m.index[chainId] = 0
-			}
-		}
 
+	for _, chainId := range m.chainIDs {
+		buf := m.storage.Get(indexKey(chainId))
+		if buf != nil {
+			m.index[chainId] = binary.LittleEndian.Uint64(buf)
+		} else {
+			m.index[chainId] = 0
+		}
 	}
+	if m.config.Index != nil && len(m.config.Index) != 0 {
+		for chainId, index := range m.config.Index {
+			m.index[chainId] = index
+		}
+	}
+
 	m.logger.WithFields(logrus.Fields{
 		"index":   m.index,
 		"chainID": m.config.ChainID,
