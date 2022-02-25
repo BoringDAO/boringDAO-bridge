@@ -11,18 +11,18 @@ keyFile = ""
   minConfirms = 1 # min confirms
   gasLimit = 1500000 # gas Limit
   gasFeeRate = 1.8
-  centerContract = "0x797051A08a1753b3E054DDC1245AD812DAe9050F"
+  centerContract = "0xCbb3f8292CbE44efb8A059eA2406bD36F5ab1652"
 
 [[edges]]
-  name = "bsc_test"
+  name = "arbi_test"
   addrs = [
-    "https://data-seed-prebsc-1-s1.binance.org:8545" # rpc host
+    "https://rinkeby.arbitrum.io/rpc" # rpc host
   ]
-  chainID = 97
+  chainID = 421611
   minConfirms = 1 # min confirms
   gasLimit = 1500000 # gas Limit
   gasFeeRate = 1.2
-  edgeContract = "0xFaf3aD46dA9670910e340073FFd31aA4D04B2f5a"
+  edgeContract = "0x3caf319515A122E98Da710304f31F237a9b304C7"
 
 [[edges]]
 name = "kovan_test"
@@ -32,7 +32,7 @@ addrs = [
 chainID = 42
 minConfirms = 1 # min confirms
 gasLimit = 1500000 # gas Limit
-edgeContract = "0x15624E9d0442D1039C335BC1aeB5F6A876a9bb72"
+edgeContract = "0x79149445532A5847F12b136448a5f1AC25d85C92"
 
 [log]
   level = "info"

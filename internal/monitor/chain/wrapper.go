@@ -438,6 +438,10 @@ func (w *Wrapper) isNetworkError(err error) bool {
 		strings.Contains(err.Error(), "too many requests")
 }
 
+func (w *Wrapper) Session() *edge.TwoWayEdgeSession {
+	return w.session
+}
+
 // ensureContext is a helper method to ensure a context is not nil, even if the
 // user specified it as such.
 func ensureContext(ctx context.Context) context.Context {

@@ -7,15 +7,16 @@ import (
 	"sync"
 	"time"
 
-	center_chain "github.com/boringdao/bridge/internal/monitor/center"
-	"github.com/common-nighthawk/go-figure"
+	"github.com/boringdao/bridge/internal/monitor/chain"
 
 	"github.com/boringdao/bridge/internal/loggers"
 	"github.com/boringdao/bridge/internal/monitor"
-	"github.com/boringdao/bridge/internal/monitor/chain"
+	center_chain "github.com/boringdao/bridge/internal/monitor/center"
+	"github.com/boringdao/bridge/internal/monitor/chain/filter"
 	"github.com/boringdao/bridge/internal/repo"
 	"github.com/boringdao/bridge/pkg/storage"
 	"github.com/boringdao/bridge/pkg/storage/leveldb"
+	"github.com/common-nighthawk/go-figure"
 	"github.com/sirupsen/logrus"
 )
 
@@ -49,9 +50,17 @@ func New(repoRoot *repo.Repo) (*Bridge, error) {
 	mntCocoC := make(map[uint64]chan *monitor.Coco)
 
 	for _, config := range repoRoot.Config.Edges {
-		mnt, err := chain.New(repoRoot.Config.RepoRoot, config, chainIDs, loggers.Logger(config.Name))
-		if err != nil {
-			return nil, err
+		var mnt monitor.Mnt
+		if config.IsFilter {
+			mnt, err = filter.New(repoRoot.Config.RepoRoot, config, loggers.Logger(config.Name))
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			mnt, err = chain.New(repoRoot.Config.RepoRoot, config, chainIDs, loggers.Logger(config.Name))
+			if err != nil {
+				return nil, err
+			}
 		}
 		mnts[config.ChainID] = mnt
 		mntCocoC[config.ChainID] = make(chan *monitor.Coco, 1024)
