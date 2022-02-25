@@ -352,16 +352,17 @@ func indexKey(chainId uint64) []byte {
 }
 
 func (m *Monitor) loadIndexFromStorage() {
+	for _, chainId := range m.chainIds {
+		buf := m.storage.Get(indexKey(chainId))
+		if buf != nil {
+			m.index[chainId] = binary.LittleEndian.Uint64(buf)
+		} else {
+			m.index[chainId] = 0
+		}
+	}
 	if m.config.Index != nil && len(m.config.Index) != 0 {
-		m.index = m.config.Index
-	} else {
-		for _, chainId := range m.chainIds {
-			buf := m.storage.Get(indexKey(chainId))
-			if buf != nil {
-				m.index[chainId] = binary.LittleEndian.Uint64(buf)
-			} else {
-				m.index[chainId] = 0
-			}
+		for chainId, index := range m.config.Index {
+			m.index[chainId] = index
 		}
 	}
 	m.logger.WithFields(logrus.Fields{
