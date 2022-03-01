@@ -46,6 +46,8 @@ func New(repoRoot *repo.Repo) (*Bridge, error) {
 		chainIDs = append(chainIDs, bConfig.ChainID)
 	}
 
+	chainIDs = append(chainIDs, repoRoot.Config.Center.ChainID)
+
 	mnts := make(map[uint64]monitor.Mnt)
 	mntCocoC := make(map[uint64]chan *monitor.Coco)
 
