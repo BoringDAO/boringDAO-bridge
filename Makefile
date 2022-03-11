@@ -74,6 +74,10 @@ plugin:
 	@mkdir -p build
 	cd internal/monitor/chain/klaytn && make plugin
 
+## make release: Build release before push
+release-binary:
+	@cd scripts && bash release_binary.sh
+
 ## make linter: Run golanci-lint
 linter:
 	golangci-lint run

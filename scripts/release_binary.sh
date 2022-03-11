@@ -24,5 +24,5 @@ cp -r .build/*.so  "${BUILD_PATH}"/
 if [ "$(uname)" == "Darwin" ]; then
   tar -zcvf bridge_darwin_x86_64_"${APP_VERSION}".tar.gz "${BUILD_PATH}"/*
 else
-  tar -zcvf bridge_linux-amd64_"${APP_VERSION}".tar.gz "${BUILD_PATH}"/*
+  tar -zcvf bridge_linux_amd64_"${APP_VERSION}".tar.gz "${BUILD_PATH}"/*
 fi
