@@ -23,8 +23,8 @@ archives:
       windows: Windows
       386: i386
       amd64: x86_64
-  files:
-    - build/*.so
+    files:
+      - build/*.so
 checksum:
   name_template: 'checksums.txt'
 snapshot:
