@@ -1,32 +1,45 @@
 title = "Bridge configuration file"
 
+keyFile = ""
 
-[eth]
+[center]
+  name = "matic_test"
   addrs = [
-    "https://ropsten.infura.io/v3/3e8a2d2286964b62bc6b1d67c379badd",
-    "https://eth-ropsten.alchemyapi.io/v2/K36BtEv6HiX4gn-b_XEB-l1mjqtm7FEI"
+    "https://rpc-mumbai.maticvigil.com"
   ]
-  minConfirms = 5 # min confirms
+  chainID = 80001 # main 137, testnet 80001
+  minConfirms = 1 # min confirms
   gasLimit = 1500000 # gas Limit
-  height = 11938261
-  crossLockContract = "0xbD187d9D7403eb026Cc67a854c30205828CD5d0C" # crosslock contract address
+  gasFeeRate = 1.8
+  centerContract = "0xCbb3f8292CbE44efb8A059eA2406bD36F5ab1652"
 
-[bsc]
+[[edges]]
+  name = "arbi_test"
   addrs = [
-    "http://data-seed-prebsc-1-s1.binance.org:8545", # rpc host
-    "http://data-seed-prebsc-1-s2.binance.org:8545", # rpc host
+    "https://rinkeby.arbitrum.io/rpc" # rpc host
   ]
-  minConfirms = 5 # min confirms
+  chainID = 421611
+  minConfirms = 1 # min confirms
   gasLimit = 1500000 # gas Limit
-  height = 11938261
-  borBscContract = "0xADA4f520213C6c106385072319E2A2bDC2E8c839" # borbsc contract address
+  gasFeeRate = 1.2
+  edgeContract = "0x3caf319515A122E98Da710304f31F237a9b304C7"
+
+[[edges]]
+name = "kovan_test"
+addrs = [
+  "https://kovan.infura.io/v3/f05d1f443cdc4cd089c073969678e26a" # rpc host
+]
+chainID = 42
+minConfirms = 1 # min confirms
+gasLimit = 1500000 # gas Limit
+edgeContract = "0x79149445532A5847F12b136448a5f1AC25d85C92"
 
 [log]
   level = "info"
   dir = "logs"
   filename = "bridge.log"
 [log.module]
-  bsc = "info"
-  eth = "info"
   app = "info"
-
+  bsc = "info"
+  okex = "info"
+  matic = "info"
