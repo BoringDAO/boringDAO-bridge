@@ -54,19 +54,19 @@ type CenterConfig struct {
 }
 
 type EdgeConfig struct {
-	IsFilter            bool              `toml:"isFilter" json:"isFilter"`
-	Name                string            `toml:"name" json:"name"`
-	Addrs               []string          `toml:"addrs" json:"addrs"`
-	ChainID             uint64            `toml:"chainID" json:"chainID"`
-	MinConfirms         uint64            `toml:"minConfirms" json:"minConfirms"`
-	PrivKey             string            `toml:"privKey" json:"privKey"`
-	GasLimit            uint64            `toml:"gasLimit" json:"gasLimit"`
-	GasFeeRate          float64           `toml:"gasFeeRate" json:"gasFeeRate"`
-	Index               map[uint64]uint64 `toml:"index" json:"index"`
-	DepositedHeight     uint64            `mapstructure:"depositedHeight" json:"depositedHeight"`
-	CrossOutedHeight    uint64            `mapstructure:"crossOutedHeight" json:"crossOutedHeight"`
-	CrossInFailedHeight uint64            `mapstructure:"crossInFailedHeight" json:"crossInFailedHeight"`
-	EdgeContract        string            `toml:"EdgeContract" json:"EdgeContract"`
+	IsFilter         bool              `toml:"isFilter" json:"isFilter"`
+	Name             string            `toml:"name" json:"name"`
+	Addrs            []string          `toml:"addrs" json:"addrs"`
+	ChainID          uint64            `toml:"chainID" json:"chainID"`
+	MinConfirms      uint64            `toml:"minConfirms" json:"minConfirms"`
+	PrivKey          string            `toml:"privKey" json:"privKey"`
+	GasLimit         uint64            `toml:"gasLimit" json:"gasLimit"`
+	GasFeeRate       float64           `toml:"gasFeeRate" json:"gasFeeRate"`
+	Index            map[uint64]uint64 `toml:"index" json:"index"`
+	DepositedHeight  uint64            `mapstructure:"depositedHeight" json:"depositedHeight"`
+	CrossOutedHeight uint64            `mapstructure:"crossOutedHeight" json:"crossOutedHeight"`
+	EdgeContract     string            `toml:"EdgeContract" json:"EdgeContract"`
+	Plugin           string            `toml:"plugin" json:"plugin"`
 }
 
 func (c *Config) Bytes() ([]byte, error) {

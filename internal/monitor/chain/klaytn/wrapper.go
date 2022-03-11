@@ -1,4 +1,4 @@
-package chain
+package main
 
 import (
 	"context"
@@ -11,31 +11,29 @@ import (
 
 	"github.com/boringdao/bridge/pkg/repo"
 
-	"github.com/boringdao/bridge/internal/monitor/contracts/edge"
-
 	"github.com/Rican7/retry"
 	"github.com/Rican7/retry/strategy"
 	"github.com/boringdao/bridge/pkg/kit/hexutil"
-	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/ethereum/go-ethereum/rlp"
-	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/klaytn/klaytn/accounts/abi"
+	"github.com/klaytn/klaytn/accounts/abi/bind"
+	"github.com/klaytn/klaytn/blockchain/types"
+	"github.com/klaytn/klaytn/client"
+	"github.com/klaytn/klaytn/common"
+	"github.com/klaytn/klaytn/crypto"
+	"github.com/klaytn/klaytn/networks/rpc"
+	"github.com/klaytn/klaytn/rlp"
 	"github.com/sirupsen/logrus"
 )
 
 type Wrapper struct {
 	addrIdx   int
 	config    *repo.EdgeConfig
-	ethClient *ethclient.Client
+	ethClient *client.Client
 	rpcClient *rpc.Client
-	twoWay    *edge.TwoWayEdge
-	session   *edge.TwoWayEdgeSession
+	twoWay    *TwoWayEdge
+	session   *TwoWayEdgeSession
 	logger    logrus.FieldLogger
+	chainId   *big.Int
 }
 
 func NewWrapper(config *repo.EdgeConfig, logger logrus.FieldLogger) (*Wrapper, error) {
@@ -47,9 +45,9 @@ func NewWrapper(config *repo.EdgeConfig, logger logrus.FieldLogger) (*Wrapper, e
 	if err != nil {
 		return nil, err
 	}
-	etherCli := ethclient.NewClient(rpcClient)
+	etherCli := client.NewClient(rpcClient)
 
-	twoWay, err := edge.NewTwoWayEdge(common.HexToAddress(config.EdgeContract), etherCli)
+	twoWay, err := NewTwoWayEdge(common.HexToAddress(config.EdgeContract), etherCli)
 	if err != nil {
 		return nil, fmt.Errorf("failed to instantiate a EdgeContract contract: %w", err)
 	}
@@ -68,17 +66,14 @@ func NewWrapper(config *repo.EdgeConfig, logger logrus.FieldLogger) (*Wrapper, e
 		return nil, fmt.Errorf("%s blockchain chainID is %d but config is %d", config.Name, chainID.Uint64(), config.ChainID)
 	}
 
-	auth, err := bind.NewKeyedTransactorWithChainID(privKey, chainID)
-	if err != nil {
-		return nil, err
-	}
+	auth := bind.NewKeyedTransactor(privKey)
 	if config.GasLimit < 800000 {
 		auth.GasLimit = 1500000
 	} else {
 		auth.GasLimit = config.GasLimit
 	}
 
-	session := &edge.TwoWayEdgeSession{
+	session := &TwoWayEdgeSession{
 		Contract: twoWay,
 		CallOpts: bind.CallOpts{
 			Pending: false,
@@ -89,6 +84,7 @@ func NewWrapper(config *repo.EdgeConfig, logger logrus.FieldLogger) (*Wrapper, e
 	return &Wrapper{
 		addrIdx:   0,
 		config:    config,
+		chainId:   chainID,
 		rpcClient: rpcClient,
 		ethClient: etherCli,
 		twoWay:    twoWay,
@@ -118,49 +114,8 @@ func (w *Wrapper) HeaderByNumber(ctx context.Context, number *big.Int) *types.He
 	return header
 }
 
-func (w *Wrapper) Index(chainId *big.Int) *big.Int {
-	var header *big.Int
-	var err error
-
-	if err := retry.Retry(func(attempt uint) error {
-		header, err = w.session.EventIndex0(chainId)
-		if err != nil {
-			w.logger.Warnf("Index:[%d]: %s", chainId.Uint64(), err.Error())
-
-			if w.isNetworkError(err) {
-				w.switchToNextAddr()
-			}
-		}
-		return err
-	}, strategy.Wait(10*time.Second)); err != nil {
-		w.logger.Panic(err)
-	}
-
-	return header
-}
-
-func (w *Wrapper) IndexHeight(chainId, index *big.Int) *big.Int {
-	var header *big.Int
-	var err error
-
-	if err := retry.Retry(func(attempt uint) error {
-		header, err = w.session.EventHeights0(chainId, index)
-		if err != nil {
-			w.logger.Warnf("IndexHeight [%d]:[%d]: %s", chainId.Uint64(), index.Uint64(), err.Error())
-
-			if w.isNetworkError(err) {
-				w.switchToNextAddr()
-			}
-		}
-		return err
-	}, strategy.Wait(10*time.Second)); err != nil {
-		w.logger.Panic(err)
-	}
-
-	return header
-}
-func (w *Wrapper) FilterDeposited(opts *bind.FilterOpts) *edge.TwoWayEdgeDepositedIterator {
-	var iterator *edge.TwoWayEdgeDepositedIterator
+func (w *Wrapper) FilterDeposited(opts *bind.FilterOpts) *TwoWayEdgeDepositedIterator {
+	var iterator *TwoWayEdgeDepositedIterator
 	var err error
 
 	if err := retry.Retry(func(attempt uint) error {
@@ -180,8 +135,8 @@ func (w *Wrapper) FilterDeposited(opts *bind.FilterOpts) *edge.TwoWayEdgeDeposit
 	return iterator
 }
 
-func (w *Wrapper) FilterCrossOuted(opts *bind.FilterOpts) *edge.TwoWayEdgeCrossOutedIterator {
-	var iterator *edge.TwoWayEdgeCrossOutedIterator
+func (w *Wrapper) FilterCrossOuted(opts *bind.FilterOpts) *TwoWayEdgeCrossOutedIterator {
+	var iterator *TwoWayEdgeCrossOutedIterator
 	var err error
 
 	if err := retry.Retry(func(attempt uint) error {
@@ -260,7 +215,7 @@ func (w *Wrapper) CrossIn(fromToken, toToken common.Address, from, to common.Add
 		}
 		if err != nil {
 			w.logger.Warnf("CrossIn: %s", err.Error())
-			if errors.Is(err, core.ErrNonceTooLow) {
+			if errors.Is(err, errors.New("nonce too low")) {
 				tx = nil
 				hash = common.Hash{}
 				return nil
@@ -281,11 +236,11 @@ func (w *Wrapper) CrossIn(fromToken, toToken common.Address, from, to common.Add
 }
 
 func (w *Wrapper) crossIn(fromToken, toToken common.Address, from, to common.Address, fromChainID, toChainID, amount *big.Int, txid string) (*types.Transaction, common.Hash, error) {
-	parsed, err := abi.JSON(strings.NewReader(edge.TwoWayEdgeMetaData.ABI))
+	parsed, err := abi.JSON(strings.NewReader(TwoWayEdgeABI))
 	if err != nil {
 		return nil, common.Hash{}, err
 	}
-	in := edge.InParam{
+	in := InParam{
 		FromChainId: fromChainID,
 		FromToken:   fromToken,
 		From:        from,
@@ -327,7 +282,8 @@ func (w *Wrapper) crossIn(fromToken, toToken common.Address, from, to common.Add
 
 	// Create the transaction, sign it and schedule it for execution
 	rawTx := types.NewTransaction(nonce, common.HexToAddress(w.config.EdgeContract), value, opts.GasLimit, opts.GasPrice, input)
-	signedTx, err := opts.Signer(opts.From, rawTx)
+	signer := types.NewEIP155Signer(w.chainId)
+	signedTx, err := opts.Signer(signer, opts.From, rawTx)
 	if err != nil {
 		return nil, common.Hash{}, err
 	}
@@ -407,9 +363,9 @@ func (w *Wrapper) switchToNextAddr() {
 		if err != nil {
 			continue
 		}
-		w.ethClient = ethclient.NewClient(rpcClient)
+		w.ethClient = client.NewClient(rpcClient)
 		w.rpcClient = rpcClient
-		w.twoWay, err = edge.NewTwoWayEdge(common.HexToAddress(w.config.EdgeContract), w.ethClient)
+		w.twoWay, err = NewTwoWayEdge(common.HexToAddress(w.config.EdgeContract), w.ethClient)
 		if err != nil {
 			continue
 		}
@@ -437,10 +393,6 @@ func (w *Wrapper) isNetworkError(err error) bool {
 		strings.Contains(err.Error(), "connection reset by peer") ||
 		strings.Contains(err.Error(), "TLS handshake timeout") ||
 		strings.Contains(err.Error(), "too many requests")
-}
-
-func (w *Wrapper) Session() *edge.TwoWayEdgeSession {
-	return w.session
 }
 
 // ensureContext is a helper method to ensure a context is not nil, even if the

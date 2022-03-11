@@ -44,19 +44,19 @@ test-coverage:
 	@cat cover.out >> coverage.txt
 
 packr:
-	cd internal/repo && packr
+	cd pkg/repo && packr
 
 prepare:
 	cd scripts && bash prepare.sh
 
 ## make install: Go install the project
 install:
-	cd internal/repo && packr
+	cd pkg/repo && packr
 	$(GO) install -ldflags '${GOLDFLAGS}' ./cmd/${APP_NAME}
 	@printf "${GREEN}Build bridge successfully!${NC}\n"
 
 build:
-	cd internal/repo && packr
+	cd pkg/repo && packr
 	@mkdir -p bin
 	$(GO) build -ldflags '${GOLDFLAGS}' ./cmd/${APP_NAME}
 	@mv ./bridge bin
@@ -70,6 +70,9 @@ docker-build: packr
 build-linux:
 	cd scripts && bash cross_compile.sh linux-amd64 ${CURRENT_PATH}
 
+plugin:
+	@mkdir -p build
+	cd internal/monitor/chain/klaytn && make plugin
 
 ## make linter: Run golanci-lint
 linter:
