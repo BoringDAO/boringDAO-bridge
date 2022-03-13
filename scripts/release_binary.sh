@@ -19,10 +19,11 @@ cd "${PROJECT_PATH}" && make build && make plugin
 
 print_blue "===> 3. Pack binary"
 cd "${PROJECT_PATH}" || (echo "project path is not exist" && return)
-cp ./bin/bridge "${BUILD_PATH}"/bridge
-cp -r .build/*.so  "${BUILD_PATH}"/
+cp ./bin/bridge "${BUILD_PATH}"/
+cp -r ./build/*.so  "${BUILD_PATH}"/
+cd "${BUILD_PATH}"
 if [ "$(uname)" == "Darwin" ]; then
   tar -zcvf bridge_darwin_x86_64_"${APP_VERSION}".tar.gz "${BUILD_PATH}"/*
 else
-  tar -zcvf bridge_linux_amd64_"${APP_VERSION}".tar.gz "${BUILD_PATH}"/*
+  tar -zcvf bridge_linux_x86_64_"${APP_VERSION}".tar.gz "${BUILD_PATH}"/*
 fi
