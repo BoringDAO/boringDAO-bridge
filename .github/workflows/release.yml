@@ -27,9 +27,9 @@ jobs:
             COMPILER: gcc
             LINKER: gcc
     steps:
+      - run: echo ${{matrix.TARGET}}
       - name: Set up Go
         uses: actions/setup-go@v2
-        run: echo ${{matrix.TARGET}}
         with:
           go-version: 1.15
 
