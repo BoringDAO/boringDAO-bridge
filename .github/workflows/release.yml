@@ -1,27 +1,47 @@
 name: Release
+
 on:
-  create:
+  push:
     tags:
       - v*
 
 jobs:
-  release:
-    runs-on: ubuntu-latest
-    name: Release on GitHub
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, ubuntu-latest]
+        include:
+          - os: macos-latest
+            TARGET: x86_64-apple-darwin
+            COMPILER: clang
+            LINKER: clang
+
+          - os: ubuntu-latest
+            TARGET: armv7-unknown-linux-musleabihf
+            COMPILER: arm-linux-gnueabihf-gcc-5
+            LINKER: gcc-5-arm-linux-gnueabihf
+
+          - os: ubuntu-latest
+            TARGET: x86_64-unknown-linux-musl
+            COMPILER: gcc
+            LINKER: gcc
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
       - name: Set up Go
         uses: actions/setup-go@v2
+        run: echo ${{matrix.TARGET}}
         with:
           go-version: 1.15
 
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v2
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Build Binary
+        run: make release-binary
+
+      - name: Release Binary
+        uses: softprops/action-gh-release@v1
         with:
-          version: latest
-          args: release --rm-dist
+          files: dist/**.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
