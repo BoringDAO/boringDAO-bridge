@@ -17,19 +17,38 @@ bridge --repo <repo> init
 ### 2. Edit the configuration file
 
 Open the bridge.yaml file in .bridge directory, and edit below items:
-#### [eth]
-1. **addrs**: specify the eth rpc address this bridge will connect, you can configure more than one
-1. **minConfirms**: minimal blocks to confirm a transaction, a number not less than **15** is recommended
-1. **gasLimit**: set the default transaction gas limit
-1. **height**: set the block number at which the cross lock contract is deployed
-1. **crossLockContract**: specify the cross lock contract address deployed in eth network
-#### [bsc]
-1. **addrs**: specify the bsc rpc address this bridge will connect, you can configure more than one
-1. **minConfirms**: minimal blocks to confirm a transaction, a number not less than **15** is recommended
-1. **gasLimit**: set the default transaction gas limit
-1. **height**: set the block number at which the bor bsc contract is deployed
-1. **borBscContract**: specify the bor contract address deployed in bsc network
 
+#### [center]
+```
+  name = "matic_test"
+  addrs = [
+    "https://rpc-mumbai.maticvigil.com"
+  ]
+  chainID = 80001 # main 137, testnet 80001
+  minConfirms = 1 # min confirms
+  gasLimit = 1500000 # gas Limit
+  gasFeeRate = 1.8 # newGasPrice = gasPrice * gasFeeRate
+  centerContract = "0xCbb3f8292CbE44efb8A059eA2406bD36F5ab1652" # twoway center contract
+  [center.index]
+    421611 = 1 # specify egde‘s chainId with cross out index
+```
+#### [[edges]]
+```
+  isFilter = false # whether to filter events by block height, if not then [edge.index] is valid
+  name = "arbi_test"
+  addrs = [
+    "https://rinkeby.arbitrum.io/rpc" # rpc host
+  ]
+  chainID = 421611
+  minConfirms = 1 # min confirms
+  gasLimit = 1500000 # gas Limit
+  gasFeeRate = 1.2  # newGasPrice = gasPrice * gasFeeRate
+  edgeContract = "0x3caf319515A122E98Da710304f31F237a9b304C7" # twoway edge contract
+  depositedHeight = 0  # Deposit Event‘s block height
+  crossOutedHeight = 0  # CrossOut Event’s block height
+  [edge.index]
+    421611 = 1 # specify egde‘s chainId with cross out index
+```
 ### 3. Start the bridge
 
 Use below command to start the bridge, it will use the configuration in the default home directory:
