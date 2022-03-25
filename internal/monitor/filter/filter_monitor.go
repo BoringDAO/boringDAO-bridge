@@ -55,7 +55,7 @@ func New(repoRoot string, config *repo.BridgeConfig, token map[string]string, ch
 		return nil, err
 	}
 
-	borAbi, err := abi.JSON(bytes.NewReader([]byte(monitor.NBridgeABI)))
+	borAbi, err := abi.JSON(bytes.NewReader([]byte(monitor.OfficialBridgeABI)))
 	if err != nil {
 		return nil, fmt.Errorf("abi unmarshal: %s", err.Error())
 	}
@@ -170,17 +170,16 @@ func (m *Monitor) handleCrossInCocoC() {
 	for {
 		select {
 		case coco := <-m.crossInC:
-			if err := m.CrossIn(coco.OriginToken, coco.OriginChainId, coco.FromChainId, coco.ToChainId, coco.From, coco.To, coco.Amount, coco.TxId); err != nil {
+			if err := m.CrossIn(coco.FromToken, coco.ToToken, coco.FromChainId, coco.ToChainId, coco.From, coco.To, coco.Amount, coco.TxId); err != nil {
 				m.logger.WithFields(logrus.Fields{
-					"OriginToken":   coco.OriginToken.String(),
-					"OriginChainId": coco.OriginChainId.String(),
-					"FromChainId":   coco.FromChainId.String(),
-					"ToChainId":     coco.ToChainId.String(),
-					"From":          coco.From.String(),
-					"To":            coco.To.String(),
-					"Amount":        coco.Amount.String(),
-					"TxId":          coco.TxId,
-					"error":         err.Error(),
+					"FromToken":   coco.FromToken.String(),
+					"FromChainId": coco.FromChainId.String(),
+					"ToChainId":   coco.ToChainId.String(),
+					"From":        coco.From.String(),
+					"To":          coco.To.String(),
+					"Amount":      coco.Amount.String(),
+					"TxId":        coco.TxId,
+					"error":       err.Error(),
 				}).Panic("CrossIn failed")
 			}
 
@@ -193,14 +192,14 @@ func (m *Monitor) handleCrossInCocoC() {
 	}
 }
 
-func (m *Monitor) handleCross(crossOut *monitor.NBridgeCrossOut, isHistory bool) bool {
+func (m *Monitor) handleCross(crossOut *monitor.OfficialBridgeCrossOut, isHistory bool) bool {
 	if !strings.EqualFold(crossOut.Raw.Address.String(), m.config.BridgeContract) {
 		m.logger.Warnf("ignore log with contract address: %s", crossOut.Raw.Address.String())
 		return false
 	}
 
-	if !m.checkSupportedToken(crossOut.OriginToken.String(), crossOut.OriginChainId.String()) {
-		m.logger.Warnf("ignore log with unsupported original token: %s", crossOut.OriginToken.String())
+	if !m.checkSupportedToken(crossOut.FromToken.String(), crossOut.FromChainId.String()) {
+		m.logger.Warnf("ignore log with unsupported fromal token: %s", crossOut.FromToken.String())
 		return false
 	}
 
@@ -209,28 +208,28 @@ func (m *Monitor) handleCross(crossOut *monitor.NBridgeCrossOut, isHistory bool)
 	}
 
 	coco := &monitor.Coco{
-		OriginToken:   crossOut.OriginToken,
-		OriginChainId: crossOut.OriginChainId,
-		FromChainId:   crossOut.FromChainId,
-		ToChainId:     crossOut.ToChainId,
-		From:          crossOut.From,
-		To:            crossOut.To,
-		Amount:        crossOut.Amount,
-		TxId:          crossOut.Raw.TxHash.String(),
-		BlockHeight:   crossOut.Raw.BlockNumber,
+		FromToken:   crossOut.FromToken,
+		ToToken:     crossOut.ToToken,
+		FromChainId: crossOut.FromChainId,
+		ToChainId:   crossOut.ToChainId,
+		From:        crossOut.From,
+		To:          crossOut.To,
+		Amount:      crossOut.Amount,
+		TxId:        crossOut.Raw.TxHash.String(),
+		BlockHeight: crossOut.Raw.BlockNumber,
 	}
 
 	m.logger.WithFields(logrus.Fields{
-		"OriginToken":   coco.OriginToken.String(),
-		"OriginChainId": coco.OriginChainId.String(),
-		"FromChainId":   coco.FromChainId.String(),
-		"ToChainId":     coco.ToChainId.String(),
-		"From":          coco.From.String(),
-		"To":            coco.To.String(),
-		"Amount":        coco.Amount.String(),
-		"TxId":          crossOut.Raw.TxHash.String(),
-		"block_height":  crossOut.Raw.BlockNumber,
-		"removed":       crossOut.Raw.Removed,
+		"FromToken":    coco.FromToken.String(),
+		"ToToken":      coco.ToToken.String(),
+		"FromChainId":  coco.FromChainId.String(),
+		"ToChainId":    coco.ToChainId.String(),
+		"From":         coco.From.String(),
+		"To":           coco.To.String(),
+		"Amount":       coco.Amount.String(),
+		"TxId":         crossOut.Raw.TxHash.String(),
+		"block_height": crossOut.Raw.BlockNumber,
+		"removed":      crossOut.Raw.Removed,
 	}).Info("CrossOut")
 
 	if crossOut.Raw.Removed {
@@ -255,8 +254,8 @@ func (m *Monitor) handleCross(crossOut *monitor.NBridgeCrossOut, isHistory bool)
 }
 
 func (m *Monitor) checkSupportedToken(token, chainID string) bool {
-	for tokenAddr, originChainId := range m.token {
-		if strings.EqualFold(token, tokenAddr) && strings.EqualFold(chainID, originChainId) {
+	for tokenAddr, fromChainId := range m.token {
+		if strings.EqualFold(token, tokenAddr) && strings.EqualFold(chainID, fromChainId) {
 			return true
 		}
 	}
@@ -284,7 +283,7 @@ func (m *Monitor) confirmEvent(event types.Log) bool {
 	}
 }
 
-func (m *Monitor) CrossIn(originToken common.Address, originChainId *big.Int, fromChainId *big.Int, toChainId *big.Int,
+func (m *Monitor) CrossIn(fromToken, toToken common.Address, fromChainId *big.Int, toChainId *big.Int,
 	from common.Address, to common.Address, amount *big.Int, txId string) error {
 	minted := m.bridgeWrapper.TxHandled(txId)
 	if minted {
@@ -316,7 +315,7 @@ func (m *Monitor) CrossIn(originToken common.Address, originChainId *big.Int, fr
 			gasPrice.BigInt().Cmp(m.bridgeWrapper.Session().TransactOpts.GasPrice) == 1 {
 			m.bridgeWrapper.Session().TransactOpts.GasPrice = gasPrice.BigInt()
 
-			transaction, hash = m.bridgeWrapper.CrossIn(originToken, originChainId, fromChainId, toChainId, from, to, amount, txId)
+			transaction, hash = m.bridgeWrapper.CrossIn(fromToken, toToken, fromChainId, toChainId, from, to, amount, txId)
 			m.bridgeWrapper.Session().TransactOpts.Nonce = big.NewInt(int64(transaction.Nonce()))
 			hashes = append(hashes, hash)
 
@@ -351,21 +350,21 @@ func (m *Monitor) GetLockLog(txId string) (*monitor.Coco, error) {
 		}
 		for _, topic := range log.Topics {
 			if strings.EqualFold(topic.String(), m.bridgeAbi.Events["CrossOut"].ID.String()) {
-				var lock monitor.NBridgeCrossOut
+				var lock monitor.OfficialBridgeCrossOut
 				if err := m.bridgeAbi.UnpackIntoInterface(&lock, "CrossOut", log.Data); err != nil {
 					m.logger.Error(err)
 					continue
 				}
 				return &monitor.Coco{
-					OriginToken:   lock.OriginToken,
-					OriginChainId: lock.OriginChainId,
-					FromChainId:   lock.FromChainId,
-					ToChainId:     lock.ToChainId,
-					From:          lock.From,
-					To:            lock.To,
-					Amount:        lock.Amount,
-					TxId:          log.TxHash.String(),
-					BlockHeight:   receipt.BlockNumber.Uint64(),
+					FromToken:   lock.FromToken,
+					ToToken:     lock.ToToken,
+					FromChainId: lock.FromChainId,
+					ToChainId:   lock.ToChainId,
+					From:        lock.From,
+					To:          lock.To,
+					Amount:      lock.Amount,
+					TxId:        log.TxHash.String(),
+					BlockHeight: receipt.BlockNumber.Uint64(),
 				}, nil
 			}
 		}

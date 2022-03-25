@@ -29,8 +29,8 @@ type BridgeWrapper struct {
 	config    *repo.BridgeConfig
 	rpcClient *rpc.Client
 	ethClient *ethclient.Client
-	bridge    *NBridge
-	session   *NBridgeSession
+	bridge    *OfficialBridge
+	session   *OfficialBridgeSession
 	logger    logrus.FieldLogger
 }
 
@@ -46,7 +46,7 @@ func NewBridgeWrapper(config *repo.BridgeConfig, logger logrus.FieldLogger) (*Br
 
 	etherCli := ethclient.NewClient(rpcClient)
 
-	bridge, err := NewNBridge(common.HexToAddress(config.BridgeContract), etherCli)
+	bridge, err := NewOfficialBridge(common.HexToAddress(config.BridgeContract), etherCli)
 	if err != nil {
 		return nil, fmt.Errorf("failed to instantiate a cross contract: %w", err)
 	}
@@ -67,7 +67,7 @@ func NewBridgeWrapper(config *repo.BridgeConfig, logger logrus.FieldLogger) (*Br
 		auth.GasLimit = config.GasLimit
 	}
 
-	session := &NBridgeSession{
+	session := &OfficialBridgeSession{
 		Contract: bridge,
 		CallOpts: bind.CallOpts{
 			Pending: false,
@@ -149,8 +149,8 @@ func (bw *BridgeWrapper) IndexHeight(chainId, index *big.Int) *big.Int {
 	return number
 }
 
-func (bw *BridgeWrapper) FilterCrossOut(opts *bind.FilterOpts) *NBridgeCrossOutIterator {
-	var iterator *NBridgeCrossOutIterator
+func (bw *BridgeWrapper) FilterCrossOut(opts *bind.FilterOpts) *OfficialBridgeCrossOutIterator {
+	var iterator *OfficialBridgeCrossOutIterator
 	var err error
 
 	if err := retry.Retry(func(attempt uint) error {
@@ -212,8 +212,8 @@ func (bw *BridgeWrapper) SuggestGasPrice(ctx context.Context) *big.Int {
 	return result
 }
 
-func (bw *BridgeWrapper) CrossIn(originToken common.Address, originChainId *big.Int, fromChainId *big.Int, toChainId *big.Int,
-	from common.Address, to common.Address, amount *big.Int, txId string) (*types.Transaction, common.Hash) {
+func (bw *BridgeWrapper) CrossIn(fromToken, toToken common.Address, fromChainId *big.Int, toChainId *big.Int,
+	from, to common.Address, amount *big.Int, txId string) (*types.Transaction, common.Hash) {
 	var tx *types.Transaction
 	var err error
 	var hash common.Hash
@@ -223,15 +223,15 @@ func (bw *BridgeWrapper) CrossIn(originToken common.Address, originChainId *big.
 		gasPrice := decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromFloat(1.2))
 		bw.session.TransactOpts.GasPrice = gasPrice.BigInt()
 
-		param := NCrossInParams{
-			OriginToken:   originToken,
-			OriginChainId: originChainId,
-			FromChainId:   fromChainId,
-			ToChainId:     toChainId,
-			From:          from,
-			To:            to,
-			Amount:        amount,
-			Txid:          txId,
+		param := OfficialBridgeCrossInParam{
+			FromToken:   fromToken,
+			FromChainId: fromChainId,
+			ToChainId:   toChainId,
+			ToToken:     toToken,
+			From:        from,
+			To:          to,
+			Amount:      amount,
+			Txid:        txId,
 		}
 		if bw.config.ChainID == 65 || bw.config.ChainID == 66 {
 			tx, hash, err = bw.okChainCrossIn(param)
@@ -258,8 +258,8 @@ func (bw *BridgeWrapper) CrossIn(originToken common.Address, originChainId *big.
 	return tx, hash
 }
 
-func (bw *BridgeWrapper) okChainCrossIn(param NCrossInParams) (*types.Transaction, common.Hash, error) {
-	parsed, err := abi.JSON(strings.NewReader(NBridgeABI))
+func (bw *BridgeWrapper) okChainCrossIn(param OfficialBridgeCrossInParam) (*types.Transaction, common.Hash, error) {
+	parsed, err := abi.JSON(strings.NewReader(OfficialBridgeABI))
 	if err != nil {
 		return nil, common.Hash{}, err
 	}
@@ -364,7 +364,7 @@ func (bw *BridgeWrapper) switchToNextAddr() {
 			continue
 		}
 
-		bw.bridge, err = NewNBridge(common.HexToAddress(bw.config.BridgeContract), bw.ethClient)
+		bw.bridge, err = NewOfficialBridge(common.HexToAddress(bw.config.BridgeContract), bw.ethClient)
 		if err != nil {
 			continue
 		}
@@ -379,7 +379,7 @@ func (bw *BridgeWrapper) switchToNextAddr() {
 	panic("all bridge addrs are not valid")
 }
 
-func (bw *BridgeWrapper) Session() *NBridgeSession {
+func (bw *BridgeWrapper) Session() *OfficialBridgeSession {
 	return bw.session
 }
 
