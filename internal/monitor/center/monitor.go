@@ -134,34 +134,30 @@ func (m *Monitor) listenEvent(chainId uint64) {
 				}
 				for !hasEvent {
 					j := i
-					filter := m.wrapper.FilterWithdrawed(&bind.FilterOpts{Start: indexHeight, End: &indexHeight, Context: m.ctx})
-					for filter.Next() {
-						if filter.Event.P.ToChainId.Uint64() != chainId {
+					withdrawedFilter := m.wrapper.FilterWithdrawed(&bind.FilterOpts{Start: indexHeight, End: &indexHeight, Context: m.ctx})
+					for withdrawedFilter.Next() {
+						if withdrawedFilter.Event.P.ToChainId.Uint64() != chainId {
 							continue
 						}
-						m.handleWithdrawed(filter.Event)
+						m.handleWithdrawed(withdrawedFilter.Event)
 						hasEvent = true
 					}
-					if !hasEvent {
-						filter := m.wrapper.FilterForwardCrossOuted(&bind.FilterOpts{Start: indexHeight, End: &indexHeight, Context: m.ctx})
-						for filter.Next() {
-							if filter.Event.P.ToChainId.Uint64() != chainId {
-								continue
-							}
-							m.handleForwardCrossOuted(filter.Event)
-							hasEvent = true
+					forwardFilter := m.wrapper.FilterForwardCrossOuted(&bind.FilterOpts{Start: indexHeight, End: &indexHeight, Context: m.ctx})
+					for forwardFilter.Next() {
+						if forwardFilter.Event.P.ToChainId.Uint64() != chainId {
+							continue
 						}
+						m.handleForwardCrossOuted(forwardFilter.Event)
+						hasEvent = true
 					}
-					if !hasEvent {
-						filter := m.wrapper.FilterCenterCrossOuted(&bind.FilterOpts{Start: indexHeight, End: &indexHeight, Context: m.ctx})
-						for filter.Next() {
-							if filter.Event.P.ToChainId.Uint64() != chainId {
-								continue
-							}
-							m.handleCenterCrossOuted(filter.Event)
-							hasEvent = true
-
+					crossOutedfilter := m.wrapper.FilterCenterCrossOuted(&bind.FilterOpts{Start: indexHeight, End: &indexHeight, Context: m.ctx})
+					for crossOutedfilter.Next() {
+						if crossOutedfilter.Event.P.ToChainId.Uint64() != chainId {
+							continue
 						}
+						m.handleCenterCrossOuted(crossOutedfilter.Event)
+						hasEvent = true
+
 					}
 					if hasEvent {
 						m.persistIndex(chainId, j)
