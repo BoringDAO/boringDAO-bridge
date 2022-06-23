@@ -9,18 +9,18 @@ builds:
       - CGO_ENABLED=0
     goos:
       - linux
-      - windows
-      - darwin
+      # - windows
+      # - darwin
     main: ./cmd/bridge/
     binary: bridge
     ldflags:
       - -s -w -X main.version={{.Version}} -X main.commit={{.ShortCommit}} -X main.date={{.Date}} -X main.builtBy=goreleaser
 archives:
   - replacements:
-      darwin: Darwin
+      # darwin: Darwin
       linux: Linux
-      windows: Windows
-      386: i386
+      # windows: Windows
+      # 386: i386
       amd64: x86_64
 checksum:
   name_template: 'checksums.txt'
