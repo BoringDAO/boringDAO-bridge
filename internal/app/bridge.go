@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -40,15 +41,20 @@ func New(repoRoot *repo.Repo) (*Bridge, error) {
 
 	monitors := make(map[uint64]monitor.IMonitor)
 
+	tokens := make(map[string]string)
+	for tokenAddr, originChainId := range repoRoot.Config.Token {
+		tokens[strings.TrimSpace(tokenAddr)] = strings.TrimSpace(originChainId)
+	}
+
 	for _, bConfig := range repoRoot.Config.Bridges {
 		if bConfig.IsFilter {
-			mnt, err := filter.New(repoRoot.Config.RepoRoot, bConfig, repoRoot.Config.Token, chainIDs, loggers.Logger(bConfig.Name))
+			mnt, err := filter.New(repoRoot.Config.RepoRoot, bConfig, tokens, chainIDs, loggers.Logger(bConfig.Name))
 			if err != nil {
 				return nil, err
 			}
 			monitors[bConfig.ChainID] = mnt
 		} else {
-			mnt, err := monitor.New(repoRoot.Config.RepoRoot, bConfig, repoRoot.Config.Token, chainIDs, loggers.Logger(bConfig.Name))
+			mnt, err := monitor.New(repoRoot.Config.RepoRoot, bConfig, tokens, chainIDs, loggers.Logger(bConfig.Name))
 			if err != nil {
 				return nil, err
 			}
