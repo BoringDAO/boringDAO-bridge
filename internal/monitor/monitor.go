@@ -249,7 +249,7 @@ func (m *Monitor) handleCross(crossOut *NBridgeCrossOut, index uint64) bool {
 
 func (m *Monitor) checkSupportedToken(token, chainID string) bool {
 	for tokenAddr, originChainId := range m.token {
-		if strings.EqualFold(token, tokenAddr) && strings.EqualFold(chainID, originChainId) {
+		if strings.EqualFold(token, strings.TrimSpace(tokenAddr)) && strings.EqualFold(chainID, strings.TrimSpace(originChainId)) {
 			return true
 		}
 	}
