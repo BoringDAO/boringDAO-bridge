@@ -39,6 +39,7 @@ type Monitor struct {
 	edgeAddr         common.Address
 	address          common.Address
 	mut              sync.Mutex
+	rangeHeight      uint64
 	ctx              context.Context
 	cancel           context.CancelFunc
 }
@@ -72,6 +73,12 @@ func New(repoRoot string, config *repo.EdgeConfig, logger logrus.FieldLogger) (m
 	} else {
 		gasFeeRate = config.GasFeeRate
 	}
+	rangeHeight := uint64(0)
+	if config.RangeHeight == 0 {
+		rangeHeight = 300
+	} else {
+		rangeHeight = config.RangeHeight
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Monitor{
@@ -80,6 +87,7 @@ func New(repoRoot string, config *repo.EdgeConfig, logger logrus.FieldLogger) (m
 		address:     address,
 		gasFeeRate:  gasFeeRate,
 		wrapper:     wrapper,
+		rangeHeight: rangeHeight,
 		edgeAddr:    common.HexToAddress(config.EdgeContract),
 		minConfirms: uint64(minConfirms),
 		cocoC:       make(chan *monitor.Coco),
@@ -120,8 +128,8 @@ func (m *Monitor) listenDepositedEvent() {
 			if num < m.minConfirms || end < start {
 				continue
 			}
-			if end >= start+300 {
-				end = start + 300
+			if end >= start+m.rangeHeight {
+				end = start + m.rangeHeight
 			}
 			filter := m.wrapper.FilterDeposited(&bind.FilterOpts{Start: start, End: &end, Context: m.ctx})
 			for filter.Next() {

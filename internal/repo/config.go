@@ -63,6 +63,7 @@ type EdgeConfig struct {
 	GasLimit            uint64            `toml:"gasLimit" json:"gasLimit"`
 	GasFeeRate          float64           `toml:"gasFeeRate" json:"gasFeeRate"`
 	Index               map[uint64]uint64 `toml:"index" json:"index"`
+	RangeHeight         uint64            `toml:"rangeHeight" json:"rangeHeight"`
 	DepositedHeight     uint64            `mapstructure:"depositedHeight" json:"depositedHeight"`
 	CrossOutedHeight    uint64            `mapstructure:"crossOutedHeight" json:"crossOutedHeight"`
 	CrossInFailedHeight uint64            `mapstructure:"crossInFailedHeight" json:"crossInFailedHeight"`
