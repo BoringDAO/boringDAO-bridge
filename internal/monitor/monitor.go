@@ -112,7 +112,7 @@ func (m *Monitor) HandleFinishedCoco(coco *Coco) {
 }
 
 func (m *Monitor) listenCrossOutEvent() {
-	ticker := time.NewTicker(30 * time.Second)
+	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
 	for {
@@ -207,10 +207,6 @@ func (m *Monitor) handleCross(crossOut *NBridgeCrossOut, index uint64) bool {
 		return false
 	}
 
-	if m.HasTx(crossOut.Raw.TxHash.String()) {
-		return false
-	}
-
 	coco := &Coco{
 		Index:         index,
 		OriginToken:   crossOut.OriginToken,
@@ -236,7 +232,12 @@ func (m *Monitor) handleCross(crossOut *NBridgeCrossOut, index uint64) bool {
 		"TxId":          crossOut.Raw.TxHash.String(),
 		"block_height":  crossOut.Raw.BlockNumber,
 		"removed":       crossOut.Raw.Removed,
+		"hasTx":         m.HasTx(crossOut.Raw.TxHash.String()),
 	}).Info("CrossOut")
+
+	if m.HasTx(crossOut.Raw.TxHash.String()) {
+		return false
+	}
 
 	if crossOut.Raw.Removed {
 		return false

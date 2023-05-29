@@ -320,7 +320,7 @@ func (bw *BridgeWrapper) TransactionReceiptsLimitedRetry(ctx context.Context, tx
 			}
 		}
 		return err
-	}, strategy.Wait(10*time.Second), strategy.Limit(30)); err != nil {
+	}, strategy.Wait(2*time.Second)); err != nil {
 		bw.logger.Warnf("retry TransactionReceipt: %s", err.Error())
 	}
 
