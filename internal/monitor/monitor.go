@@ -121,7 +121,6 @@ func (m *Monitor) listenCrossOutEvent() {
 		case <-ticker.C:
 			num := m.bridgeWrapper.BlockNumber(context.TODO())
 			end := num - m.config.MinConfirms
-			hasEvent := false
 			for _, chainId := range m.chainIDs {
 				start, ok := m.index[chainId]
 				if !ok {
@@ -131,12 +130,14 @@ func (m *Monitor) listenCrossOutEvent() {
 				chainBigInt := new(big.Int).SetUint64(chainId)
 				index := m.bridgeWrapper.Index(chainBigInt)
 				for i := start + 1; i <= index.Uint64(); {
+					m.logger.Infof("listenEvent chainId:[%d], index:[%d]", chainId, i)
 					indexHeight := m.bridgeWrapper.IndexHeight(chainBigInt, new(big.Int).SetUint64(i)).Uint64()
 					if indexHeight > end || indexHeight == 0 {
 						m.logger.Warnf("IndexHeight[%d][%d]: %s", chainId, index.Uint64(), "indexHeight > end || indexHeight == 0")
 						time.Sleep(1 * time.Second)
 						continue
 					}
+					hasEvent := false
 					for !hasEvent {
 						filter := m.bridgeWrapper.FilterCrossOut(&bind.FilterOpts{Start: indexHeight, End: &indexHeight, Context: m.ctx})
 						for filter.Next() {
@@ -177,6 +178,7 @@ func (m *Monitor) handleCrossInCocoC() {
 					"error":         err.Error(),
 				}).Panic("CrossIn failed")
 			}
+			// time.Sleep(2 * time.Second)
 
 			m.finishedC <- coco
 
