@@ -134,7 +134,8 @@ func (m *Monitor) listenCrossOutEvent() {
 					indexHeight := m.bridgeWrapper.IndexHeight(chainBigInt, new(big.Int).SetUint64(i)).Uint64()
 					if indexHeight > end || indexHeight == 0 {
 						m.logger.Warnf("IndexHeight[%d][%d]: %s", chainId, index.Uint64(), "indexHeight > end || indexHeight == 0")
-						time.Sleep(1 * time.Second)
+						num := m.bridgeWrapper.BlockNumber(context.TODO())
+						end = num - m.config.MinConfirms
 						continue
 					}
 					hasEvent := false
@@ -151,7 +152,7 @@ func (m *Monitor) listenCrossOutEvent() {
 						}
 					}
 				}
-				m.logger.Infof("listenEvent chainId:[%d], index from [%d] to [%d]", chainId, start+1, index.Uint64())
+				m.logger.Infof("listenEvent chainId:[%d], index from [%d] to [%d]", chainId, start, index.Uint64())
 			}
 
 		case <-m.ctx.Done():
