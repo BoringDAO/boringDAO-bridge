@@ -68,9 +68,9 @@ func New(repoRoot string, config *repo.BridgeConfig, token map[string]string, ch
 		storage:       storage,
 		bridgeWrapper: bw,
 		bridgeAbi:     borAbi,
-		crossOutC:     make(chan *Coco),
-		crossInC:      make(chan *Coco),
-		finishedC:     make(chan *Coco),
+		crossOutC:     make(chan *Coco, 1024),
+		crossInC:      make(chan *Coco, 1024),
+		finishedC:     make(chan *Coco, 1024),
 		chainIDs:      chainIDs,
 		index:         make(map[uint64]uint64),
 		logger:        logger,
@@ -107,6 +107,7 @@ func (m *Monitor) ListenFinishedCocoC() chan *Coco {
 }
 
 func (m *Monitor) HandleFinishedCoco(coco *Coco) {
+	m.persistIndex(coco.ToChainId.Uint64(), coco.Index)
 	m.putTxID(coco.TxId, coco)
 	m.cocoNum.Dec()
 }
@@ -129,37 +130,27 @@ func (m *Monitor) listenCrossOutEvent() {
 				}
 				chainBigInt := new(big.Int).SetUint64(chainId)
 				index := m.bridgeWrapper.Index(chainBigInt)
-				for i := start + 1; i <= index.Uint64(); i++ {
+				for i := start + 1; i <= index.Uint64(); {
 					indexHeight := m.bridgeWrapper.IndexHeight(chainBigInt, new(big.Int).SetUint64(i)).Uint64()
 					if indexHeight > end || indexHeight == 0 {
-						break
+						m.logger.Warnf("IndexHeight[%d][%d]: %s", chainId, index.Uint64(), "indexHeight > end || indexHeight == 0")
+						time.Sleep(1 * time.Second)
+						continue
 					}
 					for !hasEvent {
-						j := i
 						filter := m.bridgeWrapper.FilterCrossOut(&bind.FilterOpts{Start: indexHeight, End: &indexHeight, Context: m.ctx})
 						for filter.Next() {
 							if filter.Event.ToChainId.Uint64() != chainId {
 								continue
 							}
 							hasEvent = true
-							res := m.handleCross(filter.Event, j)
-							if res {
-								m.cocoNum.Inc()
-							}
-							for m.cocoNum.Load() != 0 {
-								time.Sleep(3 * time.Second)
-							}
-							m.persistIndex(chainId, j)
-							m.index[chainId] = j
-							j++
-						}
-						if j > i+1 {
-							i = j
+							m.handleCross(filter.Event, i)
+							m.index[chainId] = i
+							i++
 						}
 					}
-
 				}
-				m.logger.Infof("listenEvent chainId:[%d], index from [%d] to [%d]", chainId, start, index.Uint64())
+				m.logger.Infof("listenEvent chainId:[%d], index from [%d] to [%d]", chainId, start+1, index.Uint64())
 			}
 
 		case <-m.ctx.Done():

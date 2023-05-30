@@ -163,7 +163,7 @@ func (bw *BridgeWrapper) FilterCrossOut(opts *bind.FilterOpts) *NBridgeCrossOutI
 			}
 		}
 		return err
-	}, strategy.Wait(10*time.Second)); err != nil {
+	}, strategy.Wait(2*time.Second)); err != nil {
 		bw.logger.Panic(err)
 	}
 
