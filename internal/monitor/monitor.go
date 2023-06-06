@@ -136,6 +136,7 @@ func (m *Monitor) listenCrossOutEvent() {
 						m.logger.Warnf("IndexHeight[%d][%d]: %s", chainId, index.Uint64(), "indexHeight > end || indexHeight == 0")
 						num := m.bridgeWrapper.BlockNumber(context.TODO())
 						end = num - m.config.MinConfirms
+						time.Sleep(5 * time.Second)
 						continue
 					}
 					hasEvent := false
