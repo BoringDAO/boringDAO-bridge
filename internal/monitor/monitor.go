@@ -113,7 +113,7 @@ func (m *Monitor) HandleFinishedCoco(coco *Coco) {
 }
 
 func (m *Monitor) listenCrossOutEvent() {
-	ticker := time.NewTicker(30 * time.Second)
+	ticker := time.NewTicker(100 * time.Second)
 	defer ticker.Stop()
 
 	for {
@@ -136,7 +136,7 @@ func (m *Monitor) listenCrossOutEvent() {
 						m.logger.Warnf("IndexHeight[%d][%d]: %s", chainId, index.Uint64(), "indexHeight > end || indexHeight == 0")
 						num := m.bridgeWrapper.BlockNumber(context.TODO())
 						end = num - m.config.MinConfirms
-						time.Sleep(5 * time.Second)
+						time.Sleep(50 * time.Second)
 						continue
 					}
 					hasEvent := false
