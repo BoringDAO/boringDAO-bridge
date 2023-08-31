@@ -113,7 +113,7 @@ func (m *Monitor) HandleFinishedCoco(coco *Coco) {
 }
 
 func (m *Monitor) listenCrossOutEvent() {
-	ticker := time.NewTicker(100 * time.Second)
+	ticker := time.NewTicker(300 * time.Second)
 	defer ticker.Stop()
 
 	for {
