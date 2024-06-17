@@ -101,12 +101,16 @@ func (m *Monitor) listenEvent() {
 			}
 
 			if !common.IsHexAddress(event.Event.ToAddress) {
-				m.logger.Errorf("Ton GetEventData failed: %s, %s", "invalid address", event.Event.ToAddress)
+				m.logger.Errorf("Ton GetEventData failed: %s[%d], %s", "invalid address", m.index, event.Event.ToAddress)
+				m.index++
+				m.persistIndex(m.index)
 				continue
 			}
 			toToken, ok := m.tokens[event.Event.JettonWalletAddress.String()]
 			if !ok {
-				m.logger.Errorf("Ton GetEventData failed: %s, %s", "invalid token", event.Event.JettonWalletAddress.String())
+				m.logger.Errorf("Ton GetEventData failed: %s[%d], %s", "invalid token", m.index, event.Event.JettonWalletAddress.String())
+				m.index++
+				m.persistIndex(m.index)
 				continue
 			}
 			m.cocoC <- &monitor.Coco{
@@ -182,6 +186,9 @@ func (m *Monitor) loadIndexFromStorage() {
 		m.index = binary.LittleEndian.Uint64(buf)
 	} else {
 		m.index = 0
+	}
+	if m.config.Index != 0 {
+		m.index = m.config.Index
 	}
 
 	m.logger.WithFields(logrus.Fields{
