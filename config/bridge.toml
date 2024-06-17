@@ -3,36 +3,38 @@ title = "Bridge configuration file"
 keyFile = ""
 
 [center]
-  name = "matic_test"
+  name = "amoy"
   addrs = [
-    "https://rpc-mumbai.maticvigil.com"
+    "https://rpc.ankr.com/polygon_amoy"
   ]
-  chainID = 80001 # main 137, testnet 80001
-  minConfirms = 1 # min confirms
-  gasLimit = 1500000 # gas Limit
-  gasFeeRate = 1.8
-  centerContract = "0xCbb3f8292CbE44efb8A059eA2406bD36F5ab1652"
-
-[[edges]]
-  name = "arbi_test"
-  addrs = [
-    "https://rinkeby.arbitrum.io/rpc" # rpc host
-  ]
-  chainID = 421611
+  chainID = 80002 
   minConfirms = 1 # min confirms
   gasLimit = 1500000 # gas Limit
   gasFeeRate = 1.2
-  edgeContract = "0x3caf319515A122E98Da710304f31F237a9b304C7"
+  centerContract = "0xBA6E3cfAfd0bF84e5d4E93560a7eac6c8c59201f"
 
 [[edges]]
-name = "kovan_test"
+  name = "sepolia"
+  addrs = [
+    "https://rpc.ankr.com/eth_sepolia" # rpc host
+  ]
+  chainID = 11155111
+  minConfirms = 1 # min confirms
+  gasLimit = 1500000 # gas Limit
+  gasFeeRate = 1.2
+  edgeContract = "0xC258B926c595F91C812ed224207A8604250fCCF5"
+
+
+[tonEdge]
+name = "ton"
 addrs = [
-  "https://kovan.infura.io/v3/f05d1f443cdc4cd089c073969678e26a" # rpc host
+  "https://tonutils.com/global.config.json"
 ]
-chainID = 42
-minConfirms = 1 # min confirms
-gasLimit = 1500000 # gas Limit
-edgeContract = "0x79149445532A5847F12b136448a5f1AC25d85C92"
+chainID = 10101010
+edgeContract = "EQAoWYTgcJM7SCzmJvn0UjicfgZRvfVKa7WQSo3dSUb7X7Rn"
+index = 2
+[tonEdge.tokens]
+  "0x0000000000000000000000000000000000000001" = "EQB0Ir-n0_U-tBYaCx6NEdar-3MylfpYFE9-oa77NOk8D_uW" # USDT
 
 [log]
   level = "info"

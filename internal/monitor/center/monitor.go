@@ -182,7 +182,7 @@ func (m *Monitor) HandleCocoC() chan *monitor.Coco {
 	return m.cocoC
 }
 
-func (m *Monitor) handleWithdrawed(withdrawed *center.TwoWayCenterWithdrawed) {
+func (m *Monitor) handleWithdrawed(withdrawed *center.CenterWithdrawed) {
 	if !strings.EqualFold(withdrawed.Raw.Address.String(), m.config.CenterContract) {
 		return
 	}
@@ -205,8 +205,8 @@ func (m *Monitor) handleWithdrawed(withdrawed *center.TwoWayCenterWithdrawed) {
 	}
 
 	m.logger.WithFields(logrus.Fields{
-		"from":          coco.From.String(),
-		"to":            coco.To.String(),
+		"from":          hexutil.Encode(coco.From),
+		"to":            hexutil.Encode(coco.To),
 		"from_chain_id": coco.FromChainId.String(),
 		"to_chain_id":   coco.ToChainId.String(),
 		"from_token":    coco.FromToken.String(),
@@ -232,7 +232,7 @@ func (m *Monitor) handleWithdrawed(withdrawed *center.TwoWayCenterWithdrawed) {
 	}
 }
 
-func (m *Monitor) handleCenterCrossOuted(outed *center.TwoWayCenterCrossOuted) {
+func (m *Monitor) handleCenterCrossOuted(outed *center.CenterCrossOuted) {
 	if !strings.EqualFold(outed.Raw.Address.String(), m.config.CenterContract) {
 		return
 	}
@@ -255,8 +255,8 @@ func (m *Monitor) handleCenterCrossOuted(outed *center.TwoWayCenterCrossOuted) {
 	}
 
 	m.logger.WithFields(logrus.Fields{
-		"from":          coco.From.String(),
-		"to":            coco.To.String(),
+		"from":          hexutil.Encode(coco.From),
+		"to":            hexutil.Encode(coco.To),
 		"from_chain_id": coco.FromChainId.String(),
 		"to_chain_id":   coco.ToChainId.String(),
 		"from_token":    coco.FromToken.String(),
@@ -282,7 +282,7 @@ func (m *Monitor) handleCenterCrossOuted(outed *center.TwoWayCenterCrossOuted) {
 	}
 }
 
-func (m *Monitor) handleForwardCrossOuted(outed *center.TwoWayCenterForwardCrossOuted) {
+func (m *Monitor) handleForwardCrossOuted(outed *center.CenterForwardCrossOuted) {
 	if !strings.EqualFold(outed.Raw.Address.String(), m.config.CenterContract) {
 		return
 	}
@@ -305,8 +305,8 @@ func (m *Monitor) handleForwardCrossOuted(outed *center.TwoWayCenterForwardCross
 	}
 
 	m.logger.WithFields(logrus.Fields{
-		"from":          coco.From.String(),
-		"to":            coco.To.String(),
+		"from":          hexutil.Encode(coco.From),
+		"to":            hexutil.Encode(coco.To),
 		"from_chain_id": coco.FromChainId.String(),
 		"to_chain_id":   coco.ToChainId.String(),
 		"from_token":    coco.FromToken.String(),
@@ -331,7 +331,7 @@ func (m *Monitor) handleForwardCrossOuted(outed *center.TwoWayCenterForwardCross
 	}
 }
 
-func (m *Monitor) CrossIn(fromToken common.Address, from, to common.Address, fromChainID, toChainID, amount *big.Int, txId string) error {
+func (m *Monitor) CrossIn(fromToken common.Address, from, to []byte, fromChainID, toChainID, amount *big.Int, txId string) error {
 	unlocked := m.wrapper.TxHandled(txId)
 	if unlocked {
 		m.logger.Infof("find TxHandled txId:%s", txId)
@@ -341,8 +341,8 @@ func (m *Monitor) CrossIn(fromToken common.Address, from, to common.Address, fro
 	m.logger.WithFields(logrus.Fields{
 		"tx_id":       txId,
 		"from_token":  fromToken.String(),
-		"from":        from.String(),
-		"to":          to.String(),
+		"from":        hexutil.Encode(from),
+		"to":          hexutil.Encode(to),
 		"fromChainId": fromChainID.String(),
 		"toChainId":   toChainID.String(),
 		"amount":      amount.String(),
@@ -399,7 +399,7 @@ func (m *Monitor) CrossIn(fromToken common.Address, from, to common.Address, fro
 	return nil
 }
 
-func (m *Monitor) Issue(fromToken, toToken common.Address, from, to common.Address, fromChainID, toChainID, amount *big.Int, txId string) error {
+func (m *Monitor) Issue(fromToken, toToken common.Address, from, to []byte, fromChainID, toChainID, amount *big.Int, txId string) error {
 	unlocked := m.wrapper.TxHandled(txId)
 	if unlocked {
 		m.logger.Infof("find TxHandled txId:%s", txId)
@@ -410,8 +410,8 @@ func (m *Monitor) Issue(fromToken, toToken common.Address, from, to common.Addre
 		"tx_id":       txId,
 		"from_token":  fromToken.String(),
 		"to_token":    toToken.String(),
-		"from":        from.String(),
-		"to":          to.String(),
+		"from":        hexutil.Encode(from),
+		"to":          hexutil.Encode(to),
 		"fromChainId": fromChainID.String(),
 		"toChainId":   toChainID.String(),
 		"amount":      amount.String(),
@@ -468,7 +468,7 @@ func (m *Monitor) Issue(fromToken, toToken common.Address, from, to common.Addre
 	return nil
 }
 
-func (m *Monitor) RollbackCrossIn(fromToken, toToken common.Address, from, to common.Address, fromChainID, toChainID, amount *big.Int, txId string) error {
+func (m *Monitor) RollbackCrossIn(fromToken, toToken common.Address, from, to []byte, fromChainID, toChainID, amount *big.Int, txId string) error {
 	unlocked := m.wrapper.TxHandled(txId)
 	if unlocked {
 		m.logger.Infof("find TxHandled txId:%s", txId)
@@ -479,8 +479,8 @@ func (m *Monitor) RollbackCrossIn(fromToken, toToken common.Address, from, to co
 		"tx_id":       txId,
 		"from_token":  fromToken.String(),
 		"to_token":    toToken.String(),
-		"from":        from.String(),
-		"to":          to.String(),
+		"from":        hexutil.Encode(from),
+		"to":          hexutil.Encode(to),
 		"fromChainId": fromChainID.String(),
 		"toChainId":   toChainID.String(),
 		"amount":      amount.String(),
@@ -534,7 +534,7 @@ func (m *Monitor) RollbackCrossIn(fromToken, toToken common.Address, from, to co
 	return nil
 }
 
-func (m *Monitor) ForwardCrossOut(fromToken common.Address, from, to common.Address, fromChainID, toChainID, amount *big.Int, txId string) error {
+func (m *Monitor) ForwardCrossOut(fromToken common.Address, from, to []byte, fromChainID, toChainID, amount *big.Int, txId string) error {
 	unlocked := m.wrapper.TxHandled(txId)
 	if unlocked {
 		m.logger.Infof("find TxHandled txId:%s", txId)
@@ -544,8 +544,8 @@ func (m *Monitor) ForwardCrossOut(fromToken common.Address, from, to common.Addr
 	m.logger.WithFields(logrus.Fields{
 		"tx_id":       txId,
 		"from_token":  fromToken.String(),
-		"from":        from.String(),
-		"to":          to.String(),
+		"from":        hexutil.Encode(from),
+		"to":          hexutil.Encode(to),
 		"fromChainId": fromChainID.String(),
 		"toChainId":   toChainID.String(),
 		"amount":      amount.String(),

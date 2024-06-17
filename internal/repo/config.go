@@ -22,11 +22,12 @@ const (
 )
 
 type Config struct {
-	RepoRoot string        `json:"repo_root"`
-	Title    string        `json:"title"`
-	Edges    []*EdgeConfig `json:"edges"`
-	KeyFile  string        `json:"keyFile"`
-	Center   *CenterConfig `json:"center"`
+	RepoRoot string         `json:"repo_root"`
+	Title    string         `json:"title"`
+	Edges    []*EdgeConfig  `json:"edges"`
+	TonEdge  *EdgeTonConfig `json:"tonEdge"`
+	KeyFile  string         `json:"keyFile"`
+	Center   *CenterConfig  `json:"center"`
 	Log      `json:"log"`
 }
 
@@ -67,7 +68,17 @@ type EdgeConfig struct {
 	DepositedHeight     uint64            `mapstructure:"depositedHeight" json:"depositedHeight"`
 	CrossOutedHeight    uint64            `mapstructure:"crossOutedHeight" json:"crossOutedHeight"`
 	CrossInFailedHeight uint64            `mapstructure:"crossInFailedHeight" json:"crossInFailedHeight"`
-	EdgeContract        string            `toml:"EdgeContract" json:"EdgeContract"`
+	EdgeContract        string            `toml:"edgeContract" json:"edgeContract"`
+}
+
+type EdgeTonConfig struct {
+	Name         string            `toml:"name" json:"name"`
+	Addrs        []string          `toml:"addrs" json:"addrs"`
+	ChainID      uint64            `toml:"chainID" json:"chainID"`
+	MNEMONIC     string            `toml:"mnemonic" json:"mnemonic"`
+	Index        uint64            `toml:"index" json:"index"`
+	EdgeContract string            `toml:"edgeContract" json:"edgeContract"`
+	Tokens       map[string]string `toml:"tokens" json:"tokens"`
 }
 
 func (c *Config) Bytes() ([]byte, error) {

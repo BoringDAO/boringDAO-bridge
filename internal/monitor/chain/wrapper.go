@@ -32,8 +32,8 @@ type Wrapper struct {
 	config    *repo.EdgeConfig
 	ethClient *ethclient.Client
 	rpcClient *rpc.Client
-	twoWay    *edge.TwoWayEdge
-	session   *edge.TwoWayEdgeSession
+	twoWay    *edge.Edge
+	session   *edge.EdgeSession
 	logger    logrus.FieldLogger
 }
 
@@ -48,7 +48,7 @@ func NewWrapper(config *repo.EdgeConfig, logger logrus.FieldLogger) (*Wrapper, e
 	}
 	etherCli := ethclient.NewClient(rpcClient)
 
-	twoWay, err := edge.NewTwoWayEdge(common.HexToAddress(config.EdgeContract), etherCli)
+	twoWay, err := edge.NewEdge(common.HexToAddress(config.EdgeContract), etherCli)
 	if err != nil {
 		return nil, fmt.Errorf("failed to instantiate a EdgeContract contract: %w", err)
 	}
@@ -77,7 +77,7 @@ func NewWrapper(config *repo.EdgeConfig, logger logrus.FieldLogger) (*Wrapper, e
 		auth.GasLimit = config.GasLimit
 	}
 
-	session := &edge.TwoWayEdgeSession{
+	session := &edge.EdgeSession{
 		Contract: twoWay,
 		CallOpts: bind.CallOpts{
 			Pending: false,
@@ -158,8 +158,8 @@ func (w *Wrapper) IndexHeight(chainId, index *big.Int) *big.Int {
 
 	return header
 }
-func (w *Wrapper) FilterDeposited(opts *bind.FilterOpts) *edge.TwoWayEdgeDepositedIterator {
-	var iterator *edge.TwoWayEdgeDepositedIterator
+func (w *Wrapper) FilterDeposited(opts *bind.FilterOpts) *edge.EdgeDepositedIterator {
+	var iterator *edge.EdgeDepositedIterator
 	var err error
 
 	if err := retry.Retry(func(attempt uint) error {
@@ -179,8 +179,8 @@ func (w *Wrapper) FilterDeposited(opts *bind.FilterOpts) *edge.TwoWayEdgeDeposit
 	return iterator
 }
 
-func (w *Wrapper) FilterCrossOuted(opts *bind.FilterOpts) *edge.TwoWayEdgeCrossOutedIterator {
-	var iterator *edge.TwoWayEdgeCrossOutedIterator
+func (w *Wrapper) FilterCrossOuted(opts *bind.FilterOpts) *edge.EdgeCrossOutedIterator {
+	var iterator *edge.EdgeCrossOutedIterator
 	var err error
 
 	if err := retry.Retry(func(attempt uint) error {
@@ -242,7 +242,7 @@ func (w *Wrapper) SuggestGasPrice(ctx context.Context) *big.Int {
 	return result
 }
 
-func (w *Wrapper) CrossIn(fromToken, toToken common.Address, from, to common.Address, fromChainID, toChainID, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
+func (w *Wrapper) CrossIn(fromToken, toToken common.Address, from, to []byte, fromChainID, toChainID, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
 	var tx *types.Transaction
 	var err error
 	var hash common.Hash
@@ -279,8 +279,8 @@ func (w *Wrapper) CrossIn(fromToken, toToken common.Address, from, to common.Add
 	return tx, hash
 }
 
-func (w *Wrapper) crossIn(fromToken, toToken common.Address, from, to common.Address, fromChainID, toChainID, amount *big.Int, txid string) (*types.Transaction, common.Hash, error) {
-	parsed, err := abi.JSON(strings.NewReader(edge.TwoWayEdgeMetaData.ABI))
+func (w *Wrapper) crossIn(fromToken, toToken common.Address, from, to []byte, fromChainID, toChainID, amount *big.Int, txid string) (*types.Transaction, common.Hash, error) {
+	parsed, err := abi.JSON(strings.NewReader(edge.EdgeMetaData.ABI))
 	if err != nil {
 		return nil, common.Hash{}, err
 	}
@@ -408,7 +408,7 @@ func (w *Wrapper) switchToNextAddr() {
 		}
 		w.ethClient = ethclient.NewClient(rpcClient)
 		w.rpcClient = rpcClient
-		w.twoWay, err = edge.NewTwoWayEdge(common.HexToAddress(w.config.EdgeContract), w.ethClient)
+		w.twoWay, err = edge.NewEdge(common.HexToAddress(w.config.EdgeContract), w.ethClient)
 		if err != nil {
 			continue
 		}
@@ -438,7 +438,7 @@ func (w *Wrapper) isNetworkError(err error) bool {
 		strings.Contains(err.Error(), "too many requests")
 }
 
-func (w *Wrapper) Session() *edge.TwoWayEdgeSession {
+func (w *Wrapper) Session() *edge.EdgeSession {
 	return w.session
 }
 

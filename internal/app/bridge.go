@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"math/big"
-	"sync"
 	"time"
 
 	"github.com/boringdao/bridge/internal/monitor/chain"
@@ -13,6 +12,7 @@ import (
 	"github.com/boringdao/bridge/internal/monitor"
 	center_chain "github.com/boringdao/bridge/internal/monitor/center"
 	"github.com/boringdao/bridge/internal/monitor/chain/filter"
+	ton "github.com/boringdao/bridge/internal/monitor/chain/ton_chain"
 	"github.com/boringdao/bridge/internal/repo"
 	"github.com/boringdao/bridge/pkg/storage"
 	"github.com/boringdao/bridge/pkg/storage/leveldb"
@@ -28,7 +28,6 @@ type Bridge struct {
 	logger    logrus.FieldLogger
 	edgeCocoC chan *monitor.Coco
 	mntCocoC  map[uint64]chan *monitor.Coco
-	mux       sync.Mutex
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -63,6 +62,16 @@ func New(repoRoot *repo.Repo) (*Bridge, error) {
 			if err != nil {
 				return nil, err
 			}
+		}
+		mnts[config.ChainID] = mnt
+		mntCocoC[config.ChainID] = make(chan *monitor.Coco, 1024)
+	}
+
+	if repoRoot.Config.TonEdge != nil {
+		config := repoRoot.Config.TonEdge
+		mnt, err := ton.New(repoRoot.Config.RepoRoot, config, chainIDs, loggers.Logger(config.Name))
+		if err != nil {
+			return nil, err
 		}
 		mnts[config.ChainID] = mnt
 		mntCocoC[config.ChainID] = make(chan *monitor.Coco, 1024)
@@ -105,7 +114,7 @@ func (b *Bridge) Start() error {
 	if err := b.center.Start(); err != nil {
 		return err
 	}
-	b.logger.Infof("mnt %s for chain ID %d has started", b.center.Name(), b.center.ChainId())
+	b.logger.Infof("center mnt %s for chain ID %d has started", b.center.Name(), b.center.ChainId())
 
 	go func() {
 		for coco := range b.center.HandleCocoC() {
@@ -141,9 +150,9 @@ func (b *Bridge) listenEdgeCocoC() {
 			var err error
 			switch coco.Typ {
 			case monitor.Deposited:
-				err = b.center.Issue(coco.FromToken, coco.ToToken, coco.From, coco.From, coco.FromChainId, big.NewInt(int64(b.center.ChainId())), coco.Amount, fmt.Sprintf("%s#Deposited", coco.TxId))
+				err = b.center.Issue(coco.FromToken, coco.ToToken, coco.From, coco.To, coco.FromChainId, big.NewInt(int64(b.center.ChainId())), coco.Amount, fmt.Sprintf("%s#Deposited", coco.TxId))
 			case monitor.CrossOuted:
-				if coco.ToChainId.Uint64() == b.center.ChainId() {
+				if coco.ToChainId == nil || coco.ToChainId.Uint64() == b.center.ChainId() {
 					err = b.center.CrossIn(coco.FromToken, coco.From, coco.To, coco.FromChainId, coco.ToChainId, coco.Amount, fmt.Sprintf("%s#CrossOuted", coco.TxId))
 				} else {
 					err = b.center.ForwardCrossOut(coco.FromToken, coco.From, coco.To, coco.FromChainId, coco.ToChainId, coco.Amount, fmt.Sprintf("%s#CrossOuted", coco.TxId))

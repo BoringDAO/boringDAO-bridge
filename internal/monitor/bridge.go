@@ -18,17 +18,17 @@ type Coco struct {
 	Index       uint           `json:"index"`
 	FromChainId *big.Int       `json:"from_chain_id"`
 	FromToken   common.Address `json:"from_token"`
-	From        common.Address `json:"from"`
+	From        []byte         `json:"from"`
 	ToChainId   *big.Int       `json:"to_chain_id"`
 	ToToken     common.Address `json:"to_token"`
-	To          common.Address `json:"to"`
+	To          []byte         `json:"to"`
 	Amount      *big.Int       `json:"amount"`
 }
 
 type Mnt interface {
 	Start() error
 
-	CrossIn(fromToken, toToken common.Address, from, to common.Address, fromChainID, toChainID, amount *big.Int, txid string) error
+	CrossIn(fromToken, toToken common.Address, from, to []byte, fromChainID, toChainID, amount *big.Int, txid string) error
 
 	HandleCocoC() chan *Coco
 

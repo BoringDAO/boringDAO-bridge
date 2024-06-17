@@ -32,8 +32,8 @@ type Wrapper struct {
 	config    *repo.CenterConfig
 	ethClient *ethclient.Client
 	rpcClient *rpc.Client
-	twoWay    *center.TwoWayCenter
-	session   *center.TwoWayCenterSession
+	twoWay    *center.Center
+	session   *center.CenterSession
 	logger    logrus.FieldLogger
 }
 
@@ -48,7 +48,7 @@ func NewWrapper(config *repo.CenterConfig, logger logrus.FieldLogger) (*Wrapper,
 	}
 	etherCli := ethclient.NewClient(rpcClient)
 
-	twoWay, err := center.NewTwoWayCenter(common.HexToAddress(config.CenterContract), etherCli)
+	twoWay, err := center.NewCenter(common.HexToAddress(config.CenterContract), etherCli)
 	if err != nil {
 		return nil, fmt.Errorf("failed to instantiate a TwoWayCenter contract: %w", err)
 	}
@@ -77,7 +77,7 @@ func NewWrapper(config *repo.CenterConfig, logger logrus.FieldLogger) (*Wrapper,
 		auth.GasLimit = config.GasLimit
 	}
 
-	session := &center.TwoWayCenterSession{
+	session := &center.CenterSession{
 		Contract: twoWay,
 		CallOpts: bind.CallOpts{
 			Pending: false,
@@ -159,8 +159,8 @@ func (w *Wrapper) IndexHeight(chainId, index *big.Int) *big.Int {
 	return header
 }
 
-func (w *Wrapper) FilterWithdrawed(opts *bind.FilterOpts) *center.TwoWayCenterWithdrawedIterator {
-	var iterator *center.TwoWayCenterWithdrawedIterator
+func (w *Wrapper) FilterWithdrawed(opts *bind.FilterOpts) *center.CenterWithdrawedIterator {
+	var iterator *center.CenterWithdrawedIterator
 	var err error
 
 	if err := retry.Retry(func(attempt uint) error {
@@ -180,8 +180,8 @@ func (w *Wrapper) FilterWithdrawed(opts *bind.FilterOpts) *center.TwoWayCenterWi
 	return iterator
 }
 
-func (w *Wrapper) FilterCenterCrossOuted(opts *bind.FilterOpts) *center.TwoWayCenterCrossOutedIterator {
-	var iterator *center.TwoWayCenterCrossOutedIterator
+func (w *Wrapper) FilterCenterCrossOuted(opts *bind.FilterOpts) *center.CenterCrossOutedIterator {
+	var iterator *center.CenterCrossOutedIterator
 	var err error
 
 	if err := retry.Retry(func(attempt uint) error {
@@ -202,8 +202,8 @@ func (w *Wrapper) FilterCenterCrossOuted(opts *bind.FilterOpts) *center.TwoWayCe
 	return iterator
 }
 
-func (w *Wrapper) FilterForwardCrossOuted(opts *bind.FilterOpts) *center.TwoWayCenterForwardCrossOutedIterator {
-	var iterator *center.TwoWayCenterForwardCrossOutedIterator
+func (w *Wrapper) FilterForwardCrossOuted(opts *bind.FilterOpts) *center.CenterForwardCrossOutedIterator {
+	var iterator *center.CenterForwardCrossOutedIterator
 	var err error
 
 	if err := retry.Retry(func(attempt uint) error {
@@ -224,8 +224,8 @@ func (w *Wrapper) FilterForwardCrossOuted(opts *bind.FilterOpts) *center.TwoWayC
 	return iterator
 }
 
-func (w *Wrapper) FilterCrossInFailed(opts *bind.FilterOpts) *center.TwoWayCenterCrossInFailedIterator {
-	var iterator *center.TwoWayCenterCrossInFailedIterator
+func (w *Wrapper) FilterCrossInFailed(opts *bind.FilterOpts) *center.CenterCrossInFailedIterator {
+	var iterator *center.CenterCrossInFailedIterator
 	var err error
 
 	if err := retry.Retry(func(attempt uint) error {
@@ -287,7 +287,7 @@ func (w *Wrapper) SuggestGasPrice(ctx context.Context) *big.Int {
 	return result
 }
 
-func (w *Wrapper) ForwardCrossOut(fromToken common.Address, from, to common.Address, fromChainID, toChainID, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
+func (w *Wrapper) ForwardCrossOut(fromToken common.Address, from, to []byte, fromChainID, toChainID, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
 	var tx *types.Transaction
 	var err error
 	var hash common.Hash
@@ -324,8 +324,8 @@ func (w *Wrapper) ForwardCrossOut(fromToken common.Address, from, to common.Addr
 	return tx, hash
 }
 
-func (w *Wrapper) forwardCrossOut(fromToken common.Address, from, to common.Address, fromChainID, toChainID, amount *big.Int, txid string) (*types.Transaction, common.Hash, error) {
-	parsed, err := abi.JSON(strings.NewReader(center.TwoWayCenterMetaData.ABI))
+func (w *Wrapper) forwardCrossOut(fromToken common.Address, from, to []byte, fromChainID, toChainID, amount *big.Int, txid string) (*types.Transaction, common.Hash, error) {
+	parsed, err := abi.JSON(strings.NewReader(center.CenterMetaData.ABI))
 	if err != nil {
 		return nil, common.Hash{}, err
 	}
@@ -385,7 +385,7 @@ func (w *Wrapper) forwardCrossOut(fromToken common.Address, from, to common.Addr
 	return signedTx, txHash, err
 }
 
-func (w *Wrapper) CrossIn(fromToken common.Address, from, to common.Address, fromChainID, toChainID, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
+func (w *Wrapper) CrossIn(fromToken common.Address, from, to []byte, fromChainID, toChainID, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
 	var tx *types.Transaction
 	var err error
 	var hash common.Hash
@@ -422,8 +422,8 @@ func (w *Wrapper) CrossIn(fromToken common.Address, from, to common.Address, fro
 	return tx, hash
 }
 
-func (w *Wrapper) crossIn(fromToken common.Address, from, to common.Address, fromChainID, toChainID, amount *big.Int, txid string) (*types.Transaction, common.Hash, error) {
-	parsed, err := abi.JSON(strings.NewReader(center.TwoWayCenterMetaData.ABI))
+func (w *Wrapper) crossIn(fromToken common.Address, from, to []byte, fromChainID, toChainID, amount *big.Int, txid string) (*types.Transaction, common.Hash, error) {
+	parsed, err := abi.JSON(strings.NewReader(center.CenterMetaData.ABI))
 	if err != nil {
 		return nil, common.Hash{}, err
 	}
@@ -483,7 +483,7 @@ func (w *Wrapper) crossIn(fromToken common.Address, from, to common.Address, fro
 	return signedTx, txHash, err
 }
 
-func (w *Wrapper) Issue(fromToken, toToken common.Address, from, to common.Address, fromChainID, toChainID, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
+func (w *Wrapper) Issue(fromToken, toToken common.Address, from, to []byte, fromChainID, toChainID, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
 	var tx *types.Transaction
 	var err error
 	var hash common.Hash
@@ -520,8 +520,8 @@ func (w *Wrapper) Issue(fromToken, toToken common.Address, from, to common.Addre
 	return tx, hash
 }
 
-func (w *Wrapper) issue(fromToken, toToken common.Address, from, to common.Address, fromChainID, toChainID, amount *big.Int, txid string) (*types.Transaction, common.Hash, error) {
-	parsed, err := abi.JSON(strings.NewReader(center.TwoWayCenterMetaData.ABI))
+func (w *Wrapper) issue(fromToken, toToken common.Address, from, to []byte, fromChainID, toChainID, amount *big.Int, txid string) (*types.Transaction, common.Hash, error) {
+	parsed, err := abi.JSON(strings.NewReader(center.CenterMetaData.ABI))
 	if err != nil {
 		return nil, common.Hash{}, err
 	}
@@ -582,7 +582,7 @@ func (w *Wrapper) issue(fromToken, toToken common.Address, from, to common.Addre
 	return signedTx, txHash, err
 }
 
-func (w *Wrapper) RollbackCrossIn(fromToken, toToken common.Address, from, to common.Address, fromChainID, toChainID, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
+func (w *Wrapper) RollbackCrossIn(fromToken, toToken common.Address, from, to []byte, fromChainID, toChainID, amount *big.Int, txid string) (*types.Transaction, common.Hash) {
 	var tx *types.Transaction
 	var err error
 	var hash common.Hash
@@ -619,8 +619,8 @@ func (w *Wrapper) RollbackCrossIn(fromToken, toToken common.Address, from, to co
 	return tx, hash
 }
 
-func (w *Wrapper) rollbackCrossIn(fromToken, toToken common.Address, from, to common.Address, fromChainID, toChainID, amount *big.Int, txid string) (*types.Transaction, common.Hash, error) {
-	parsed, err := abi.JSON(strings.NewReader(center.TwoWayCenterMetaData.ABI))
+func (w *Wrapper) rollbackCrossIn(fromToken, toToken common.Address, from, to []byte, fromChainID, toChainID, amount *big.Int, txid string) (*types.Transaction, common.Hash, error) {
+	parsed, err := abi.JSON(strings.NewReader(center.CenterMetaData.ABI))
 	if err != nil {
 		return nil, common.Hash{}, err
 	}
@@ -737,7 +737,7 @@ func (w *Wrapper) switchToNextAddr() {
 		}
 		w.ethClient = ethclient.NewClient(rpcClient)
 		w.rpcClient = rpcClient
-		w.twoWay, err = center.NewTwoWayCenter(common.HexToAddress(w.config.CenterContract), w.ethClient)
+		w.twoWay, err = center.NewCenter(common.HexToAddress(w.config.CenterContract), w.ethClient)
 		if err != nil {
 			continue
 		}

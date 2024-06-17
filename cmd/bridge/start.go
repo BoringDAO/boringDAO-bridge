@@ -64,8 +64,17 @@ func start(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
+
 	for _, config := range repo.Config.Edges {
 		config.PrivKey = ethKey
+	}
+
+	if repo.Config.TonEdge != nil {
+		mnemonic, err := tonMnemonic(repo)
+		if err != nil {
+			return err
+		}
+		repo.Config.TonEdge.MNEMONIC = mnemonic
 	}
 	repo.Config.Center.PrivKey = ethKey
 	bridge, err := app.New(repo)
@@ -90,6 +99,9 @@ func start(ctx *cli.Context) error {
 func ethKey(rep *repo.Repo) (string, error) {
 	if rep.Config.KeyFile == "" {
 		key, err := gopass.GetPasswdPrompt("Please input eth/bridge private key: ", true, os.Stdin, os.Stdout)
+		if err != nil {
+			return "", err
+		}
 		priv, err := crypto.ToECDSA(hexutil.Decode(string(key)))
 		if err != nil || priv == nil {
 			return "", fmt.Errorf("eth private key format error:%w", err)
@@ -124,6 +136,17 @@ func ethKey(rep *repo.Repo) (string, error) {
 		return "", fmt.Errorf("the address cannot match the private key, please check and try again")
 	}
 	return hexutil.Encode(crypto.FromECDSA(key.PrivateKey)), nil
+}
+
+func tonMnemonic(rep *repo.Repo) (string, error) {
+	if rep.Config.TonEdge.MNEMONIC == "" {
+		mnemonic, err := gopass.GetPasswdPrompt("Please input ton mnemonic: ", true, os.Stdin, os.Stdout)
+		if err != nil {
+			return "", err
+		}
+		return string(mnemonic), nil
+	}
+	return rep.Config.TonEdge.MNEMONIC, nil
 }
 
 func handleShutdown(bridge *app.Bridge, wg *sync.WaitGroup) {
