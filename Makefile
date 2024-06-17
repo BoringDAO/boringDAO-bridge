@@ -43,26 +43,26 @@ test-coverage:
 	@go test -short -coverprofile cover.out -covermode=atomic ${TEST_PKGS}
 	@cat cover.out >> coverage.txt
 
-packr:
-	cd internal/repo && packr
+packr2:
+	cd internal/repo && packr2
 
 prepare:
 	cd scripts && bash prepare.sh
 
 ## make install: Go install the project
 install:
-	cd internal/repo && packr
+	cd internal/repo && packr2
 	$(GO) install -ldflags '${GOLDFLAGS}' ./cmd/${APP_NAME}
 	@printf "${GREEN}Build bridge successfully!${NC}\n"
 
 build:
-	cd internal/repo && packr
+	cd internal/repo && packr2
 	@mkdir -p bin
 	$(GO) build -ldflags '${GOLDFLAGS}' ./cmd/${APP_NAME}
 	@mv ./bridge bin
 	@printf "${GREEN}Build bridge successfully!${NC}\n"
 
-docker-build: packr
+docker-build: packr2
 	$(GO) install -ldflags '${STATIC_LDFLAGS}' ./cmd/${APP_NAME}
 	@echo "Build bridge successfully"
 

@@ -12,7 +12,7 @@ import (
 
 	"github.com/boringdao/bridge/pkg/kit/fileutil"
 	"github.com/gobuffalo/packd"
-	"github.com/gobuffalo/packr"
+	"github.com/gobuffalo/packr/v2"
 )
 
 const (
@@ -20,7 +20,7 @@ const (
 )
 
 func Initialize(repoRoot string) error {
-	box := packr.NewBox(packPath)
+	box := packr.New(packPath, packPath)
 	if err := box.Walk(func(s string, file packd.File) error {
 		p := filepath.Join(repoRoot, s)
 		dir := filepath.Dir(p)
