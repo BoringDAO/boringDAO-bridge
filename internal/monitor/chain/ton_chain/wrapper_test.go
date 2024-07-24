@@ -10,19 +10,20 @@ import (
 
 	"github.com/boringdao/bridge/internal/repo"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/xssnick/tonutils-go/ton/wallet"
 	"github.com/xssnick/tonutils-go/tvm/cell"
 )
 
-const configUrl string = "https://tonutils.com/global.config.json"
+const configUrl string = "https://ton.org/global.config.json"
 
-const multisigContractAddress string = "EQB1RnlT_67oVnkhByAHcplzps65lxUGhNjTGNWybmZ0umNb"
-const eventIndex uint = 1
+const multisigContractAddress string = "EQAoWYTgcJM7SCzmJvn0UjicfgZRvfVKa7WQSo3dSUb7X7Rn"
+const eventIndex uint = 8
 
 func TestWrapper_GetEventData(t *testing.T) {
 
-	w, _ := NewWrapper(nil, &repo.EdgeTonConfig{
+	w, _ := NewWrapper(&logrus.Logger{}, &repo.EdgeTonConfig{
 		Addrs:        []string{configUrl},
 		EdgeContract: multisigContractAddress,
 		MNEMONIC:     strings.Join(wallet.NewSeed(), " "),
@@ -38,7 +39,7 @@ func TestWrapper_GetEventData(t *testing.T) {
 
 func TestWrapper_CrossIn(t *testing.T) {
 	words := ""
-	w, _ := NewWrapper(nil, &repo.EdgeTonConfig{
+	w, _ := NewWrapper(&logrus.Logger{}, &repo.EdgeTonConfig{
 		Addrs:        []string{configUrl},
 		EdgeContract: multisigContractAddress,
 		MNEMONIC:     words,

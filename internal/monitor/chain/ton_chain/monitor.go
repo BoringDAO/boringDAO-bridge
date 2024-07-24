@@ -82,6 +82,7 @@ func (m *Monitor) listenEvent() {
 	for {
 		select {
 		case <-ticker.C:
+			m.logger.Infof("listenEvent chainId:[%d], index from [%d] to [%d]", m.config.ChainID, m.index, m.index)
 			index, err := m.wrapper.GetEventAddress(m.ctx, uint(m.index))
 			if err != nil {
 				m.logger.Errorf("Ton GetEventAddress failed: %s", err)
@@ -97,7 +98,7 @@ func (m *Monitor) listenEvent() {
 			}
 			typ := monitor.CrossOuted
 			if event.Event.Opcode == DEPOSIT {
-				typ = monitor.CrossOuted
+				typ = monitor.Deposited
 			}
 
 			if !common.IsHexAddress(event.Event.ToAddress) {
@@ -113,7 +114,7 @@ func (m *Monitor) listenEvent() {
 				m.persistIndex(m.index)
 				continue
 			}
-			m.cocoC <- &monitor.Coco{
+			coco := &monitor.Coco{
 				Typ:         typ,
 				TxId:        event.Event.EventAddress,
 				BlockHeight: 0,
@@ -126,6 +127,16 @@ func (m *Monitor) listenEvent() {
 				To:          common.HexToAddress(event.Event.ToAddress).Bytes(),
 				Amount:      event.Event.JettonAmount,
 			}
+			m.logger.WithFields(logrus.Fields{
+				"tx_id":      coco.TxId,
+				"type":       typ,
+				"from_token": coco.FromToken.String(),
+				"to_token":   coco.ToToken.String(),
+				"from":       event.Event.FromUser.String(),
+				"to":         common.BytesToAddress(coco.To),
+				"amount":     coco.Amount.String(),
+			}).Info("Ton CrossOuted")
+			m.cocoC <- coco
 			m.index++
 			m.persistIndex(m.index)
 		case <-m.ctx.Done():
