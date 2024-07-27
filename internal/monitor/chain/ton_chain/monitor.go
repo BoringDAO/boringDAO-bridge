@@ -17,6 +17,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/sirupsen/logrus"
+	"github.com/xssnick/tonutils-go/address"
 )
 
 type Monitor struct {
@@ -76,7 +77,7 @@ func (m *Monitor) Stop() error {
 }
 
 func (m *Monitor) listenEvent() {
-	ticker := time.NewTicker(5 * time.Second)
+	ticker := time.NewTicker(20 * time.Second)
 	defer ticker.Stop()
 
 	for {
@@ -107,7 +108,7 @@ func (m *Monitor) listenEvent() {
 				m.persistIndex(m.index)
 				continue
 			}
-			toToken, ok := m.tokens[event.Event.JettonWalletAddress.String()]
+			fromToken, ok := m.tokens[event.Event.JettonWalletAddress.String()]
 			if !ok {
 				m.logger.Errorf("Ton GetEventData failed: %s[%d], %s", "invalid token", m.index, event.Event.JettonWalletAddress.String())
 				m.index++
@@ -120,21 +121,22 @@ func (m *Monitor) listenEvent() {
 				BlockHeight: 0,
 				Index:       0,
 				FromChainId: big.NewInt(int64(m.config.ChainID)),
-				FromToken:   common.BytesToAddress(event.Event.JettonWalletAddress.Data()),
+				FromToken:   common.HexToAddress(fromToken),
 				From:        event.Event.FromUser.Data(),
 				ToChainId:   event.Event.ToChainId,
-				ToToken:     common.HexToAddress(toToken),
+				ToToken:     common.BytesToAddress(event.Event.JettonWalletAddress.Data()),
 				To:          common.HexToAddress(event.Event.ToAddress).Bytes(),
-				Amount:      event.Event.JettonAmount,
+				Amount:      new(big.Int).Mul(event.Event.JettonAmount, big.NewInt(10).Exp(big.NewInt(10), big.NewInt(12), nil)),
 			}
 			m.logger.WithFields(logrus.Fields{
-				"tx_id":      coco.TxId,
-				"type":       typ,
-				"from_token": coco.FromToken.String(),
-				"to_token":   coco.ToToken.String(),
-				"from":       event.Event.FromUser.String(),
-				"to":         common.BytesToAddress(coco.To),
-				"amount":     coco.Amount.String(),
+				"tx_id":         coco.TxId,
+				"type":          typ,
+				"from_token":    coco.FromToken.String(),
+				"to_token":      coco.ToToken.String(),
+				"from":          event.Event.FromUser.String(),
+				"to":            common.BytesToAddress(coco.To),
+				"jetton_amount": event.Event.JettonAmount.String(),
+				"amount":        coco.Amount.String(),
 			}).Info("Ton CrossOuted")
 			m.cocoC <- coco
 			m.index++
@@ -160,13 +162,14 @@ func (m *Monitor) CrossIn(fromToken, toToken common.Address, from, to []byte, fr
 		m.logger.Warnf("order %s already handled", txId)
 		return nil
 	}
-
+	toAddr := address.NewAddress(to[0], to[1], to[2:])
+	amount = new(big.Int).Div(amount, big.NewInt(10).Exp(big.NewInt(10), big.NewInt(12), nil))
 	m.logger.WithFields(logrus.Fields{
 		"tx_id":       txId,
 		"from_token":  fromToken.String(),
 		"to_token":    toToken.String(),
 		"from":        hexutil.Encode(from),
-		"to":          hexutil.Encode(to),
+		"to":          toAddr.String(),
 		"fromChainId": fromChainID.String(),
 		"toChainId":   toChainID.String(),
 		"amount":      amount.String(),
@@ -176,7 +179,7 @@ func (m *Monitor) CrossIn(fromToken, toToken common.Address, from, to []byte, fr
 		m.logger.Errorf("Ton CrossIn failed: %s, %s", "invalid token", toToken.Hex())
 		return fmt.Errorf("invalid token %s", toToken.Hex())
 	}
-	return m.wrapper.CrossIn(m.ctx, jettonToken, common.BytesToAddress(from).Hex(), string(to), amount, orderId)
+	return m.wrapper.CrossIn(m.ctx, jettonToken, common.BytesToAddress(from).Hex(), toAddr.String(), amount, orderId)
 }
 
 func (m *Monitor) Name() string {

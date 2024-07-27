@@ -287,9 +287,6 @@ func (m *Monitor) handleForwardCrossOuted(outed *center.CenterForwardCrossOuted)
 		return
 	}
 
-	if m.storage.Has(TxKey(outed.Raw.TxHash.String(), monitor.ForwardCrossOuted, outed.Raw.Index)) {
-		return
-	}
 	coco := &monitor.Coco{
 		Typ:         monitor.ForwardCrossOuted,
 		From:        outed.P.From,
@@ -317,6 +314,10 @@ func (m *Monitor) handleForwardCrossOuted(outed *center.CenterForwardCrossOuted)
 		"block_height":  outed.Raw.BlockNumber,
 		"removed":       outed.Raw.Removed,
 	}).Info("ForwardCrossOuted")
+
+	if m.storage.Has(TxKey(outed.Raw.TxHash.String(), monitor.ForwardCrossOuted, outed.Raw.Index)) {
+		return
+	}
 
 	if outed.Raw.Removed {
 		return

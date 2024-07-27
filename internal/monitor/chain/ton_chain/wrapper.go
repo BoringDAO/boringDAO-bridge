@@ -180,11 +180,11 @@ func (w *Wrapper) isOrderHandled(ctx context.Context, txId string) (bool, error)
 	_, err = w.api.WaitForBlock(block.SeqNo).RunGetMethod(ctx, block, orderAddr, "get_order_data")
 	if err != nil {
 		if strings.Contains(err.Error(), "contract is not initialized") {
-			return true, nil
+			return false, nil
 		}
 		return false, err
 	}
-	return false, nil
+	return true, nil
 }
 
 func (w *Wrapper) GetOrderData(ctx context.Context, orderAddr *address.Address) error {

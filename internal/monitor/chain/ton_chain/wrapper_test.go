@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
+	"github.com/xssnick/tonutils-go/address"
 	"github.com/xssnick/tonutils-go/ton/wallet"
 	"github.com/xssnick/tonutils-go/tvm/cell"
 )
@@ -19,7 +20,7 @@ import (
 const configUrl string = "https://ton.org/global.config.json"
 
 const multisigContractAddress string = "EQAoWYTgcJM7SCzmJvn0UjicfgZRvfVKa7WQSo3dSUb7X7Rn"
-const eventIndex uint = 8
+const eventIndex uint = 6
 
 func TestWrapper_GetEventData(t *testing.T) {
 
@@ -35,6 +36,27 @@ func TestWrapper_GetEventData(t *testing.T) {
 	require.NoError(t, err)
 	data, _ := json.Marshal(e)
 	fmt.Println("e: ", string(data))
+}
+
+const sender = "UQA8ue90JugDvs0wvLR35tuiraNFV7-_Uxczu7Ku-xK1tjgi"
+
+func TestWrapper_Address(t *testing.T) {
+	// addr := "0x527aaa24d2b237bbba5c5ae79f04eb2c8806f75c88c35fcf268898e90e178518"
+	// data := hexutil.Decode(addr)
+	// a := address.NewAddress(data[0], data[1], data[2:])
+	// fmt.Print(a.String())
+	a, err := address.ParseAddr(sender)
+	require.NoError(t, err)
+
+	// fmt.Println(hexutil.Encode(a.Data()))
+
+	na := address.NewAddress(a.FlagsToByte(), byte(a.Workchain()), a.Data())
+	fmt.Println(na.String())
+
+	// data, err := addr.Copy().MarshalJSON()
+	// require.NoError(t, err)
+	// a := address.NewAddress(data[0], data[1], data[2:])
+	// fmt.Print(a.String())
 }
 
 func TestWrapper_CrossIn(t *testing.T) {

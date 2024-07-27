@@ -50,6 +50,17 @@ func New(repoRoot *repo.Repo) (*Bridge, error) {
 	mnts := make(map[uint64]monitor.Mnt)
 	mntCocoC := make(map[uint64]chan *monitor.Coco)
 
+	if repoRoot.Config.TonEdge != nil {
+		config := repoRoot.Config.TonEdge
+		chainIDs = append(chainIDs, config.ChainID)
+		mnt, err := ton.New(repoRoot.Config.RepoRoot, config, chainIDs, loggers.Logger(config.Name))
+		if err != nil {
+			return nil, err
+		}
+		mnts[config.ChainID] = mnt
+		mntCocoC[config.ChainID] = make(chan *monitor.Coco, 1024)
+	}
+
 	for _, config := range repoRoot.Config.Edges {
 		var mnt monitor.Mnt
 		if config.IsFilter {
@@ -58,20 +69,17 @@ func New(repoRoot *repo.Repo) (*Bridge, error) {
 				return nil, err
 			}
 		} else {
-			mnt, err = chain.New(repoRoot.Config.RepoRoot, config, chainIDs, loggers.Logger(config.Name))
+			newChainIDs := make([]uint64, 0, len(chainIDs)-1)
+			for _, chainID := range chainIDs {
+				if chainID == config.ChainID {
+					continue
+				}
+				newChainIDs = append(newChainIDs, chainID)
+			}
+			mnt, err = chain.New(repoRoot.Config.RepoRoot, config, newChainIDs, loggers.Logger(config.Name))
 			if err != nil {
 				return nil, err
 			}
-		}
-		mnts[config.ChainID] = mnt
-		mntCocoC[config.ChainID] = make(chan *monitor.Coco, 1024)
-	}
-
-	if repoRoot.Config.TonEdge != nil {
-		config := repoRoot.Config.TonEdge
-		mnt, err := ton.New(repoRoot.Config.RepoRoot, config, chainIDs, loggers.Logger(config.Name))
-		if err != nil {
-			return nil, err
 		}
 		mnts[config.ChainID] = mnt
 		mntCocoC[config.ChainID] = make(chan *monitor.Coco, 1024)

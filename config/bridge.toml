@@ -35,6 +35,7 @@ edgeContract = "EQAoWYTgcJM7SCzmJvn0UjicfgZRvfVKa7WQSo3dSUb7X7Rn"
 index = 2
 [tonEdge.tokens]
   "0x0000000000000000000000000000000000000001" = "EQB0Ir-n0_U-tBYaCx6NEdar-3MylfpYFE9-oa77NOk8D_uW" # USDT
+  
 
 [log]
   level = "info"
