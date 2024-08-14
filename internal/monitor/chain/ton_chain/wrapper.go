@@ -128,7 +128,7 @@ func (w *Wrapper) CrossIn(ctx context.Context, jettonMinterAddress, fromAddr, to
 			Bounce:      true,
 			DstAddr:     w.contractAddr,
 			Body:        boc,
-			Amount:      tlb.MustFromTON("0.01"),
+			Amount:      tlb.MustFromTON("0.05"),
 		},
 	})
 	if err != nil {
