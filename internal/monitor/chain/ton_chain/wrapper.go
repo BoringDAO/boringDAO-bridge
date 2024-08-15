@@ -135,7 +135,7 @@ func (w *Wrapper) CrossIn(ctx context.Context, jettonToken, fromAddr, toAddr str
 	if err != nil {
 		return err
 	}
-	logrus.Printf("CrossIn tx: %s, block: %d", hex.EncodeToString(tx.Hash), block.SeqNo)
+	w.logger.Infof("Ton CrossIn tx: %s, block: %d", hex.EncodeToString(tx.Hash), block.SeqNo)
 
 	return nil
 }
