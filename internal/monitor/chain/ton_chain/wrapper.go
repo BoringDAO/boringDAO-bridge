@@ -104,11 +104,11 @@ func (w *Wrapper) HeaderByNumber(ctx context.Context, number uint32) tlb.BlockHe
 	return data.BlockInfo
 }
 
-func (w *Wrapper) CrossIn(ctx context.Context, jettonMinterAddress, fromAddr, toAddr string, amount *big.Int, txId string) error {
+func (w *Wrapper) CrossIn(ctx context.Context, jettonToken, fromAddr, toAddr string, amount *big.Int, txId string) error {
 	var err error
 	msgBase64 := ""
 	retry.Retry(func(attempt uint) error {
-		msgBase64, err = getCrossInBoc(fromAddr, toAddr, amount.String(), jettonMinterAddress, w.contractAddr.String(), txId)
+		msgBase64, err = getCrossInBoc(fromAddr, toAddr, amount.String(), jettonToken, w.contractAddr.String(), txId)
 		if err != nil {
 			logrus.Printf("getCrossInBoc err: %s", err.Error())
 		}

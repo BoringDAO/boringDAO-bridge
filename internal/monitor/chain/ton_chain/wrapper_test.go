@@ -61,13 +61,13 @@ func TestWrapper_Address(t *testing.T) {
 }
 
 func TestWrapper_CrossIn(t *testing.T) {
-	words := ""
+	words := "element deal hedgehog tennis letter gather soccer surround carry science barrel lava divert busy bright crash decide recall club wage lunar blossom lock buffalo"
 	w, _ := NewWrapper(&logrus.Logger{}, &repo.EdgeTonConfig{
 		Addrs:        []string{configUrl},
 		EdgeContract: multisigContractAddress,
 		MNEMONIC:     words,
 	})
-	txId := "123456ds78"
+	txId := "123456dsds78"
 	orderId := crypto.Keccak256Hash([]byte(txId)).Hex()
 	fmt.Println("orderId: ", orderId)
 	err := w.CrossIn(context.Background(), "EQB0Ir-n0_U-tBYaCx6NEdar-3MylfpYFE9-oa77NOk8D_uW", "0xd75d38de8C8227097Df34A439C1a553F6E31372e", "UQBSeqok0rI3u7pcWuefBOssiAb3XIjDX88miJjpDheFGA7z", big.NewInt(1994000), orderId)

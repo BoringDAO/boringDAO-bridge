@@ -164,21 +164,23 @@ func (m *Monitor) CrossIn(fromToken, toToken common.Address, from, to []byte, fr
 	}
 	toAddr := address.NewAddress(to[0], to[1], to[2:])
 	amount = new(big.Int).Div(amount, big.NewInt(10).Exp(big.NewInt(10), big.NewInt(12), nil))
+	jettonToken, ok := m.tokens[toToken.Hex()]
+	if !ok {
+		m.logger.Errorf("Ton CrossIn failed: %s, %s", "invalid token", toToken.Hex())
+		return fmt.Errorf("invalid token %s", toToken.Hex())
+	}
 	m.logger.WithFields(logrus.Fields{
 		"tx_id":       txId,
 		"from_token":  fromToken.String(),
 		"to_token":    toToken.String(),
+		"jettonToken": jettonToken,
 		"from":        hexutil.Encode(from),
 		"to":          toAddr.String(),
 		"fromChainId": fromChainID.String(),
 		"toChainId":   toChainID.String(),
 		"amount":      amount.String(),
 	}).Info("will crossIn")
-	jettonToken, ok := m.tokens[toToken.Hex()]
-	if !ok {
-		m.logger.Errorf("Ton CrossIn failed: %s, %s", "invalid token", toToken.Hex())
-		return fmt.Errorf("invalid token %s", toToken.Hex())
-	}
+
 	return m.wrapper.CrossIn(m.ctx, jettonToken, common.BytesToAddress(from).Hex(), toAddr.String(), amount, orderId)
 }
 
