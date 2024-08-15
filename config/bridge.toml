@@ -7,11 +7,13 @@ keyFile = ""
   addrs = [
     "https://rpc.ankr.com/polygon_amoy"
   ]
-  chainID = 80002 
+  chainID = 80002
   minConfirms = 1 # min confirms
-  gasLimit = 1500000 # gas Limit
+  gasLimit = 300000 # gas Limit
   gasFeeRate = 1.2
   centerContract = "0xBA6E3cfAfd0bF84e5d4E93560a7eac6c8c59201f"
+[center.index]
+ 10101010=2
 
 [[edges]]
   name = "sepolia"
@@ -20,10 +22,11 @@ keyFile = ""
   ]
   chainID = 11155111
   minConfirms = 1 # min confirms
-  gasLimit = 1500000 # gas Limit
+  gasLimit = 300000 # gas Limit
   gasFeeRate = 1.2
   edgeContract = "0xC258B926c595F91C812ed224207A8604250fCCF5"
-
+[[edges.index]]
+10101010=4
 
 [tonEdge]
 name = "ton"
@@ -32,10 +35,9 @@ addrs = [
 ]
 chainID = 10101010
 edgeContract = "EQAoWYTgcJM7SCzmJvn0UjicfgZRvfVKa7WQSo3dSUb7X7Rn"
-index = 2
+index = 13
 [tonEdge.tokens]
   "0x0000000000000000000000000000000000000001" = "EQB0Ir-n0_U-tBYaCx6NEdar-3MylfpYFE9-oa77NOk8D_uW" # USDT
-  
 
 [log]
   level = "info"

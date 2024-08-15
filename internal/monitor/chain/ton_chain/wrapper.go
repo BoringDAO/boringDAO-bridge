@@ -3,6 +3,7 @@ package ton
 import (
 	"context"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -121,7 +122,7 @@ func (w *Wrapper) CrossIn(ctx context.Context, jettonMinterAddress, fromAddr, to
 	if err != nil {
 		return err
 	}
-	err = w.wallet.Send(w.ctx, &wallet.Message{
+	tx, block, err := w.wallet.SendWaitTransaction(w.ctx, &wallet.Message{
 		Mode: 1,
 		InternalMessage: &tlb.InternalMessage{
 			IHRDisabled: true,
@@ -134,6 +135,7 @@ func (w *Wrapper) CrossIn(ctx context.Context, jettonMinterAddress, fromAddr, to
 	if err != nil {
 		return err
 	}
+	logrus.Printf("CrossIn tx: %s, block: %d", hex.EncodeToString(tx.Hash), block.SeqNo)
 
 	return nil
 }

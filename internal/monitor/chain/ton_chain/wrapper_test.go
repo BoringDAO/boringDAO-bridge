@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"strings"
 	"testing"
 
@@ -66,11 +67,11 @@ func TestWrapper_CrossIn(t *testing.T) {
 		EdgeContract: multisigContractAddress,
 		MNEMONIC:     words,
 	})
-	txId := "12345678"
+	txId := "123456ds78"
 	orderId := crypto.Keccak256Hash([]byte(txId)).Hex()
 	fmt.Println("orderId: ", orderId)
-	// err := w.CrossIn(context.Background(), "EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs", "0xd75d38de8C8227097Df34A439C1a553F6E31372e", "UQA8ue90JugDvs0wvLR35tuiraNFV7-_Uxczu7Ku-xK1tjgi", big.NewInt(1), orderId)
-	// require.NoError(t, err)
+	err := w.CrossIn(context.Background(), "EQB0Ir-n0_U-tBYaCx6NEdar-3MylfpYFE9-oa77NOk8D_uW", "0xd75d38de8C8227097Df34A439C1a553F6E31372e", "UQBSeqok0rI3u7pcWuefBOssiAb3XIjDX88miJjpDheFGA7z", big.NewInt(1994000), orderId)
+	require.NoError(t, err)
 
 	exist, err := w.isOrderHandled(context.Background(), txId)
 	require.NoError(t, err)
