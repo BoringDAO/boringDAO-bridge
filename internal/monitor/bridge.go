@@ -15,7 +15,7 @@ type Coco struct {
 	Typ         int            `json:"typ"`
 	TxId        string         `json:"tx_id"`
 	BlockHeight uint64         `json:"block_height"`
-	Index       uint           `json:"index"`
+	Index       uint64         `json:"index"`
 	FromChainId *big.Int       `json:"from_chain_id"`
 	FromToken   common.Address `json:"from_token"`
 	From        []byte         `json:"from"`

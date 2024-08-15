@@ -135,7 +135,7 @@ func (m *Monitor) listenEvent() {
 							if chainId != m.config.ChainID {
 								continue
 							}
-							m.handleDeposited(filter.Event)
+							m.handleDeposited(filter.Event, j)
 							hasEvent = true
 						}
 						if !hasEvent {
@@ -144,7 +144,7 @@ func (m *Monitor) listenEvent() {
 								if filter.Event.P.ToChainId.Uint64() != chainId {
 									continue
 								}
-								m.handleCrossOuted(filter.Event)
+								m.handleCrossOuted(filter.Event, j)
 								hasEvent = true
 							}
 						}
@@ -171,12 +171,8 @@ func (m *Monitor) HandleCocoC() chan *monitor.Coco {
 	return m.cocoC
 }
 
-func (m *Monitor) handleDeposited(lock *edge.EdgeDeposited) {
+func (m *Monitor) handleDeposited(lock *edge.EdgeDeposited, index uint64) {
 	if !strings.EqualFold(lock.Raw.Address.String(), m.config.EdgeContract) {
-		return
-	}
-
-	if m.storage.Has(TxKey(lock.Raw.TxHash.String(), monitor.Deposited, lock.Raw.Index)) {
 		return
 	}
 	coco := &monitor.Coco{
@@ -186,7 +182,7 @@ func (m *Monitor) handleDeposited(lock *edge.EdgeDeposited) {
 		Amount:      lock.Amount,
 		FromChainId: lock.FromChainId,
 		FromToken:   lock.FromToken,
-		Index:       lock.Raw.Index,
+		Index:       index,
 		TxId:        lock.Raw.TxHash.String(),
 		BlockHeight: lock.Raw.BlockNumber,
 	}
@@ -204,6 +200,11 @@ func (m *Monitor) handleDeposited(lock *edge.EdgeDeposited) {
 		"removed":       lock.Raw.Removed,
 	}).Info("Deposited")
 
+	if m.storage.Has(TxKey(lock.Raw.TxHash.String(), monitor.Deposited, index)) {
+		m.logger.Infof("find Deposited[%d] TxHandled txId:%s", index, lock.Raw.TxHash.String())
+		return
+	}
+
 	if lock.Raw.Removed {
 		return
 	}
@@ -217,14 +218,11 @@ func (m *Monitor) handleDeposited(lock *edge.EdgeDeposited) {
 	}
 }
 
-func (m *Monitor) handleCrossOuted(crossBurn *edge.EdgeCrossOuted) {
+func (m *Monitor) handleCrossOuted(crossBurn *edge.EdgeCrossOuted, index uint64) {
 	if !strings.EqualFold(crossBurn.Raw.Address.String(), m.config.EdgeContract) {
 		return
 	}
 
-	if m.storage.Has(TxKey(crossBurn.Raw.TxHash.String(), monitor.CrossOuted, crossBurn.Raw.Index)) {
-		return
-	}
 	coco := &monitor.Coco{
 		Typ:         monitor.CrossOuted,
 		From:        crossBurn.P.From,
@@ -233,7 +231,7 @@ func (m *Monitor) handleCrossOuted(crossBurn *edge.EdgeCrossOuted) {
 		FromChainId: crossBurn.P.FromChainId,
 		ToChainId:   crossBurn.P.ToChainId,
 		Amount:      crossBurn.P.Amount,
-		Index:       crossBurn.Raw.Index,
+		Index:       index,
 		TxId:        crossBurn.Raw.TxHash.String(),
 		BlockHeight: crossBurn.Raw.BlockNumber,
 	}
@@ -251,6 +249,11 @@ func (m *Monitor) handleCrossOuted(crossBurn *edge.EdgeCrossOuted) {
 		"block_height":  crossBurn.Raw.BlockNumber,
 		"removed":       crossBurn.Raw.Removed,
 	}).Info("CrossOuted")
+
+	if m.storage.Has(TxKey(crossBurn.Raw.TxHash.String(), monitor.CrossOuted, index)) {
+		m.logger.Infof("find CrossOuted[%d] TxHandled txId:%s", index, crossBurn.Raw.TxHash.String())
+		return
+	}
 
 	if crossBurn.Raw.Removed {
 		return
@@ -371,7 +374,7 @@ func (m *Monitor) loadIndexFromStorage() {
 	}).Info("Subscribe")
 }
 
-func TxKey(hash string, typ int, idx uint) []byte {
+func TxKey(hash string, typ int, idx uint64) []byte {
 	return []byte(fmt.Sprintf("tx-%d-%s-%d", typ, hash, idx))
 }
 

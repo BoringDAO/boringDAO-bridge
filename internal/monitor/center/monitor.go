@@ -139,7 +139,7 @@ func (m *Monitor) listenEvent(chainId uint64) {
 						if withdrawedFilter.Event.P.ToChainId.Uint64() != chainId {
 							continue
 						}
-						m.handleWithdrawed(withdrawedFilter.Event)
+						m.handleWithdrawed(withdrawedFilter.Event, j)
 						hasEvent = true
 					}
 					forwardFilter := m.wrapper.FilterForwardCrossOuted(&bind.FilterOpts{Start: indexHeight, End: &indexHeight, Context: m.ctx})
@@ -147,7 +147,7 @@ func (m *Monitor) listenEvent(chainId uint64) {
 						if forwardFilter.Event.P.ToChainId.Uint64() != chainId {
 							continue
 						}
-						m.handleForwardCrossOuted(forwardFilter.Event)
+						m.handleForwardCrossOuted(forwardFilter.Event, j)
 						hasEvent = true
 					}
 					crossOutedfilter := m.wrapper.FilterCenterCrossOuted(&bind.FilterOpts{Start: indexHeight, End: &indexHeight, Context: m.ctx})
@@ -155,7 +155,7 @@ func (m *Monitor) listenEvent(chainId uint64) {
 						if crossOutedfilter.Event.P.ToChainId.Uint64() != chainId {
 							continue
 						}
-						m.handleCenterCrossOuted(crossOutedfilter.Event)
+						m.handleCenterCrossOuted(crossOutedfilter.Event, j)
 						hasEvent = true
 
 					}
@@ -182,14 +182,11 @@ func (m *Monitor) HandleCocoC() chan *monitor.Coco {
 	return m.cocoC
 }
 
-func (m *Monitor) handleWithdrawed(withdrawed *center.CenterWithdrawed) {
+func (m *Monitor) handleWithdrawed(withdrawed *center.CenterWithdrawed, index uint64) {
 	if !strings.EqualFold(withdrawed.Raw.Address.String(), m.config.CenterContract) {
 		return
 	}
 
-	if m.storage.Has(TxKey(withdrawed.Raw.TxHash.String(), monitor.Withdrawed, withdrawed.Raw.Index)) {
-		return
-	}
 	coco := &monitor.Coco{
 		Typ:         monitor.Withdrawed,
 		From:        withdrawed.P.From,
@@ -199,7 +196,7 @@ func (m *Monitor) handleWithdrawed(withdrawed *center.CenterWithdrawed) {
 		FromChainId: withdrawed.P.FromChainId,
 		ToChainId:   withdrawed.P.ToChainId,
 		Amount:      withdrawed.P.Amount,
-		Index:       withdrawed.Raw.Index,
+		Index:       index,
 		TxId:        withdrawed.Raw.TxHash.String(),
 		BlockHeight: withdrawed.Raw.BlockNumber,
 	}
@@ -218,6 +215,11 @@ func (m *Monitor) handleWithdrawed(withdrawed *center.CenterWithdrawed) {
 		"removed":       withdrawed.Raw.Removed,
 	}).Info("Withdrawed")
 
+	if m.storage.Has(TxKey(withdrawed.Raw.TxHash.String(), monitor.Withdrawed, index)) {
+		m.logger.Infof("find Withdrawed[%d] TxHandled txId:%s", index, withdrawed.Raw.TxHash.String())
+		return
+	}
+
 	if withdrawed.Raw.Removed {
 		return
 	}
@@ -232,14 +234,11 @@ func (m *Monitor) handleWithdrawed(withdrawed *center.CenterWithdrawed) {
 	}
 }
 
-func (m *Monitor) handleCenterCrossOuted(outed *center.CenterCrossOuted) {
+func (m *Monitor) handleCenterCrossOuted(outed *center.CenterCrossOuted, index uint64) {
 	if !strings.EqualFold(outed.Raw.Address.String(), m.config.CenterContract) {
 		return
 	}
 
-	if m.storage.Has(TxKey(outed.Raw.TxHash.String(), monitor.CrossOuted, outed.Raw.Index)) {
-		return
-	}
 	coco := &monitor.Coco{
 		Typ:         monitor.CrossOuted,
 		From:        outed.P.From,
@@ -249,7 +248,7 @@ func (m *Monitor) handleCenterCrossOuted(outed *center.CenterCrossOuted) {
 		FromChainId: outed.P.FromChainId,
 		ToChainId:   outed.P.ToChainId,
 		Amount:      outed.P.Amount,
-		Index:       outed.Raw.Index,
+		Index:       index,
 		TxId:        outed.Raw.TxHash.String(),
 		BlockHeight: outed.Raw.BlockNumber,
 	}
@@ -268,6 +267,11 @@ func (m *Monitor) handleCenterCrossOuted(outed *center.CenterCrossOuted) {
 		"removed":       outed.Raw.Removed,
 	}).Info("CrossOuted")
 
+	if m.storage.Has(TxKey(outed.Raw.TxHash.String(), monitor.CrossOuted, index)) {
+		m.logger.Infof("find CrossOuted[%d] TxHandled txId:%s", index, outed.Raw.TxHash.String())
+		return
+	}
+
 	if outed.Raw.Removed {
 		return
 	}
@@ -282,7 +286,7 @@ func (m *Monitor) handleCenterCrossOuted(outed *center.CenterCrossOuted) {
 	}
 }
 
-func (m *Monitor) handleForwardCrossOuted(outed *center.CenterForwardCrossOuted) {
+func (m *Monitor) handleForwardCrossOuted(outed *center.CenterForwardCrossOuted, index uint64) {
 	if !strings.EqualFold(outed.Raw.Address.String(), m.config.CenterContract) {
 		return
 	}
@@ -296,7 +300,7 @@ func (m *Monitor) handleForwardCrossOuted(outed *center.CenterForwardCrossOuted)
 		FromChainId: outed.P.FromChainId,
 		ToChainId:   outed.P.ToChainId,
 		Amount:      outed.P.Amount,
-		Index:       outed.Raw.Index,
+		Index:       index,
 		TxId:        outed.Raw.TxHash.String(),
 		BlockHeight: outed.Raw.BlockNumber,
 	}
@@ -315,7 +319,8 @@ func (m *Monitor) handleForwardCrossOuted(outed *center.CenterForwardCrossOuted)
 		"removed":       outed.Raw.Removed,
 	}).Info("ForwardCrossOuted")
 
-	if m.storage.Has(TxKey(outed.Raw.TxHash.String(), monitor.ForwardCrossOuted, outed.Raw.Index)) {
+	if m.storage.Has(TxKey(outed.Raw.TxHash.String(), monitor.ForwardCrossOuted, index)) {
+		m.logger.Infof("find ForwardCrossOuted[%d] TxHandled txId:%s", index, outed.Raw.TxHash.String())
 		return
 	}
 
@@ -627,7 +632,7 @@ func (m *Monitor) persistIndex(chainId, index uint64) {
 	m.logger.Infof("handled cross out events ChainId:[%d] Index:[%d]", chainId, index)
 }
 
-func TxKey(hash string, typ int, idx uint) []byte {
+func TxKey(hash string, typ int, idx uint64) []byte {
 	return []byte(fmt.Sprintf("tx-%d-%s-%d", typ, hash, idx))
 }
 

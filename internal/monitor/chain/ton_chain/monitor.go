@@ -211,7 +211,7 @@ func (m *Monitor) loadIndexFromStorage() {
 	}).Info("Subscribe")
 }
 
-func TxKey(hash string, typ int, idx uint) []byte {
+func TxKey(hash string, typ int, idx uint64) []byte {
 	return []byte(fmt.Sprintf("tx-%d-%s-%d", typ, hash, idx))
 }
 
